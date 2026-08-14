@@ -5,10 +5,23 @@
 
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
 
     <title>World Creator</title>
+
+    <link
+        rel="manifest"
+        href="./manifest.json">
+
+    <meta
+        name="theme-color"
+        content="#ffffff">
+
+    <link
+        rel="stylesheet"
+        href="./style.css">
 
 </head>
 
@@ -16,13 +29,21 @@
 
     <header>
 
-        <h1>World Creator</h1>
+        <h1>
+
+            World Creator
+
+        </h1>
 
     </header>
 
     <section>
 
-        <h2>世界</h2>
+        <h2>
+
+            世界
+
+        </h2>
 
         <p>
 
@@ -64,7 +85,11 @@
 
     <section>
 
-        <h2>EP</h2>
+        <h2>
+
+            EP
+
+        </h2>
 
         <p>
 
@@ -206,6 +231,48 @@
     <script
         type="module"
         src="./js/core/main.js">
+
+    </script>
+
+    <script>
+
+        if (
+
+            "serviceWorker"
+
+            in
+
+            navigator
+
+        ) {
+
+            window.addEventListener(
+
+                "load",
+
+                () => {
+
+                    navigator
+                        .serviceWorker
+                        .register(
+                            "./service-worker.js"
+                        )
+
+                        .catch(
+
+                            error =>
+
+                                console.error(
+                                    error
+                                )
+
+                        );
+
+                }
+
+            );
+
+        }
 
     </script>
 
