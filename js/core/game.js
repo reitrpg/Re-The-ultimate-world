@@ -1,80 +1,69 @@
 /**
  * World Creator
- * Game Manager
+ * Game Loop
  */
-
-import eventBus from "./eventBus.js";
 
 import SettingsManager from "../settings/Manager.js";
 
-import ResourceManager from "../resource/Manager.js";
-
-import ResearchManager from "../research/Manager.js";
-
-import UpgradeManager from "../upgrades/Manager.js";
-
 import WorldManager from "../world/Manager.js";
+
+import eventBus from "./eventBus.js";
 
 class Game {
 
     constructor() {
 
-        this.isRunning = false;
+        this.interval = null;
 
-        this.timer = null;
+        this.lastUpdate = 0;
+
+        this.running = false;
 
     }
 
     start() {
 
-        if (this.isRunning) {
+        if (this.running) {
 
             return;
 
         }
 
-        this.isRunning = true;
+        this.running = true;
 
-        const tickSpeed =
-            SettingsManager.getTickSpeed();
+        this.lastUpdate = Date.now();
 
-        this.timer = setInterval(
+        this.interval = setInterval(
 
             () => {
 
-                this.tick();
+                this.update();
 
             },
 
-            tickSpeed
+            SettingsManager.getTickSpeed()
 
-        );
-
-        eventBus.emit(
-            "game:start"
         );
 
     }
 
     stop() {
 
-        if (!this.isRunning) {
+        if (!this.interval) {
 
             return;
 
         }
 
         clearInterval(
-            this.timer
+
+            this.interval
+
         );
 
-        this.timer = null;
+        this.interval = null;
 
-        this.isRunning = false;
-
-        eventBus.emit(
-            "game:stop"
-        );
+        this.running = false;
 
     }
 
@@ -86,52 +75,28 @@ class Game {
 
     }
 
-    tick() {
+    update() {
 
-        const world =
-            WorldManager.getActive();
+        const currentTime =
+            Date.now();
 
-        if (!world) {
+        const deltaTime =
 
-            return;
+            (
+                currentTime -
+                this.lastUpdate
+            ) / 1000;
 
-        }
+        this.lastUpdate =
+            currentTime;
 
-        let multiplier =
-
-            world
-                .getTotalMultiplier()
-                .toNumber();
-
-        multiplier *=
-
-            ResearchManager
-                .getTotalMultiplier();
-
-        multiplier *=
-
-            UpgradeManager
-                .getTotalMultiplier();
-
-        ResourceManager.produce(
-            multiplier
+        WorldManager.update(
+            deltaTime
         );
 
         eventBus.emit(
-            "game:tick"
+            "game:update"
         );
-
-    }
-
-    pause() {
-
-        this.stop();
-
-    }
-
-    resume() {
-
-        this.start();
 
     }
 
