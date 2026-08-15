@@ -76,4 +76,185 @@ class SaveManager {
 
         try {
 
-           
+            const data =
+                this.createSaveData();
+
+            localStorage.setItem(
+
+                this.key,
+
+                JSON.stringify(
+                    data
+                )
+
+            );
+
+            eventBus.emit(
+                "save:success"
+            );
+
+            return true;
+
+        } catch (error) {
+
+            console.error(
+                error
+            );
+
+            eventBus.emit(
+
+                "save:error",
+
+                error
+
+            );
+
+            return false;
+
+        }
+
+    }
+
+    load() {
+
+        try {
+
+            const raw =
+                localStorage.getItem(
+                    this.key
+                );
+
+            if (!raw) {
+
+                return false;
+
+            }
+
+            const data =
+                JSON.parse(raw);
+
+            WorldManager.load(
+                data.worlds
+            );
+
+            UnlockManager.load(
+                data.worldUnlock
+            );
+
+            ResourceManager.load(
+                data.resources
+            );
+
+            EPManager.load(
+                data.ep
+            );
+
+            ResearchManager.load(
+                data.research
+            );
+
+            UpgradeManager.load(
+                data.upgrades
+            );
+
+            RebirthManager.load(
+                data.rebirth
+            );
+
+            SettingsManager.load(
+                data.settings
+            );
+
+            eventBus.emit(
+                "load:success"
+            );
+
+            return true;
+
+        } catch (error) {
+
+            console.error(
+                error
+            );
+
+            eventBus.emit(
+
+                "load:error",
+
+                error
+
+            );
+
+            return false;
+
+        }
+
+    }
+
+    clear() {
+
+        localStorage.removeItem(
+            this.key
+        );
+
+        eventBus.emit(
+            "save:clear"
+        );
+
+    }
+
+    startAutoSave() {
+
+        const interval =
+
+            SettingsManager
+                .getAutoSaveInterval();
+
+        if (
+            this.autoSaveTimer
+        ) {
+
+            clearInterval(
+                this.autoSaveTimer
+            );
+
+        }
+
+        this.autoSaveTimer =
+
+            setInterval(
+
+                () => {
+
+                    this.save();
+
+                },
+
+                interval
+
+            );
+
+    }
+
+    stopAutoSave() {
+
+        if (
+            !this.autoSaveTimer
+        ) {
+
+            return;
+
+        }
+
+        clearInterval(
+            this.autoSaveTimer
+        );
+
+        this.autoSaveTimer =
+            null;
+
+    }
+
+}
+
+export default new SaveManager();
