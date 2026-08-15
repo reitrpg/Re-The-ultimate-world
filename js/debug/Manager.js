@@ -40,7 +40,9 @@ class DebugManager {
 
     }
 
-    setWorldLevel(level) {
+    setWorldLevel(
+        level
+    ) {
 
         const world =
             WorldManager.getActive();
@@ -123,19 +125,13 @@ class DebugManager {
 
     resetAll() {
 
-        EPManager.reset();
-
-        ResourceManager.clear();
-
-        ResearchManager.reset();
-
-        UpgradeManager.reset();
-
-        WorldManager.clear();
+        localStorage.clear();
 
         eventBus.emit(
             "debug:reset"
         );
+
+        location.reload();
 
     }
 
