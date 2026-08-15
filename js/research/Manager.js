@@ -3,8 +3,10 @@
  * Research Manager
  */
 
+import Research from "./Research.js";
+
 import BigNumber from "../number/BigNumber.js";
-import EPManager from "../ep/Manager.js";
+
 import eventBus from "../core/eventBus.js";
 
 class ResearchManager {
@@ -19,95 +21,87 @@ class ResearchManager {
 
     initialize() {
 
-        this.add({
+        if (
 
-            id: "agriculture",
+            this.researches.size > 0
 
-            name: "豊穣神の祝福",
+        ) {
 
-            level: 0,
+            return;
 
-            baseCost: 10,
+        }
 
-            costMultiplier: 1.5,
+        this.create(
 
-            bonus: 1.05
+            "agriculture",
+            "農業",
+            1.05,
+            100
 
-        });
+        );
 
-        this.add({
+        this.create(
 
-            id: "mining",
+            "mining",
+            "採掘",
+            1.10,
+            250
 
-            name: "地脈神の啓示",
+        );
 
-            level: 0,
+        this.create(
 
-            baseCost: 50,
+            "magic",
+            "魔法",
+            1.15,
+            500
 
-            costMultiplier: 1.7,
+        );
 
-            bonus: 1.10
+        this.create(
 
-        });
+            "world",
+            "世界",
+            1.25,
+            1000
 
-        this.add({
+        );
 
-            id: "magic",
+        this.create(
 
-            name: "魔導神の福音",
+            "rebirth",
+            "転生",
+            1.50,
+            5000
 
-            level: 0,
-
-            baseCost: 250,
-
-            costMultiplier: 1.9,
-
-            bonus: 1.15
-
-        });
-
-        this.add({
-
-            id: "world",
-
-            name: "創世神の真理",
-
-            level: 0,
-
-            baseCost: 1000,
-
-            costMultiplier: 2.0,
-
-            bonus: 1.25
-
-        });
-
-        this.add({
-
-            id: "rebirth",
-
-            name: "輪廻神の審判",
-
-            level: 0,
-
-            baseCost: 5000,
-
-            costMultiplier: 2.2,
-
-            bonus: 1.50
-
-        });
+        );
 
     }
 
-    add(data) {
+    create(
+
+        id,
+        name,
+        multiplier,
+        cost
+
+    ) {
+
+        const research =
+
+            new Research(
+
+                id,
+                name,
+                multiplier,
+                cost
+
+            );
 
         this.researches.set(
 
-            data.id,
-
-            data
+            id,
+            research
 
         );
 
@@ -115,7 +109,9 @@ class ResearchManager {
 
     get(id) {
 
-        return this.researches.get(id);
+        return this.researches.get(
+            id
+        );
 
     }
 
@@ -129,38 +125,9 @@ class ResearchManager {
 
     }
 
-    getCost(id) {
-
-        const research =
-
-            this.get(id);
-
-        if (!research) {
-
-            return BigNumber.from(0);
-
-        }
-
-        const cost =
-
-            research.baseCost *
-
-            Math.pow(
-
-                research.costMultiplier,
-
-                research.level
-
-            );
-
-        return BigNumber.from(cost);
-
-    }
-
     buy(id) {
 
         const research =
-
             this.get(id);
 
         if (!research) {
@@ -169,79 +136,40 @@ class ResearchManager {
 
         }
 
-        const cost =
+        const result =
+            research.buy();
 
-            this.getCost(id);
+        if (result) {
 
-        if (
+            eventBus.emit(
 
-            !EPManager.has(cost)
+                "research:update"
 
-        ) {
-
-            return false;
-
-        }
-
-        EPManager.consume(cost);
-
-        research.level++;
-
-        eventBus.emit(
-
-            "research:update",
-
-            research
-
-        );
-
-        return true;
-
-    }
-
-    getMultiplier(id) {
-
-        const research =
-
-            this.get(id);
-
-        if (!research) {
-
-            return 1;
+            );
 
         }
 
-        return Math.pow(
-
-            research.bonus,
-
-            research.level
-
-        );
+        return result;
 
     }
 
     getTotalMultiplier() {
 
-        let multiplier = 1;
+        let multiplier =
+            1;
 
-        for (
+        this.getAll().forEach(
 
-            const research of
+            research => {
 
-            this.researches.values()
+                multiplier *=
 
-        ) {
+                    research
+                        .getMultiplier();
 
-            multiplier *= Math.pow(
+            }
 
-                research.bonus,
-
-                research.level
-
-            );
-
-        }
+        );
 
         return multiplier;
 
@@ -249,21 +177,13 @@ class ResearchManager {
 
     reset() {
 
-        for (
+        this.researches.clear();
 
-            const research of
-
-            this.researches.values()
-
-        ) {
-
-            research.level = 0;
-
-        }
+        this.initialize();
 
         eventBus.emit(
 
-            "research:reset"
+            "research:update"
 
         );
 
@@ -271,67 +191,52 @@ class ResearchManager {
 
     toJSON() {
 
-        const data = {};
+        return this.getAll().map(
 
-        for (
+            research =>
 
-            const [
+                research.toJSON()
 
-                id,
-
-                research
-
-            ]
-
-            of this.researches
-
-        ) {
-
-            data[id] = {
-
-                level:
-
-                    research.level
-
-            };
-
-        }
-
-        return data;
+        );
 
     }
 
     load(data) {
 
-        if (!data) {
+        this.reset();
+
+        if (
+
+            !Array.isArray(
+                data
+            )
+
+        ) {
 
             return;
 
         }
 
-        for (
+        data.forEach(
 
-            const id in data
+            researchData => {
 
-        ) {
+                const research =
+                    this.get(
 
-            const research =
+                        researchData.id
 
-                this.get(id);
+                    );
 
-            if (research) {
+                if (research) {
 
-                research.level =
+                    research.load(
+                        researchData
+                    );
 
-                    data[id].level;
+                }
 
             }
-
-        }
-
-        eventBus.emit(
-
-            "research:update"
 
         );
 
