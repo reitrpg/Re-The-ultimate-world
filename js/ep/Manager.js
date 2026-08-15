@@ -4,6 +4,7 @@
  */
 
 import BigNumber from "../number/BigNumber.js";
+
 import eventBus from "../core/eventBus.js";
 
 class EPManager {
@@ -11,10 +12,7 @@ class EPManager {
     constructor() {
 
         this.amount =
-            new BigNumber();
-
-        this.totalEarned =
-            new BigNumber();
+            BigNumber.zero();
 
     }
 
@@ -24,42 +22,30 @@ class EPManager {
 
     }
 
-    getTotalEarned() {
-
-        return this.totalEarned;
-
-    }
-
     set(value) {
 
         this.amount =
-            BigNumber.from(value);
+
+            BigNumber.from(
+                value
+            );
 
         eventBus.emit(
-            "ep:update",
-            this.amount
+            "ep:update"
         );
 
     }
 
     add(value) {
 
-        const gain =
-            BigNumber.from(value);
-
         this.amount =
-            this.amount.add(
-                gain
-            );
 
-        this.totalEarned =
-            this.totalEarned.add(
-                gain
+            this.amount.add(
+                value
             );
 
         eventBus.emit(
-            "ep:update",
-            this.amount
+            "ep:update"
         );
 
     }
@@ -67,10 +53,17 @@ class EPManager {
     consume(value) {
 
         const cost =
-            BigNumber.from(value);
+
+            BigNumber.from(
+                value
+            );
 
         if (
-            !this.has(cost)
+
+            this.amount.lt(
+                cost
+            )
+
         ) {
 
             return false;
@@ -78,13 +71,13 @@ class EPManager {
         }
 
         this.amount =
+
             this.amount.subtract(
                 cost
             );
 
         eventBus.emit(
-            "ep:update",
-            this.amount
+            "ep:update"
         );
 
         return true;
@@ -93,8 +86,8 @@ class EPManager {
 
     has(value) {
 
-        return this.amount.greaterOrEqual(
-            BigNumber.from(value)
+        return this.amount.gte(
+            value
         );
 
     }
@@ -102,14 +95,10 @@ class EPManager {
     reset() {
 
         this.amount =
-            new BigNumber();
-
-        this.totalEarned =
-            new BigNumber();
+            BigNumber.zero();
 
         eventBus.emit(
-            "ep:update",
-            this.amount
+            "ep:update"
         );
 
     }
@@ -119,10 +108,9 @@ class EPManager {
         return {
 
             amount:
-                this.amount.toJSON(),
 
-            totalEarned:
-                this.totalEarned.toJSON()
+                this.amount
+                    .toJSON()
 
         };
 
@@ -137,19 +125,12 @@ class EPManager {
         }
 
         this.amount =
-            BigNumber.fromJSON(
-                data.amount
-            );
 
-        this.totalEarned =
-            BigNumber.fromJSON(
-                data.totalEarned
-            );
+            BigNumber.from(
 
-        eventBus.emit(
-            "ep:update",
-            this.amount
-        );
+                data.amount || 0
+
+            );
 
     }
 
