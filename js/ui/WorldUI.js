@@ -1,129 +1,91 @@
 /**
  * World Creator
- * World Unlock Manager
+ * World UI
  */
 
-import BigNumber from "../number/BigNumber.js";
+import WorldManager from "../world/Manager.js";
+import UnlockManager from "../world/UnlockManager.js";
 
-import EPManager from "../ep/Manager.js";
-
-import WorldManager from "./Manager.js";
+import Formatter from "../utils/Formatter.js";
 
 import eventBus from "../core/eventBus.js";
 
-class UnlockManager {
+class WorldUI {
 
     constructor() {
 
-        this.unlockedWorlds = 1;
-
-        this.baseCost =
-            BigNumber.from(
-                10000
-            );
+        this.initialized = false;
 
     }
 
-    getUnlockCost() {
+    initialize() {
 
-        const cost =
-
-            10000 *
-
-            Math.pow(
-
-                10,
-
-                this.unlockedWorlds - 1
-
-            );
-
-        return BigNumber.from(
-            cost
-        );
-
-    }
-
-    canUnlock() {
-
-        return EPManager.has(
-
-            this.getUnlockCost()
-
-        );
-
-    }
-
-    unlock(seed) {
-
-        if (
-
-            !this.canUnlock()
-
-        ) {
-
-            return false;
-
-        }
-
-        EPManager.consume(
-
-            this.getUnlockCost()
-
-        );
-
-        WorldManager.create(
-
-            seed ||
-
-            Date.now().toString()
-
-        );
-
-        this.unlockedWorlds++;
-
-        eventBus.emit(
-
-            "world:unlock"
-
-        );
-
-        return true;
-
-    }
-
-    getUnlockedWorldCount() {
-
-        return this.unlockedWorlds;
-
-    }
-
-    toJSON() {
-
-        return {
-
-            unlockedWorlds:
-
-                this.unlockedWorlds
-
-        };
-
-    }
-
-    load(data) {
-
-        if (!data) {
+        if (this.initialized) {
 
             return;
 
         }
 
-        this.unlockedWorlds =
+        this.initialized = true;
 
-            data.unlockedWorlds || 1;
+        this.registerEvents();
+
+        this.registerButtons();
+
+        this.render();
 
     }
 
-}
+    registerEvents() {
 
-export default new UnlockManager();
+        eventBus.on(
+
+            "world:update",
+
+            () => {
+
+                this.render();
+
+            }
+
+        );
+
+        eventBus.on(
+
+            "world:unlock",
+
+            () => {
+
+                this.render();
+
+            }
+
+        );
+
+    }
+
+    registerButtons() {
+
+        const button =
+
+            document.getElementById(
+                "unlock-world"
+            );
+
+        if (!button) {
+
+            return;
+
+        }
+
+        button.addEventListener(
+
+            "click",
+
+            () => {
+
+                UnlockManager.unlock();
+
+            }
+
+       
