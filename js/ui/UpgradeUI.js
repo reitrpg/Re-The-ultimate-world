@@ -3,8 +3,11 @@
  * Upgrade UI
  */
 
-import eventBus from "../core/eventBus.js";
 import UpgradeManager from "../upgrades/Manager.js";
+
+import Formatter from "../utils/Formatter.js";
+
+import eventBus from "../core/eventBus.js";
 
 class UpgradeUI {
 
@@ -24,32 +27,24 @@ class UpgradeUI {
 
         this.initialized = true;
 
-        eventBus.on(
-            "upgrade:update",
-            () => {
-
-                this.render();
-
-            }
-        );
-
-        eventBus.on(
-            "ep:update",
-            () => {
-
-                this.render();
-
-            }
-        );
+        this.registerEvents();
 
         this.render();
 
     }
 
-    getContainer() {
+    registerEvents() {
 
-        return document.getElementById(
-            "upgrade-list"
+        eventBus.on(
+
+            "upgrade:update",
+
+            () => {
+
+                this.render();
+
+            }
+
         );
 
     }
@@ -58,43 +53,17 @@ class UpgradeUI {
         upgrade
     ) {
 
-        const wrapper =
+        const item =
+
             document.createElement(
                 "div"
             );
 
-        wrapper.className =
+        item.className =
             "upgrade-item";
 
-        const title =
-            document.createElement(
-                "h3"
-            );
-
-        title.textContent =
-            upgrade.name;
-
-        const level =
-            document.createElement(
-                "p"
-            );
-
-        level.textContent =
-            `Lv.${upgrade.level}`;
-
-        const cost =
-            document.createElement(
-                "p"
-            );
-
-        cost.textContent =
-            `Cost: ${UpgradeManager
-                .getCost(
-                    upgrade.id
-                )
-                .toString()} EP`;
-
         const button =
+
             document.createElement(
                 "button"
             );
@@ -103,71 +72,38 @@ class UpgradeUI {
             "強化";
 
         button.addEventListener(
+
             "click",
+
             () => {
 
                 UpgradeManager.buy(
                     upgrade.id
                 );
 
-                this.render();
-
             }
+
         );
 
-        wrapper.appendChild(
-            title
-        );
+        item.innerHTML =
 
-        wrapper.appendChild(
-            level
-        );
+            `
+            <h3>${upgrade.name}</h3>
+            <p>Lv : ${upgrade.level}</p>
+            <p>倍率 : ×${upgrade.getMultiplier()}</p>
+            <p>コスト : ${Formatter.format(upgrade.getCost())} EP</p>
+            `;
 
-        wrapper.appendChild(
-            cost
-        );
-
-        wrapper.appendChild(
+        item.appendChild(
             button
         );
 
-        return wrapper;
+        return item;
 
     }
 
     render() {
 
         const container =
-            this.getContainer();
 
-        if (!container) {
-
-            return;
-
-        }
-
-        container.innerHTML =
-            "";
-
-        const upgrades =
-            UpgradeManager.getAll();
-
-        upgrades.forEach(
-            upgrade => {
-
-                container.appendChild(
-
-                    this.createUpgradeElement(
-                        upgrade
-                    )
-
-                );
-
-            }
-        );
-
-    }
-
-}
-
-export default new UpgradeUI();
+            document.getElement
