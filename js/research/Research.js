@@ -1,154 +1,138 @@
 /**
  * World Creator
- * Research
+ * Research UI
  */
 
-import EPManager from "../ep/Manager.js";
+import ResearchManager from "../research/Manager.js";
 
-import BigNumber from "../number/BigNumber.js";
+import Formatter from "../utils/Formatter.js";
 
-class Research {
+import eventBus from "../core/eventBus.js";
 
-    constructor(
+class ResearchUI {
 
-        id = "",
+    constructor() {
 
-        name = "",
-
-        multiplier = 1,
-
-        cost = 0
-
-    ) {
-
-        this.id = id;
-
-        this.name = name;
-
-        this.level = 0;
-
-        this.multiplier = multiplier;
-
-        this.baseCost =
-
-            BigNumber.from(
-                cost
-            );
+        this.initialized = false;
 
     }
 
-    getCost() {
+    initialize() {
 
-        return this.baseCost.multiply(
-
-            Math.pow(
-
-                2,
-
-                this.level
-
-            )
-
-        );
-
-    }
-
-    canBuy() {
-
-        return EPManager.has(
-
-            this.getCost()
-
-        );
-
-    }
-
-    buy() {
-
-        if (
-
-            !this.canBuy()
-
-        ) {
-
-            return false;
-
-        }
-
-        EPManager.consume(
-
-            this.getCost()
-
-        );
-
-        this.level++;
-
-        return true;
-
-    }
-
-    getMultiplier() {
-
-        return Math.pow(
-
-            this.multiplier,
-
-            this.level
-
-        );
-
-    }
-
-    toJSON() {
-
-        return {
-
-            id:
-                this.id,
-
-            name:
-                this.name,
-
-            level:
-                this.level,
-
-            multiplier:
-                this.multiplier,
-
-            baseCost:
-
-                this.baseCost
-                    .toJSON()
-
-        };
-
-    }
-
-    load(data) {
-
-        if (!data) {
+        if (this.initialized) {
 
             return;
 
         }
 
-        this.id =
-            data.id;
+        this.initialized = true;
 
-        this.name =
-            data.name;
+        this.registerEvents();
 
-        this.level =
-            data.level || 0;
+        this.render();
 
-        this.multiplier =
-            data.multiplier;
+    }
 
-        this.baseCost =
+    registerEvents() {
 
-            BigNumber.from(
+        eventBus.on(
 
-                data.baseCost
+            "research:update",
+
+            () => {
+
+                this.render();
+
+            }
+
+        );
+
+    }
+
+    createResearchElement(
+        research
+    ) {
+
+        const item =
+
+            document.createElement(
+                "div"
+            );
+
+        item.className =
+            "research-item";
+
+        const button =
+
+            document.createElement(
+                "button"
+            );
+
+        button.textContent =
+            "研究";
+
+        button.addEventListener(
+
+            "click",
+
+            () => {
+
+                ResearchManager.buy(
+                    research.id
+                );
+
+            }
+
+        );
+
+        item.innerHTML =
+
+            `
+            <h3>${research.name}</h3>
+            <p>Lv : ${research.level}</p>
+            <p>倍率 : ×${research.getMultiplier()}</p>
+            <p>コスト : ${Formatter.format(research.getCost())} EP</p>
+            `;
+
+        item.appendChild(
+            button
+        );
+
+        return item;
+
+    }
+
+    render() {
+
+        const container =
+
+            document.getElementById(
+                "research-list"
+            );
+
+        if (!container) {
+
+            return;
+
+        }
+
+        container.innerHTML = "";
+
+        ResearchManager
+            .getAll()
+            .forEach(
+
+                research => {
+
+                    container.appendChild(
+
+                        this.createResearchElement(
+                            research
+                        )
+
+                    );
+
+                }
 
             );
 
@@ -156,4 +140,4 @@ class Research {
 
 }
 
-export default Research;
+export default new ResearchUI();
