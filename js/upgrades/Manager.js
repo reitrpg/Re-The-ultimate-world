@@ -3,8 +3,8 @@
  * Upgrade Manager
  */
 
-import BigNumber from "../number/BigNumber.js";
-import EPManager from "../ep/Manager.js";
+import Upgrade from "./Upgrade.js";
+
 import eventBus from "../core/eventBus.js";
 
 class UpgradeManager {
@@ -19,95 +19,97 @@ class UpgradeManager {
 
     initialize() {
 
-        this.add({
+        if (
 
-            id: "production",
+            this.upgrades.size > 0
 
-            name: "創造神の恩寵",
+        ) {
 
-            level: 0,
+            return;
 
-            baseCost: 100,
+        }
 
-            costMultiplier: 1.6,
+        this.create(
 
-            bonus: 1.10
+            "divine_revelation",
 
-        });
+            "神託",
 
-        this.add({
+            1.05,
 
-            id: "conversion",
+            100
 
-            name: "錬成神の神託",
+        );
 
-            level: 0,
+        this.create(
 
-            baseCost: 500,
+            "heavenly_blessing",
 
-            costMultiplier: 1.8,
+            "天恵",
 
-            bonus: 1.15
+            1.10,
 
-        });
+            500
 
-        this.add({
+        );
 
-            id: "world",
+        this.create(
 
-            name: "世界樹の導き",
+            "world_tree",
 
-            level: 0,
+            "世界樹の加護",
 
-            baseCost: 2000,
+            1.25,
 
-            costMultiplier: 2.0,
+            1000
 
-            bonus: 1.20
+        );
 
-        });
+        this.create(
 
-        this.add({
+            "creator_will",
 
-            id: "research",
+            "創造神の意思",
 
-            name: "叡智神の啓示",
+            1.50,
 
-            level: 0,
+            5000
 
-            baseCost: 10000,
-
-            costMultiplier: 2.2,
-
-            bonus: 1.25
-
-        });
-
-        this.add({
-
-            id: "rebirth",
-
-            name: "輪廻神の加護",
-
-            level: 0,
-
-            baseCost: 50000,
-
-            costMultiplier: 2.5,
-
-            bonus: 1.50
-
-        });
+        );
 
     }
 
-    add(data) {
+    create(
+
+        id,
+
+        name,
+
+        multiplier,
+
+        cost
+
+    ) {
+
+        const upgrade =
+
+            new Upgrade(
+
+                id,
+
+                name,
+
+                multiplier,
+
+                cost
+
+            );
 
         this.upgrades.set(
 
-            data.id,
+            id,
 
-            data
+            upgrade
 
         );
 
@@ -115,7 +117,11 @@ class UpgradeManager {
 
     get(id) {
 
-        return this.upgrades.get(id);
+        return this.upgrades.get(
+
+            id
+
+        );
 
     }
 
@@ -126,34 +132,6 @@ class UpgradeManager {
             this.upgrades.values()
 
         );
-
-    }
-
-    getCost(id) {
-
-        const upgrade =
-
-            this.get(id);
-
-        if (!upgrade) {
-
-            return BigNumber.from(0);
-
-        }
-
-        const cost =
-
-            upgrade.baseCost *
-
-            Math.pow(
-
-                upgrade.costMultiplier,
-
-                upgrade.level
-
-            );
-
-        return BigNumber.from(cost);
 
     }
 
@@ -169,55 +147,21 @@ class UpgradeManager {
 
         }
 
-        const cost =
+        const result =
 
-            this.getCost(id);
+            upgrade.buy();
 
-        if (
+        if (result) {
 
-            !EPManager.has(cost)
+            eventBus.emit(
 
-        ) {
+                "upgrade:update"
 
-            return false;
-
-        }
-
-        EPManager.consume(cost);
-
-        upgrade.level++;
-
-        eventBus.emit(
-
-            "upgrade:update",
-
-            upgrade
-
-        );
-
-        return true;
-
-    }
-
-    getMultiplier(id) {
-
-        const upgrade =
-
-            this.get(id);
-
-        if (!upgrade) {
-
-            return 1;
+            );
 
         }
 
-        return Math.pow(
-
-            upgrade.bonus,
-
-            upgrade.level
-
-        );
+        return result;
 
     }
 
@@ -225,23 +169,18 @@ class UpgradeManager {
 
         let multiplier = 1;
 
-        for (
+        this.getAll().forEach(
 
-            const upgrade of
+            upgrade => {
 
-            this.upgrades.values()
+                multiplier *=
 
-        ) {
+                    upgrade
+                        .getMultiplier();
 
-            multiplier *= Math.pow(
+            }
 
-                upgrade.bonus,
-
-                upgrade.level
-
-            );
-
-        }
+        );
 
         return multiplier;
 
@@ -249,21 +188,13 @@ class UpgradeManager {
 
     reset() {
 
-        for (
+        this.upgrades.clear();
 
-            const upgrade of
-
-            this.upgrades.values()
-
-        ) {
-
-            upgrade.level = 0;
-
-        }
+        this.initialize();
 
         eventBus.emit(
 
-            "upgrade:reset"
+            "upgrade:update"
 
         );
 
@@ -271,67 +202,53 @@ class UpgradeManager {
 
     toJSON() {
 
-        const data = {};
+        return this.getAll().map(
 
-        for (
+            upgrade =>
 
-            const [
+                upgrade.toJSON()
 
-                id,
-
-                upgrade
-
-            ]
-
-            of this.upgrades
-
-        ) {
-
-            data[id] = {
-
-                level:
-
-                    upgrade.level
-
-            };
-
-        }
-
-        return data;
+        );
 
     }
 
     load(data) {
 
-        if (!data) {
+        this.reset();
+
+        if (
+
+            !Array.isArray(data)
+
+        ) {
 
             return;
 
         }
 
-        for (
+        data.forEach(
 
-            const id in data
+            upgradeData => {
 
-        ) {
+                const upgrade =
 
-            const upgrade =
+                    this.get(
 
-                this.get(id);
+                        upgradeData.id
 
-            if (upgrade) {
+                    );
 
-                upgrade.level =
+                if (upgrade) {
 
-                    data[id].level;
+                    upgrade.load(
+
+                        upgradeData
+
+                    );
+
+                }
 
             }
-
-        }
-
-        eventBus.emit(
-
-            "upgrade:update"
 
         );
 
