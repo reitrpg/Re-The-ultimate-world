@@ -4,7 +4,9 @@
  */
 
 import Resource from "./Resource.js";
+
 import BigNumber from "../number/BigNumber.js";
+
 import eventBus from "../core/eventBus.js";
 
 class ResourceManager {
@@ -15,66 +17,87 @@ class ResourceManager {
 
     }
 
-    register(
-        id,
-        name,
-        amount = 0,
-        production = 0
-    ) {
-
-        if (
-            this.resources.has(id)
-        ) {
-
-            return this.resources.get(id);
-
-        }
-
-        const resource =
-            new Resource(
-                id,
-                name,
-                amount,
-                production
-            );
+    create(resource) {
 
         this.resources.set(
-            id,
+
+            resource.id,
+
             resource
+
         );
 
         eventBus.emit(
-            "resource:register",
-            resource
+
+            "resource:update"
+
         );
 
         return resource;
 
     }
 
+    createDefaultResources() {
+
+        if (
+
+            this.exists(
+                "material"
+            )
+
+        ) {
+
+            return;
+
+        }
+
+        this.create(
+
+            new Resource(
+
+                "material",
+
+                "素材",
+
+                0,
+
+                0
+
+            )
+
+        );
+
+    }
+
     get(id) {
 
-        return this.resources.get(id);
+        return this.resources.get(
+            id
+        );
 
     }
 
     getAll() {
 
-        return Object.fromEntries(
-            this.resources
+        return Array.from(
+
+            this.resources.values()
+
         );
 
     }
 
     exists(id) {
 
-        return this.resources.has(id);
+        return this.resources.has(
+            id
+        );
 
     }
 
     add(
         id,
-        value
+        amount
     ) {
 
         const resource =
@@ -86,11 +109,16 @@ class ResourceManager {
 
         }
 
-        resource.add(value);
+        resource.amount =
+
+            resource.amount.add(
+                amount
+            );
 
         eventBus.emit(
-            "resource:update",
-            resource
+
+            "resource:update"
+
         );
 
         return true;
@@ -99,7 +127,7 @@ class ResourceManager {
 
     consume(
         id,
-        value
+        amount
     ) {
 
         const resource =
@@ -111,27 +139,43 @@ class ResourceManager {
 
         }
 
-        const result =
-            resource.subtract(
-                value
+        const cost =
+
+            BigNumber.from(
+                amount
             );
 
-        if (result) {
+        if (
 
-            eventBus.emit(
-                "resource:update",
-                resource
-            );
+            resource.amount.lt(
+                cost
+            )
+
+        ) {
+
+            return false;
 
         }
 
-        return result;
+        resource.amount =
+
+            resource.amount.subtract(
+                cost
+            );
+
+        eventBus.emit(
+
+            "resource:update"
+
+        );
+
+        return true;
 
     }
 
     has(
         id,
-        value
+        amount
     ) {
 
         const resource =
@@ -143,50 +187,37 @@ class ResourceManager {
 
         }
 
-        return resource.has(
-            value
+        return resource.amount.gte(
+            amount
         );
 
     }
 
     produce(
-        multiplier = 1
+        amount
     ) {
 
-        for (
-            const resource
-            of this.resources.values()
-        ) {
-
-            resource.produce(
-                multiplier
+        const resource =
+            this.get(
+                "material"
             );
 
+        if (!resource) {
+
+            return;
         }
+
+        resource.amount =
+
+            resource.amount.add(
+                amount
+            );
 
         eventBus.emit(
+
             "resource:update"
+
         );
-
-    }
-
-    remove(id) {
-
-        const result =
-            this.resources.delete(
-                id
-            );
-
-        if (result) {
-
-            eventBus.emit(
-                "resource:remove",
-                id
-            );
-
-        }
-
-        return result;
 
     }
 
@@ -194,73 +225,36 @@ class ResourceManager {
 
         this.resources.clear();
 
+        this.createDefaultResources();
+
         eventBus.emit(
-            "resource:clear"
+
+            "resource:update"
+
         );
 
     }
 
     toJSON() {
 
-        const data = {};
+        return this.getAll().map(
 
-        for (
-            const [id, resource]
-            of this.resources
-        ) {
+            resource =>
 
-            data[id] =
-                resource.toJSON();
+                resource.toJSON()
 
-        }
-
-        return data;
+        );
 
     }
 
     load(data) {
 
-        if (!data) {
+        this.resources.clear();
 
-            return;
+        if (
 
-        }
-
-        this.clear();
-
-        for (
-            const id in data
-        ) {
-
-            this.resources.set(
-                id,
-                Resource.fromJSON(
-                    data[id]
-                )
-            );
-
-        }
-
-        eventBus.emit(
-            "resource:update"
-        );
-
-    }
-
-    createDefaultResources() {
-
-        this.register(
-            "material",
-            "素材",
-            0,
-            new BigNumber(
-                1,
-                0
+            !Array.isArray(
+                data
             )
-        );
 
-    }
-
-}
-
-export default new ResourceManager();
+       
