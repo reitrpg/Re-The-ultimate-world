@@ -3,9 +3,11 @@
  * Converter UI
  */
 
-import eventBus from "../core/eventBus.js";
-
 import Converter from "../converter/Converter.js";
+
+import Formatter from "../utils/Formatter.js";
+
+import eventBus from "../core/eventBus.js";
 
 class ConverterUI {
 
@@ -25,6 +27,26 @@ class ConverterUI {
 
         this.initialized = true;
 
+        this.registerEvents();
+
+        this.render();
+
+    }
+
+    registerEvents() {
+
+        eventBus.on(
+
+            "converter:update",
+
+            () => {
+
+                this.render();
+
+            }
+
+        );
+
         eventBus.on(
 
             "resource:update",
@@ -37,67 +59,23 @@ class ConverterUI {
 
         );
 
-        eventBus.on(
-
-            "ep:update",
-
-            () => {
-
-                this.render();
-
-            }
-
-        );
-
-        this.render();
-
     }
 
-    getContainer() {
+    createConverterElement(
+        recipe
+    ) {
 
-        return document.getElementById(
-            "converter-list"
-        );
+        const item =
 
-    }
-
-    createRecipe(recipe) {
-
-        const wrapper =
             document.createElement(
                 "div"
             );
 
-        wrapper.className =
+        item.className =
             "converter-item";
 
-        const title =
-            document.createElement(
-                "h3"
-            );
-
-        title.textContent =
-            recipe.name;
-
-        const cost =
-            document.createElement(
-                "p"
-            );
-
-        cost.textContent =
-
-            `必要素材: ${recipe.resourceCost.toString()}`;
-
-        const reward =
-            document.createElement(
-                "p"
-            );
-
-        reward.textContent =
-
-            `獲得EP: ${recipe.epReward.toString()}`;
-
         const convertButton =
+
             document.createElement(
                 "button"
             );
@@ -120,12 +98,13 @@ class ConverterUI {
         );
 
         const convertAllButton =
+
             document.createElement(
                 "button"
             );
 
         convertAllButton.textContent =
-            "一括変換";
+            "全変換";
 
         convertAllButton.addEventListener(
 
@@ -141,34 +120,36 @@ class ConverterUI {
 
         );
 
-        wrapper.appendChild(
-            title
-        );
+        item.innerHTML =
 
-        wrapper.appendChild(
-            cost
-        );
+            `
+            <h3>${recipe.name}</h3>
+            <p>
+                ${Formatter.format(recipe.resourceCost)}
+                →
+                ${Formatter.format(recipe.epReward)} EP
+            </p>
+            `;
 
-        wrapper.appendChild(
-            reward
-        );
-
-        wrapper.appendChild(
+        item.appendChild(
             convertButton
         );
 
-        wrapper.appendChild(
+        item.appendChild(
             convertAllButton
         );
 
-        return wrapper;
+        return item;
 
     }
 
     render() {
 
         const container =
-            this.getContainer();
+
+            document.getElementById(
+                "converter-list"
+            );
 
         if (!container) {
 
@@ -176,19 +157,15 @@ class ConverterUI {
 
         }
 
-        container.innerHTML =
-            "";
+        container.innerHTML = "";
 
-        const recipes =
-            Converter.getRecipes();
-
-        recipes.forEach(
+        Converter.getRecipes().forEach(
 
             recipe => {
 
                 container.appendChild(
 
-                    this.createRecipe(
+                    this.createConverterElement(
                         recipe
                     )
 
