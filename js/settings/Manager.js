@@ -9,27 +9,25 @@ class SettingsManager {
 
     constructor() {
 
-        this.defaultSettings = {
-
-            numberFormat: "scientific",
-
-            tickSpeed: 1000,
-
-            autoSaveInterval: 30000,
-
-            debugMode: false,
-
-            speedRunMode: false,
-
-            language: "ja",
-
-            worldSeed: ""
-
-        };
-
         this.settings = {
 
-            ...this.defaultSettings
+            numberFormat:
+                "scientific",
+
+            tickSpeed:
+                1000,
+
+            autoSaveInterval:
+                30000,
+
+            debugMode:
+                false,
+
+            speedRunMode:
+                false,
+
+            language:
+                "ja"
 
         };
 
@@ -41,16 +39,6 @@ class SettingsManager {
 
     }
 
-    getAll() {
-
-        return {
-
-            ...this.settings
-
-        };
-
-    }
-
     set(
         key,
         value
@@ -58,7 +46,13 @@ class SettingsManager {
 
         if (
 
-            !(key in this.settings)
+            !Object.prototype.hasOwnProperty.call(
+
+                this.settings,
+
+                key
+
+            )
 
         ) {
 
@@ -66,15 +60,12 @@ class SettingsManager {
 
         }
 
-        this.settings[key] = value;
+        this.settings[key] =
+            value;
 
         eventBus.emit(
 
-            "settings:update",
-
-            key,
-
-            value
+            "settings:update"
 
         );
 
@@ -82,17 +73,21 @@ class SettingsManager {
 
     }
 
-    reset() {
+    getTickSpeed() {
 
-        this.settings = {
+        return Number(
 
-            ...this.defaultSettings
+            this.settings.tickSpeed
 
-        };
+        );
 
-        eventBus.emit(
+    }
 
-            "settings:reset"
+    getAutoSaveInterval() {
+
+        return Number(
+
+            this.settings.autoSaveInterval
 
         );
 
@@ -100,43 +95,53 @@ class SettingsManager {
 
     isDebugMode() {
 
-        return this.settings.debugMode;
+        return Boolean(
+
+            this.settings.debugMode
+
+        );
 
     }
 
     isSpeedRunMode() {
 
-        return this.settings.speedRunMode;
+        return Boolean(
+
+            this.settings.speedRunMode
+
+        );
 
     }
 
-    getTickSpeed() {
+    reset() {
 
-        return this.settings.tickSpeed;
+        this.settings = {
 
-    }
+            numberFormat:
+                "scientific",
 
-    getAutoSaveInterval() {
+            tickSpeed:
+                1000,
 
-        return this.settings.autoSaveInterval;
+            autoSaveInterval:
+                30000,
 
-    }
+            debugMode:
+                false,
 
-    getNumberFormat() {
+            speedRunMode:
+                false,
 
-        return this.settings.numberFormat;
+            language:
+                "ja"
 
-    }
+        };
 
-    getLanguage() {
+        eventBus.emit(
 
-        return this.settings.language;
+            "settings:update"
 
-    }
-
-    getWorldSeed() {
-
-        return this.settings.worldSeed;
+        );
 
     }
 
@@ -160,17 +165,11 @@ class SettingsManager {
 
         this.settings = {
 
-            ...this.defaultSettings,
+            ...this.settings,
 
             ...data
 
         };
-
-        eventBus.emit(
-
-            "settings:load"
-
-        );
 
     }
 
