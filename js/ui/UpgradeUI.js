@@ -106,4 +106,38 @@ class UpgradeUI {
 
         const container =
 
-            document.getElement
+            document.getElementById(
+                "upgrade-list"
+            );
+
+        if (!container) {
+
+            return;
+
+        }
+
+        container.innerHTML = "";
+
+        UpgradeManager
+            .getAll()
+            .forEach(
+
+                upgrade => {
+
+                    container.appendChild(
+
+                        this.createUpgradeElement(
+                            upgrade
+                        )
+
+                    );
+
+                }
+
+            );
+
+    }
+
+}
+
+export default new UpgradeUI();
