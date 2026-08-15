@@ -257,4 +257,39 @@ class ResourceManager {
                 data
             )
 
-       
+        ) {
+
+            this.createDefaultResources();
+
+            return;
+
+        }
+
+        data.forEach(
+
+            resourceData => {
+
+                const resource =
+                    new Resource();
+
+                resource.load(
+                    resourceData
+                );
+
+                this.resources.set(
+
+                    resource.id,
+
+                    resource
+
+                );
+
+            }
+
+        );
+
+    }
+
+}
+
+export default new ResourceManager();
