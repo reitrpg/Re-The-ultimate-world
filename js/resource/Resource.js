@@ -75,4 +75,48 @@ class Resource {
                 this.id,
 
             name:
-                this
+                this.name,
+
+            amount:
+
+                this.amount.toJSON(),
+
+            production:
+
+                this.production.toJSON()
+
+        };
+
+    }
+
+    load(data) {
+
+        if (!data) {
+
+            return;
+
+        }
+
+        this.id =
+            data.id;
+
+        this.name =
+            data.name;
+
+        this.amount =
+
+            BigNumber.from(
+                data.amount
+            );
+
+        this.production =
+
+            BigNumber.from(
+                data.production
+            );
+
+    }
+
+}
+
+export default Resource;
