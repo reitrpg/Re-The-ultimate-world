@@ -5,123 +5,122 @@
 
 import BigNumber from "../number/BigNumber.js";
 
+import ResourceManager from "../resource/Manager.js";
+
 class World {
 
-    constructor({
-        id = "",
-        name = "Unknown World",
-        seed = "",
-        rarity = 1,
-        level = 1,
-        exp = 0,
-        rebirthMultiplier = 1,
-        effect = 1,
-        productionMultiplier = 1
-    } = {}) {
-
-        this.id = id;
-
-        this.name = name;
+    constructor(seed = Date.now().toString()) {
 
         this.seed = seed;
 
-        this.rarity = rarity;
+        this.name =
+            `World-${seed.slice(-4)}`;
 
-        this.level = level;
+        this.rarity =
+            this.generateRarity();
+
+        this.level = 1;
 
         this.exp =
-            BigNumber.from(exp);
+            BigNumber.zero();
 
         this.rebirthMultiplier =
-            BigNumber.from(
-                rebirthMultiplier
-            );
+            BigNumber.one();
 
-        this.effect =
-            BigNumber.from(effect);
+        this.baseProduction =
+            BigNumber.one();
 
-        this.productionMultiplier =
-            BigNumber.from(
-                productionMultiplier
-            );
+        this.uniqueEffect =
+            1;
 
     }
 
-    addExp(value) {
+    generateRarity() {
 
-        this.exp =
-            this.exp.add(value);
+        const value =
+            Number(
+                this.seed
+                    .toString()
+                    .slice(-2)
+            );
 
-        this.checkLevelUp();
-
-    }
-
-    getRequiredExp() {
-
-        return BigNumber.from(
-
-            Math.pow(
-                this.level,
-                2
-            ) * 100
-
+        return Math.max(
+            1,
+            Math.floor(
+                value / 10
+            ) + 1
         );
-
-    }
-
-    checkLevelUp() {
-
-        let required =
-            this.getRequiredExp();
-
-        while (
-            this.exp.greaterOrEqual(
-                required
-            )
-        ) {
-
-            this.exp =
-                this.exp.subtract(
-                    required
-                );
-
-            this.level++;
-
-            required =
-                this.getRequiredExp();
-
-        }
 
     }
 
     getLevelMultiplier() {
 
-        return BigNumber.from(
+        return (
 
-            (
-                this.level *
-                this.level
-            ) / 100
+            this.level *
+            this.level
 
-        );
+        ) / 100;
+
+    }
+
+    getRarityMultiplier() {
+
+        return this.rarity;
 
     }
 
     getTotalMultiplier() {
 
-        return this.productionMultiplier
-            .multiply(
-                this.effect
-            )
-            .multiply(
-                this.rebirthMultiplier
-            )
-            .multiply(
-                this.getLevelMultiplier()
-            )
-            .multiply(
-                this.rarity
+        let multiplier =
+            this.baseProduction
+                .toNumber();
+
+        multiplier *=
+            this.getRarityMultiplier();
+
+        multiplier *=
+            this.getLevelMultiplier();
+
+        multiplier *=
+            this.uniqueEffect;
+
+        multiplier *=
+            this.rebirthMultiplier
+                .toNumber();
+
+        return BigNumber.from(
+            multiplier
+        );
+
+    }
+
+    gainExperience(amount) {
+
+        this.exp =
+            this.exp.add(
+                amount
             );
+
+    }
+
+    levelUp() {
+
+        this.level += 1;
+
+    }
+
+    update(deltaTime) {
+
+        const amount =
+            this.getTotalMultiplier()
+                .multiply(
+                    deltaTime
+                );
+
+        ResourceManager.produce(
+            amount
+        );
 
     }
 
@@ -129,14 +128,11 @@ class World {
 
         return {
 
-            id:
-                this.id,
+            seed:
+                this.seed,
 
             name:
                 this.name,
-
-            seed:
-                this.seed,
 
             rarity:
                 this.rarity,
@@ -148,58 +144,60 @@ class World {
                 this.exp.toJSON(),
 
             rebirthMultiplier:
-                this.rebirthMultiplier.toJSON(),
 
-            effect:
-                this.effect.toJSON(),
+                this.rebirthMultiplier
+                    .toJSON(),
 
-            productionMultiplier:
-                this.productionMultiplier.toJSON()
+            baseProduction:
+
+                this.baseProduction
+                    .toJSON(),
+
+            uniqueEffect:
+
+                this.uniqueEffect
 
         };
 
     }
 
-    static fromJSON(data) {
+    load(data) {
 
-        return new World({
+        if (!data) {
 
-            id:
-                data.id,
+            return;
 
-            name:
-                data.name,
+        }
 
-            seed:
-                data.seed,
+        this.seed =
+            data.seed;
 
-            rarity:
-                data.rarity,
+        this.name =
+            data.name;
 
-            level:
-                data.level,
+        this.rarity =
+            data.rarity;
 
-            exp:
-                BigNumber.fromJSON(
-                    data.exp
-                ),
+        this.level =
+            data.level;
 
-            rebirthMultiplier:
-                BigNumber.fromJSON(
-                    data.rebirthMultiplier
-                ),
+        this.exp =
+            BigNumber.from(
+                data.exp
+            );
 
-            effect:
-                BigNumber.fromJSON(
-                    data.effect
-                ),
+        this.rebirthMultiplier =
+            BigNumber.from(
+                data.rebirthMultiplier
+            );
 
-            productionMultiplier:
-                BigNumber.fromJSON(
-                    data.productionMultiplier
-                )
+        this.baseProduction =
+            BigNumber.from(
+                data.baseProduction
+            );
 
-        });
+        this.uniqueEffect =
+            data.uniqueEffect;
 
     }
 
