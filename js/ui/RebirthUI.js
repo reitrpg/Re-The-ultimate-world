@@ -3,9 +3,11 @@
  * Rebirth UI
  */
 
-import eventBus from "../core/eventBus.js";
-
 import RebirthManager from "../rebirth/Manager.js";
+
+import Formatter from "../utils/Formatter.js";
+
+import eventBus from "../core/eventBus.js";
 
 class RebirthUI {
 
@@ -25,6 +27,16 @@ class RebirthUI {
 
         this.initialized = true;
 
+        this.registerEvents();
+
+        this.registerButton();
+
+        this.render();
+
+    }
+
+    registerEvents() {
+
         eventBus.on(
 
             "rebirth:update",
@@ -37,32 +49,14 @@ class RebirthUI {
 
         );
 
-        eventBus.on(
-
-            "ep:update",
-
-            () => {
-
-                this.render();
-
-            }
-
-        );
-
-        this.registerEvents();
-
-        this.render();
-
     }
 
-    registerEvents() {
+    registerButton() {
 
         const button =
 
             document.getElementById(
-
                 "rebirth-button"
-
             );
 
         if (!button) {
@@ -87,55 +81,35 @@ class RebirthUI {
 
     render() {
 
-        const multiplier =
-
-            document.getElementById(
-
-                "rebirth-multiplier"
-
-            );
-
         const count =
 
             document.getElementById(
-
                 "rebirth-count"
-
             );
 
-        const button =
+        const multiplier =
 
             document.getElementById(
-
-                "rebirth-button"
-
+                "rebirth-multiplier"
             );
-
-        if (multiplier) {
-
-            multiplier.textContent =
-
-                RebirthManager
-                    .getMultiplier()
-                    .toString();
-
-        }
 
         if (count) {
 
             count.textContent =
 
-                RebirthManager
-                    .getCount();
+                RebirthManager.getCount();
 
         }
 
-        if (button) {
+        if (multiplier) {
 
-            button.disabled =
+            multiplier.textContent =
 
-                !RebirthManager
-                    .canRebirth();
+                Formatter.format(
+
+                    RebirthManager.getMultiplier()
+
+                );
 
         }
 
