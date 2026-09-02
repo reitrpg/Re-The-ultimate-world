@@ -1,0 +1,218 @@
+name: AI Implement
+
+on:
+  issues:
+    types:
+      - labeled
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  ai-implement:
+    if: github.event.label.name == 'AI実装'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install OpenAI SDK
+        run: npm install openai
+
+      - name: Run AI implementation
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          node <<'EOF'
+          const fs = require("fs");
+          const OpenAI = require("openai");
+
+          async function main() {
+            if (!process.env.OPENAI_API_KEY) {
+              throw new Error("OPENAI_API_KEY is not configured.");
+            }
+
+            const client = new OpenAI({
+              apiKey: process.env.OPENAI_API_KEY
+            });
+
+            const issueTitle = process.env.ISSUE_TITLE || "";
+            const issueBody = process.env.ISSUE_BODY || "";
+
+            const files = [];
+
+            function walk(dir) {
+              if (!fs.existsSync(dir)) return;
+
+              for (const entry of fs.readdirSync(dir, {
+                withFileTypes: true
+              })) {
+                if (
+                  entry.name === ".git" ||
+                  entry.name === "node_modules"
+                ) {
+                  continue;
+                }
+
+                const fullPath = `${dir}/${entry.name}`;
+
+                if (entry.isDirectory()) {
+                  walk(fullPath);
+                } else {
+                  files.push(fullPath);
+                }
+              }
+            }
+
+            walk(".");
+
+            const sourceFiles = files
+              .filter(file =>
+                /\.(js|html|css|json|md|yml|yaml)$/.test(file)
+              )
+              .map(file => {
+                let content = "";
+
+                try {
+                  content = fs.readFileSync(file, "utf8");
+                } catch {
+                  return "";
+                }
+
+                return `
+--- FILE: ${file} ---
+${content}
+--- END FILE ---
+`;
+              })
+              .join("\n");
+
+            const prompt = `
+あなたはこのGitHubリポジトリの開発担当AIです。
+
+リポジトリ:
+reitrpg/Re-The-ultimate-world
+
+以下のGitHub Issueの内容に従って実装してください。
+
+# Issue Title
+${issueTitle}
+
+# Issue Body
+${issueBody}
+
+## 開発ルール
+
+- 既存の設計を可能な限り維持する
+- HTML/CSS/JavaScriptを基本とする
+- 不要なライブラリを追加しない
+- 既存機能を勝手に削除しない
+- 既存ファイルを変更する場合は、そのファイル全体を書き換える
+- 必要なら新しいファイルを作成する
+- コードは実際に動作する状態にする
+- import/exportの整合性を確認する
+- 既存の命名規則を維持する
+- GitHub Pagesで動作する構成を維持する
+- Issueの要求と無関係な変更を行わない
+
+## World Creatorについて
+
+このリポジトリには「World Creator」という
+HTML/CSS/JavaScript製のSPA/PWAゲームが含まれています。
+
+主な設計:
+- LocalStorageによるセーブ
+- EventBusによるイベント通知
+- BigNumberによる巨大数処理
+- World / Resource / Research / Upgrade / Rebirth / EPなどのManager
+- UIとManagerを分離
+
+現在の実装を読み取り、Issueの要求に必要な変更だけを行ってください。
+
+## 出力形式
+
+ファイルを直接編集してください。
+
+編集後、変更したファイルについて
+構文エラーやimport/exportの不整合がないか確認してください。
+`;
+
+            const response = await client.responses.create({
+              model: "gpt-5",
+              input: prompt
+            });
+
+            const result = response.output_text || "";
+
+            fs.writeFileSync(
+              "ai-result.txt",
+              result,
+              "utf8"
+            );
+          }
+
+          main().catch(error => {
+            console.error(error);
+            process.exit(1);
+          });
+          EOF
+
+      - name: Check changes
+        run: |
+          git status --short
+
+      - name: Create branch
+        id: branch
+        run: |
+          BRANCH="ai/issue-${{ github.event.issue.number }}"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          git checkout -b "$BRANCH"
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add .
+
+          if git diff --cached --quiet; then
+            echo "No changes detected."
+            exit 0
+          fi
+
+          git commit -m "AI implementation: issue #${{ github.event.issue.number }}"
+
+      - name: Push branch
+        run: |
+          git push origin "${{ steps.branch.outputs.branch }}"
+
+      - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr create \
+            --base main \
+            --head "${{ steps.branch.outputs.branch }}" \
+            --title "AI implementation: #${{ github.event.issue.number }} ${{ github.event.issue.title }}" \
+            --body "## AI実装
+
+GitHub Issue #${{ github.event.issue.number }} に基づいてAIが実装した変更です。
+
+### Issue
+${{ github.event.issue.title }}
+
+${{ github.event.issue.body }}
+
+このPRの内容を確認してからmainへマージしてください。"
