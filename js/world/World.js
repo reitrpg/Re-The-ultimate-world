@@ -51,9 +51,10 @@ class World {
  }
 
  getResourceProduction(id) {
-  return this.getLevelMultiplier() *
-   this.getResourceMultiplier(id) *
-   this.rebirthMultiplier.toNumber();
+  return BigNumber.one()
+   .multiply(this.getLevelMultiplier())
+   .multiply(this.getResourceMultiplier(id))
+   .multiply(this.rebirthMultiplier);
  }
 
  gainExperience(amount) {
@@ -108,9 +109,9 @@ class World {
 
   RESOURCE_IDS.forEach(id => {
    const amount =
-    this.getResourceProduction(id) *
-    globalMultiplier *
-    deltaTime;
+    this.getResourceProduction(id)
+     .multiply(globalMultiplier)
+     .multiply(deltaTime);
 
    if (ResourceManager.produce(id, amount)) {
     experienceGain = experienceGain.add(amount);
