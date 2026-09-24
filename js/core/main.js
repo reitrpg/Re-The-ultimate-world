@@ -5,23 +5,61 @@ import ResourceManager from "../resource/Manager.js";
 import WorldManager from "../world/Manager.js";
 import UI from "../ui/UI.js";
 import InputManager from "./InputManager.js";
+import ErrorHandler from "./errorHandler.js";
 
-function ensureInitialState(){
- if(!ResourceManager.exists("material"))ResourceManager.createDefaultResources();
- if(WorldManager.getCount()===0)WorldManager.create(Date.now().toString());
+function ensureInitialState() {
+    if (!ResourceManager.exists("material")) {
+        ResourceManager.createDefaultResources();
+    }
+
+    if (WorldManager.getCount() === 0) {
+        WorldManager.create(Date.now().toString());
+    }
 }
-function registerServiceWorker(){
- if("serviceWorker" in navigator)navigator.serviceWorker.register("./service-worker.js").catch(error=>console.warn("Service Worker registration failed:",error));
+
+function registerServiceWorker() {
+    if (!("serviceWorker" in navigator)) {
+        return;
+    }
+
+    navigator.serviceWorker
+        .register("./service-worker.js")
+        .catch(error => {
+            console.warn("Service Worker registration failed:", error);
+            ErrorHandler.record(error);
+        });
 }
-function initializeGame(){
- const loaded=SaveManager.load();
- if(!loaded)ensureInitialState();else ensureInitialState();
- OfflineProgress.calculate();
- UI.initialize();
- InputManager.initialize();
- SaveManager.startAutoSave();
- Game.start();
- registerServiceWorker();
+
+function initializeGame() {
+    try {
+        ErrorHandler.initialize();
+
+        const loaded = SaveManager.load();
+
+        // Loading a missing/invalid save must never prevent the game
+        // from creating its required initial state.
+        if (!loaded || WorldManager.getCount() === 0) {
+            ensureInitialState();
+        } else {
+            ensureInitialState();
+        }
+
+        OfflineProgress.calculate();
+
+        UI.initialize();
+        InputManager.initialize();
+        SaveManager.startAutoSave();
+        Game.start();
+        registerServiceWorker();
+    } catch (error) {
+        ErrorHandler.record(error);
+        console.error("World Creator initialization failed:", error);
+    }
 }
-window.addEventListener("beforeunload",()=>{OfflineProgress.saveTimestamp();SaveManager.save();});
-document.addEventListener("DOMContentLoaded",initializeGame);
+
+window.addEventListener("beforeunload", () => {
+    OfflineProgress.saveTimestamp();
+    SaveManager.save();
+});
+
+document.addEventListener("DOMContentLoaded", initializeGame);
