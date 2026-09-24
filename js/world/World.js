@@ -67,7 +67,7 @@ class World {
     }
 
     getResourceProduction(id) {
-        return BigNumber.one()
+        return this.baseProduction
             .multiply(this.getLevelMultiplier())
             .multiply(this.getResourceMultiplier(id))
             .multiply(this.rebirthMultiplier);
@@ -118,8 +118,8 @@ class World {
 
     update(deltaTime) {
         const globalMultiplier =
-            ResearchManager.getTotalMultiplier() *
-            UpgradeManager.getTotalMultiplier();
+            BigNumber.from(ResearchManager.getTotalMultiplier())
+                .multiply(UpgradeManager.getTotalMultiplier());
 
         let experienceGain = BigNumber.zero();
 
