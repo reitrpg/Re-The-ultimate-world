@@ -6,14 +6,29 @@ import eventBus from "../core/eventBus.js";
 class UnlockManager {
     constructor() {
         this.unlockedWorlds = 1;
-        this.baseCost = BigNumber.from(10000);
+        this.firstPaidWorldCost = BigNumber.from(1e100);
+        this.costMultiplier = BigNumber.from(1e100);
     }
 
     getUnlockCost() {
-        return BigNumber.from(
-            10000 * Math.pow(
-                10,
-                Math.max(0, this.unlockedWorlds - 1)
+        if (this.unlockedWorlds <= 1) {
+            return BigNumber.zero();
+        }
+
+        if (this.unlockedWorlds === 2) {
+            return this.firstPaidWorldCost.clone();
+        }
+
+        return this.firstPaidWorldCost.multiply(
+            this.costMultiplier.multiply(
+                BigNumber.from(1)
+            ).multiply(
+                BigNumber.from(
+                    Math.pow(
+                        1e100,
+                        this.unlockedWorlds - 2
+                    )
+                )
             )
         );
     }
