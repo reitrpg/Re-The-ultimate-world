@@ -132,3 +132,69 @@ button {
 }
 
 #app-version{margin-top:24px;padding:12px 0;text-align:center;font-size:12px;opacity:.65}
+
+
+/* World screen */
+#world-list,
+#next-world {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.world-card {
+    padding: 16px;
+    border: 1px solid;
+    cursor: pointer;
+}
+
+.world-card.active {
+    border-width: 2px;
+}
+
+.world-card h3,
+.next-world-title {
+    margin-bottom: 8px;
+}
+
+.world-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.world-name-row span {
+    flex: 1;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.world-rename-button {
+    width: auto !important;
+    margin: 0 !important;
+    padding: 4px 8px !important;
+    font-size: 18px;
+}
+
+.world-stats p {
+    margin-bottom: 4px;
+}
+
+.world-production {
+    margin-top: 12px;
+}
+
+.world-production ul {
+    padding-left: 24px;
+}
+
+#next-world {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid;
+}
+
+#next-world #unlock-world {
+    width: 100%;
+}
