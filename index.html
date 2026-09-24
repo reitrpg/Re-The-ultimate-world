@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#ffffff">
 <meta name="description" content="World Creator - 自分だけの世界を育てる放置ゲーム">
 <link rel="manifest" href="./manifest.json">
-<link rel="stylesheet" href="./style.css?v=10">
+<link rel="stylesheet" href="./style.css?v=11">
 <title>World Creator</title>
 </head>
 <body>
@@ -21,15 +21,23 @@
 <button type="button" data-tab="world" aria-selected="true">世界</button>
 <button type="button" data-tab="research" aria-selected="false">研究</button>
 <button type="button" data-tab="upgrade" aria-selected="false">強化</button>
-<button type="button" data-tab="converter" aria-selected="false">変換</button>
 <button type="button" data-tab="rebirth" aria-selected="false">転生</button>
 <button type="button" data-tab="settings" aria-selected="false">設定</button>
 </nav>
 <main>
 <section id="world-tab" class="tab-content" data-tab-panel="world">
 <h2>世界</h2>
+<div class="world-category-tabs" role="tablist" aria-label="世界カテゴリ">
+<button type="button" data-action="world:category" data-world-category="world" class="world-category-button active" aria-selected="true">世界</button>
+<button type="button" data-action="world:category" data-world-category="converter" class="world-category-button" aria-selected="false">変換</button>
+</div>
+<div id="world-category-world" class="world-category-panel" data-world-category-panel="world">
 <div id="world-list"></div>
 <div id="next-world"></div>
+</div>
+<div id="world-category-converter" class="world-category-panel" data-world-category-panel="converter" hidden>
+<div id="converter-list"></div>
+</div>
 </section>
 <section id="research-tab" class="tab-content" data-tab-panel="research" hidden>
 <h2>研究</h2><div id="research-list"></div>
@@ -42,9 +50,13 @@
 </section>
 <section id="rebirth-tab" class="tab-content" data-tab-panel="rebirth" hidden>
 <h2>転生</h2>
+<p>対象世界: <span id="rebirth-world-name">-</span></p>
 <p>転生回数: <span id="rebirth-count">0</span></p>
-<p>転生倍率: ×<span id="rebirth-multiplier">1</span></p>
-<button id="rebirth-button" type="button">転生</button>
+<p>現在の転生倍率: ×<span id="rebirth-multiplier">1</span></p>
+<p>今回の転生倍率: ×<span id="rebirth-sacrifice-multiplier">1</span></p>
+<p>必要倍率: ×2.5</p>
+<p>世界経験値: <span id="rebirth-world-exp">0</span></p>
+<button id="rebirth-button" type="button" disabled>転生</button>
 </section>
 <section id="settings-tab" class="tab-content" data-tab-panel="settings" hidden>
 <h2>設定</h2>
@@ -78,7 +90,7 @@
 </section>
 </main>
 <div id="notification-container" aria-live="polite"></div>
-<footer id="app-version">World Creator v0.0.16</footer>
-<script type="module" src="./js/core/main.js?v=10"></script>
+<footer id="app-version">World Creator v0.0.17</footer>
+<script type="module" src="./js/core/main.js?v=11></script>
 </body>
 </html>
