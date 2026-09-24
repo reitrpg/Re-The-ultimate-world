@@ -54,6 +54,14 @@ class WorldUI {
         });
     }
 
+    getFeatureResourceName(world) {
+        const featureName = world.getResourceFeatureName("plant");
+        if (featureName === "植物の大地") return "植物";
+        if (featureName === "豊かな鉱脈") return "金属";
+        if (featureName === "魔力の源泉") return "魔力";
+        return featureName;
+    }
+
     getUnlockFailureMessage(failure) {
         switch (failure.code) {
             case "INSUFFICIENT_EP":
@@ -105,7 +113,7 @@ class WorldUI {
         const rarity = document.createElement("p");
         rarity.textContent = "レアリティ: " + world.rarity;
         const feature = document.createElement("p");
-        feature.textContent = "特徴: " + world.getResourceFeatureName("plant");
+        feature.textContent = "特徴: " + this.getFeatureResourceName(world);
         const level = document.createElement("p");
         level.textContent = "Lv: " + world.level;
         const exp = document.createElement("p");
@@ -131,8 +139,6 @@ class WorldUI {
             const item = document.createElement("li");
             const rate = world.getResourceProduction(id).multiply(globalMultiplier);
             item.textContent =
-                world.getResourceFeatureName(id) +
-                " / " +
                 label +
                 ": +" +
                 Formatter.format(rate) +
