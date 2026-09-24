@@ -106,9 +106,12 @@ class WorldUI {
         level.textContent = "Lv: " + world.level;
         const exp = document.createElement("p");
         exp.textContent = "EXP: " + Formatter.format(world.exp) + "/" + Formatter.format(world.getRequiredExperience());
+        const base = document.createElement("p");
+        base.textContent = "基礎能力: ×" + Formatter.format(world.getLevelMultiplier());
         stats.appendChild(rarity);
         stats.appendChild(level);
         stats.appendChild(exp);
+        stats.appendChild(base);
 
         const production = document.createElement("div");
         production.className = "world-production";
@@ -119,7 +122,15 @@ class WorldUI {
         [["plant","植物"],["metal","金属"],["magic","魔力"]].forEach(([id,label]) => {
             const item = document.createElement("li");
             const rate = world.getResourceProduction(id) * globalMultiplier;
-            item.textContent = label + ": +" + Formatter.format(rate) + "/秒 (×" + world.getResourceMultiplier(id) + ")";
+            item.textContent =
+                world.getResourceFeatureName(id) +
+                " / " +
+                label +
+                ": +" +
+                Formatter.format(rate) +
+                "/秒 (×" +
+                world.getResourceMultiplier(id) +
+                ")";
             list.appendChild(item);
         });
         production.appendChild(productionTitle);
