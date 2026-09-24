@@ -180,17 +180,17 @@ class ResourceManager {
     }
 
     produce(
+        id,
         amount
     ) {
 
         const resource =
-            this.get(
-                "material"
-            );
+            this.get(id);
 
         if (!resource) {
 
-            return;
+            return false;
+
         }
 
         resource.amount =
@@ -204,6 +204,8 @@ class ResourceManager {
             "resource:update"
 
         );
+
+        return true;
 
     }
 
