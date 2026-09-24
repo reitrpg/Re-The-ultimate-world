@@ -7,6 +7,14 @@ class WorldGenerator{
  generateRarity(seed){const v=this.random(seed,3);if(v<.5)return 1;if(v<.75)return 2;if(v<.9)return 3;if(v<.98)return 4;return 5;}
  generateEffect(seed){return 1+this.random(seed,4);}
  generateProductionMultiplier(seed){return 1+this.random(seed,5)*2;}
+ generateResourceMultipliers(seed){
+  const values=[0.75,1,1.4];
+  return {
+   plant:values[Math.floor(this.random(seed,5)*values.length)],
+   metal:values[Math.floor(this.random(seed,6)*values.length)],
+   magic:values[Math.floor(this.random(seed,7)*values.length)]
+  };
+ }
  generate(seed){
   const worldSeed=String(seed),world=new World(worldSeed);
   world.name=this.generateName(worldSeed);

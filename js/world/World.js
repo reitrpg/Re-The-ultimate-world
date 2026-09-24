@@ -9,10 +9,10 @@ class World {
  getLevelMultiplier(){return(this.level*this.level)/100;}
  getRarityMultiplier(){return this.rarity;}
  getTotalMultiplier(){return BigNumber.one();}
- getResourceMultiplier(id){const value=Number(this.resourceMultipliers?.[id]);return Number.isFinite(value)?value:1;}
+ getResourceMultiplier(id){const value=Number(this.resourceMultipliers?.[id]);return Number.isFinite(value)&&value>0?value:1;}
  getResourceProduction(id){return this.getResourceMultiplier(id)*this.rebirthMultiplier.toNumber();}
  gainExperience(amount){this.exp=this.exp.add(amount);}
- getRequiredExperience(){return BigNumber.from(this.level*100);}
+ getRequiredExperience(){return BigNumber.from(this.level*this.level*100);}
  getRebirthMultiplier(){return BigNumber.one().add(this.exp.divide(100));}
  canRebirth(){return this.getRebirthMultiplier().greaterOrEqual(2.5);}
  performRebirth(){if(!this.canRebirth())return false;const sacrifice=this.getRebirthMultiplier();this.rebirthMultiplier=this.rebirthMultiplier.multiply(sacrifice);this.rebirthCount+=1;this.exp=BigNumber.zero();this.level=1;return true;}
