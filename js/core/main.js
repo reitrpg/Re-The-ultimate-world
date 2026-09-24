@@ -47,8 +47,11 @@ function initializeGame() {
 
         OfflineProgress.calculate();
 
-        UI.initialize();
+        // Input must be available before UI modules start.
+        // This keeps the input -> event path alive even if a UI module
+        // fails during startup.
         InputManager.initialize();
+        UI.initialize();
         SaveManager.startAutoSave();
         Game.start();
         registerServiceWorker();
