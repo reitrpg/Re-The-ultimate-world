@@ -1,4 +1,4 @@
-const CACHE_NAME = "world-creator-v4";
+const CACHE_NAME = "world-creator-v5";
 
 const FILES_TO_CACHE = [
     "./",
@@ -50,11 +50,59 @@ const FILES_TO_CACHE = [
     "./icon-512.png"
 ];
 
+function isFreshResourceRequest(request) {
+    return (
+        request.destination === "document" ||
+        request.destination === "style" ||
+        request.destination === "script" ||
+        request.destination === "worker"
+    );
+}
+
+async function networkFirst(request) {
+    try {
+        const freshRequest = new Request(request, {
+            cache: "no-store"
+        });
+
+        const response = await fetch(freshRequest);
+
+        if (response && response.ok) {
+            const cache = await caches.open(CACHE_NAME);
+            await cache.put(request, response.clone());
+        }
+
+        return response;
+    } catch (error) {
+        const cached = await caches.match(request);
+        if (cached) return cached;
+        throw error;
+    }
+}
+
+async function cacheFirst(request) {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+
+    const response = await fetch(request);
+
+    if (response && response.ok) {
+        const cache = await caches.open(CACHE_NAME);
+        await cache.put(request, response.clone());
+    }
+
+    return response;
+}
+
 self.addEventListener("install", event => {
     event.waitUntil(
         caches
             .open(CACHE_NAME)
-            .then(cache => cache.addAll(FILES_TO_CACHE))
+            .then(cache =>
+                Promise.allSettled(
+                    FILES_TO_CACHE.map(file => cache.add(file))
+                )
+            )
             .then(() => self.skipWaiting())
     );
 });
@@ -80,19 +128,8 @@ self.addEventListener("fetch", event => {
     if (event.request.method !== "GET") return;
 
     event.respondWith(
-        caches.match(event.request).then(cached => {
-            if (cached) return cached;
-
-            return fetch(event.request).then(response => {
-                if (response && response.ok) {
-                    const copy = response.clone();
-                    caches.open(CACHE_NAME).then(cache => {
-                        cache.put(event.request, copy);
-                    });
-                }
-
-                return response;
-            });
-        })
+        isFreshResourceRequest(event.request)
+            ? networkFirst(event.request)
+            : cacheFirst(event.request)
     );
 });
