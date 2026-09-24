@@ -4,6 +4,7 @@ import OfflineProgress from "../utils/OfflineProgress.js";
 import ResourceManager from "../resource/Manager.js";
 import WorldManager from "../world/Manager.js";
 import UI from "../ui/UI.js";
+import InputManager from "./InputManager.js";
 
 function ensureInitialState(){
  if(!ResourceManager.exists("material"))ResourceManager.createDefaultResources();
@@ -17,6 +18,7 @@ function initializeGame(){
  if(!loaded)ensureInitialState();else ensureInitialState();
  OfflineProgress.calculate();
  UI.initialize();
+ InputManager.initialize();
  SaveManager.startAutoSave();
  Game.start();
  registerServiceWorker();
