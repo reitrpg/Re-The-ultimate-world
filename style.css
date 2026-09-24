@@ -29,20 +29,24 @@ p {
 
 nav {
     display: flex;
-    gap: 4px;
-    margin-bottom: 20px;
-    overflow-x: auto;
-    padding: 4px;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    padding: 3px;
     border: 1px solid #777;
+    max-height: 20vh;
 }
 
 nav button {
-    flex: 0 0 auto;
-    min-width: 84px;
-    padding: 10px 14px;
+    flex: 1 1 0;
+    min-height: 24px;
+    width: 100%;
+    padding: 3px 8px;
     border: 1px solid #777;
     background: #eee;
     cursor: pointer;
+    line-height: 1.2;
 }
 
 nav button.active {
@@ -122,10 +126,16 @@ button {
 
     nav {
         flex-direction: column;
+        gap: 2px;
+        max-height: 20vh;
     }
 
     nav button {
         width: 100%;
+        min-height: 24px;
+        padding: 3px 8px;
+        margin: 0;
+        margin-bottom: 0;
     }
 
     input,
