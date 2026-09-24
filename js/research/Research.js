@@ -1,143 +1,78 @@
-/**
- * World Creator
- * Research UI
- */
+import EPManager from "../ep/Manager.js";
+import BigNumber from "../number/BigNumber.js";
 
-import ResearchManager from "../research/Manager.js";
-
-import Formatter from "../utils/Formatter.js";
-
-import eventBus from "../core/eventBus.js";
-
-class ResearchUI {
-
-    constructor() {
-
-        this.initialized = false;
-
-    }
-
-    initialize() {
-
-        if (this.initialized) {
-
-            return;
-
-        }
-
-        this.initialized = true;
-
-        this.registerEvents();
-
-        this.render();
-
-    }
-
-    registerEvents() {
-
-        eventBus.on(
-
-            "research:update",
-
-            () => {
-
-                this.render();
-
-            }
-
-        );
-
-    }
-
-    createResearchElement(
-        research
+class Research {
+    constructor(
+        id = "",
+        name = "",
+        multiplier = 1,
+        cost = 0
     ) {
-
-        const item =
-
-            document.createElement(
-                "div"
-            );
-
-        item.className =
-            "research-item";
-
-        const button =
-
-            document.createElement(
-                "button"
-            );
-
-        button.textContent =
-            "研究";
-
-        button.addEventListener(
-
-            "click",
-
-            () => {
-
-                ResearchManager.buy(
-                    research.id
-                );
-
-            }
-
-        );
-
-        item.innerHTML =
-
-            `
-            <h3>${research.name}</h3>
-            <p>Lv : ${research.level}</p>
-            <p>倍率 : ×${research.getMultiplier()}</p>
-            <p>コスト : ${Formatter.format(research.getCost())} EP</p>
-            `;
-
-        item.appendChild(
-            button
-        );
-
-        return item;
-
+        this.id = id;
+        this.name = name;
+        this.level = 0;
+        this.multiplier = Number(multiplier) || 1;
+        this.baseCost = BigNumber.from(cost);
     }
 
-    render() {
+    getCost() {
+        return this.baseCost.multiply(
+            Math.pow(2, this.level)
+        );
+    }
 
-        const container =
+    getMultiplier() {
+        return Math.pow(
+            this.multiplier,
+            this.level
+        );
+    }
 
-            document.getElementById(
-                "research-list"
-            );
+    canBuy() {
+        return EPManager.has(this.getCost());
+    }
 
-        if (!container) {
+    buy() {
+        const cost = this.getCost();
 
-            return;
-
+        if (!this.canBuy()) {
+            return false;
         }
 
-        container.innerHTML = "";
+        if (!EPManager.consume(cost)) {
+            return false;
+        }
 
-        ResearchManager
-            .getAll()
-            .forEach(
-
-                research => {
-
-                    container.appendChild(
-
-                        this.createResearchElement(
-                            research
-                        )
-
-                    );
-
-                }
-
-            );
-
+        this.level += 1;
+        return true;
     }
 
+    toJSON() {
+        return {
+            id: this.id,
+            name: this.name,
+            level: this.level,
+            multiplier: this.multiplier,
+            baseCost: this.baseCost.toJSON()
+        };
+    }
+
+    load(data) {
+        if (!data || typeof data !== "object") {
+            return;
+        }
+
+        this.id = String(data.id ?? this.id);
+        this.name = String(data.name ?? this.name);
+        this.level = Math.max(
+            0,
+            Math.floor(Number(data.level) || 0)
+        );
+        this.multiplier =
+            Number(data.multiplier) || this.multiplier;
+        this.baseCost =
+            BigNumber.from(data.baseCost);
+    }
 }
 
-export default new ResearchUI();
+export default Research;
