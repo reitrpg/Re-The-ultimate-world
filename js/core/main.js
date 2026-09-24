@@ -24,6 +24,7 @@ function registerServiceWorker() {
 
     navigator.serviceWorker
         .register("./service-worker.js")
+        .then(registration => registration.update())
         .catch(error => {
             console.warn("Service Worker registration failed:", error);
             ErrorHandler.record(error);
