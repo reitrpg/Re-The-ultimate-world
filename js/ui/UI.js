@@ -6,6 +6,8 @@
 import eventBus from "../core/eventBus.js";
 
 import TabUI from "./TabUI.js";
+import EPUI from "./EPUI.js";
+import ResourceUI from "./ResourceUI.js";
 import WorldUI from "./WorldUI.js";
 import ResearchUI from "./ResearchUI.js";
 import UpgradeUI from "./UpgradeUI.js";
@@ -28,6 +30,8 @@ class UI {
         this.initialized = true;
 
         TabUI.initialize();
+        EPUI.initialize();
+        ResourceUI.initialize();
         WorldUI.initialize();
         ResearchUI.initialize();
         UpgradeUI.initialize();
@@ -44,7 +48,7 @@ class UI {
     }
 
     registerEvents() {
-        const events = [
+        [
             "world:update",
             "resource:update",
             "research:update",
@@ -54,16 +58,14 @@ class UI {
             "settings:update",
             "debug:update",
             "debug:reset"
-        ];
-
-        events.forEach(event => {
-            eventBus.on(event, () => {
-                this.update();
-            });
+        ].forEach(event => {
+            eventBus.on(event, () => this.update());
         });
     }
 
     update() {
+        EPUI.render();
+        ResourceUI.render();
         WorldUI.render();
         ResearchUI.render();
         UpgradeUI.render();
