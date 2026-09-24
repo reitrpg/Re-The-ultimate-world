@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#ffffff">
 <meta name="description" content="World Creator - 自分だけの世界を育てる放置ゲーム">
 <link rel="manifest" href="./manifest.json">
-<link rel="stylesheet" href="./style.css?v=5">
+<link rel="stylesheet" href="./style.css?v=6">
 <title>World Creator</title>
 </head>
 <body>
@@ -19,11 +19,11 @@
 </header>
 <nav aria-label="ゲームメニュー">
 <button type="button" data-tab="world" aria-selected="true">世界</button>
-<button type="button" data-tab="research">研究</button>
-<button type="button" data-tab="upgrade">強化</button>
-<button type="button" data-tab="converter">変換</button>
-<button type="button" data-tab="rebirth">転生</button>
-<button type="button" data-tab="settings">設定</button>
+<button type="button" data-tab="research" aria-selected="false">研究</button>
+<button type="button" data-tab="upgrade" aria-selected="false">強化</button>
+<button type="button" data-tab="converter" aria-selected="false">変換</button>
+<button type="button" data-tab="rebirth" aria-selected="false">転生</button>
+<button type="button" data-tab="settings" aria-selected="false">設定</button>
 </nav>
 <main>
 <section id="world-tab" class="tab-content" data-tab-panel="world">
@@ -81,6 +81,6 @@
 </section>
 </main>
 <div id="notification-container" aria-live="polite"></div>
-<script type="module" src="./js/core/main.js"></script>
+<script type="module" src="./js/core/main.js?v=6"></script>
 </body>
 </html>

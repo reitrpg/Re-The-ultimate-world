@@ -12,7 +12,15 @@ class InputActionController {
         this.initialized = true;
 
         eventBus.on("world:create:request", payload => {
-            this.createWorld(payload);
+            try {
+                this.createWorld(payload);
+            } catch (error) {
+                eventBus.emit("world:create:failed", {
+                    code: "WORLD_CREATE_ERROR",
+                    error
+                });
+                throw error;
+            }
         });
     }
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = "world-creator-v5";
+const CACHE_NAME = "world-creator-v6";
 
 const FILES_TO_CACHE = [
     "./",
@@ -10,6 +10,8 @@ const FILES_TO_CACHE = [
     "./js/core/save.js",
     "./js/core/eventBus.js",
     "./js/core/errorHandler.js",
+    "./js/core/InputManager.js",
+    "./js/core/InputActionController.js",
     "./js/number/Constants.js",
     "./js/number/Normalize.js",
     "./js/number/Compare.js",

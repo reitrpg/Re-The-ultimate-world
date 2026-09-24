@@ -11,6 +11,8 @@ class TabUI {
         this.activeTab = null;
         this.tabs = [];
         this.panels = [];
+        this.lastActivationTarget = null;
+        this.lastActivationTime = 0;
     }
 
     initialize() {
@@ -28,7 +30,7 @@ class TabUI {
         this.registerEvents();
 
         const initialTab = this.getInitialTab();
-        if (initialTab) this.setActive(initialTab);
+        if (initialTab) this.setActive(initialTab, false);
     }
 
     collectElements() {
@@ -45,14 +47,31 @@ class TabUI {
 
     registerButtons() {
         this.tabs.forEach(tab => {
-            tab.addEventListener("click", event => {
-                event.preventDefault();
+            const activate = event => {
+                if (event) event.preventDefault();
+
+                const now = Date.now();
+
+                if (
+                    this.lastActivationTarget === tab &&
+                    now - this.lastActivationTime < 800
+                ) {
+                    return;
+                }
+
+                this.lastActivationTarget = tab;
+                this.lastActivationTime = now;
 
                 const tabId = this.getTabId(tab);
                 if (!tabId) return;
 
                 this.setActive(tabId);
-            });
+            };
+
+            // pointerup works for Android touch, iOS touch and mouse.
+            // click remains as a keyboard/browser compatibility path.
+            tab.addEventListener("pointerup", activate);
+            tab.addEventListener("click", activate);
         });
     }
 
@@ -108,7 +127,7 @@ class TabUI {
             panel => this.getPanelId(panel) === tabId
         );
 
-        if (!targetTab && !targetPanel) return false;
+        if (!targetTab || !targetPanel) return false;
 
         this.tabs.forEach(tab => {
             const active = this.getTabId(tab) === tabId;
