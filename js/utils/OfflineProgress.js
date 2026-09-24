@@ -14,11 +14,15 @@ class OfflineProgress {
   const world=WorldManager.getActive(); if(!world){this.saveTimestamp();return 0;}
   const globalMultiplier=ResearchManager.getTotalMultiplier()*UpgradeManager.getTotalMultiplier();
   const amounts={};
+  let experienceGain=world.exp.constructor.zero();
   ["plant","metal","magic"].forEach(id=>{
    const amount=world.getResourceProduction(id)*globalMultiplier*seconds;
-   ResourceManager.produce(id,amount);
-   amounts[id]=amount;
+   if(ResourceManager.produce(id,amount)){
+    amounts[id]=amount;
+    experienceGain=experienceGain.add(amount);
+   }
   });
+  world.gainExperience(experienceGain);
   this.saveTimestamp();
   eventBus.emit("offline:update",{seconds,amounts});
   return seconds;

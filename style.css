@@ -29,14 +29,26 @@ p {
 
 nav {
     display: flex;
-    gap: 8px;
+    gap: 4px;
     margin-bottom: 20px;
+    overflow-x: auto;
+    padding: 4px;
+    border: 1px solid #777;
 }
 
 nav button {
-    padding: 10px;
-    flex: 1;
+    flex: 0 0 auto;
+    min-width: 84px;
+    padding: 10px 14px;
+    border: 1px solid #777;
+    background: #eee;
     cursor: pointer;
+}
+
+nav button.active {
+    background: #ddd;
+    border-color: #222;
+    font-weight: 700;
 }
 
 .tab-content {
@@ -198,3 +210,8 @@ button {
 #next-world #unlock-world {
     width: 100%;
 }
+
+.world-category-tabs{display:flex;gap:4px;margin-bottom:12px;border-bottom:1px solid #777}
+.world-category-button{flex:1;padding:10px;border:1px solid #777;background:#eee;cursor:pointer}
+.world-category-button.active{background:#ddd;border-bottom:2px solid #222;font-weight:700}
+.world-category-panel[hidden]{display:none!important}

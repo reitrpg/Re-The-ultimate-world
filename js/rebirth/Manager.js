@@ -1,16 +1,32 @@
-import BigNumber from "../number/BigNumber.js";
 import eventBus from "../core/eventBus.js";
 import WorldManager from "../world/Manager.js";
 
-class RebirthManager{
- constructor(){this.count=0;this.multiplier=BigNumber.one();}
- getCount(){return this.count;}
- getMultiplier(){return this.multiplier;}
- calculateMultiplier(){const value=Math.max(1,(this.count+1)**2/100);this.multiplier=BigNumber.from(value);return this.multiplier;}
- applyMultiplier(){for(const world of WorldManager.getAll())world.rebirthMultiplier=BigNumber.from(this.multiplier);}
- rebirth(){this.count++;this.calculateMultiplier();this.applyMultiplier();eventBus.emit("rebirth:update");eventBus.emit("world:update");return true;}
- reset(){this.count=0;this.multiplier=BigNumber.one();for(const world of WorldManager.getAll())world.rebirthMultiplier=BigNumber.one();eventBus.emit("rebirth:update");}
- toJSON(){return{count:this.count,multiplier:this.multiplier.toJSON()};}
- load(data){this.count=Math.max(0,Number(data?.count)||0);this.multiplier=BigNumber.from(data?.multiplier||1);this.applyMultiplier();}
+class RebirthManager {
+    getWorld() { return WorldManager.getActive(); }
+    getCount() { return this.getWorld()?.rebirthCount || 0; }
+    getMultiplier() { return this.getWorld()?.rebirthMultiplier || 1; }
+    getSacrificeMultiplier() { return this.getWorld()?.getRebirthMultiplier() || 1; }
+    canRebirth() { return !!this.getWorld() && this.getWorld().canRebirth(); }
+
+    rebirth() {
+        const world=this.getWorld();
+        if(!world || !world.performRebirth()) return false;
+        eventBus.emit("rebirth:update");
+        eventBus.emit("world:update");
+        return true;
+    }
+
+    reset() {
+        for(const world of WorldManager.getAll()) {
+            world.rebirthCount=0;
+            world.rebirthMultiplier=world.rebirthMultiplier.constructor.one();
+        }
+        eventBus.emit("rebirth:update");
+        eventBus.emit("world:update");
+    }
+
+    toJSON() { return {version:2}; }
+    load() { eventBus.emit("rebirth:update"); }
 }
+
 export default new RebirthManager();
