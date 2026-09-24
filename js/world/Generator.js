@@ -66,7 +66,6 @@ class WorldGenerator {
 
   return { multipliers: values, names };
  }
- }
 
  generate(seed) {
   const worldSeed = String(seed);
