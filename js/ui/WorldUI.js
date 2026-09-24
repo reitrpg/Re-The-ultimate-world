@@ -1,8 +1,3 @@
-/**
- * World Creator
- * World UI
- */
-
 import WorldManager from "../world/Manager.js";
 import UnlockManager from "../world/UnlockManager.js";
 import Formatter from "../utils/Formatter.js";
@@ -14,71 +9,35 @@ class WorldUI {
     }
 
     initialize() {
-        if (this.initialized) {
-            return;
-        }
-
+        if (this.initialized) return;
         this.initialized = true;
         this.registerEvents();
-        this.registerButtons();
         this.render();
     }
 
     registerEvents() {
-        eventBus.on("world:update", () => {
-            this.render();
-        });
+        eventBus.on("world:update", () => this.render());
+        eventBus.on("world:unlock", () => this.render());
 
-        eventBus.on("world:unlock", () => {
-            this.render();
-        });
-
-        // 押下処理と世界生成処理を分離する。
-        // ボタン側は要求イベントだけを発火し、実際の生成処理はここから開始する。
+        // InputManager が発火した入力イベントをゲームイベントへ変換する。
         eventBus.on("world:create:request", (payload = {}) => {
             const seed = payload.seed ?? Date.now().toString();
+            const cost = UnlockManager.getUnlockCost();
             const created = UnlockManager.unlock(seed);
 
             eventBus.emit(
-                created
-                    ? "world:create:success"
-                    : "world:create:failed",
-                {
-                    seed,
-                    cost: UnlockManager.getUnlockCost()
-                }
+                created ? "world:create:success" : "world:create:failed",
+                { seed, cost }
             );
         });
 
-        eventBus.on("world:create:success", () => {
-            this.render();
-        });
-
-        eventBus.on("world:create:failed", () => {
-            this.render();
-        });
-    }
-
-    registerButtons() {
-        const button = document.getElementById("unlock-world");
-
-        if (!button) {
-            return;
-        }
-
-        button.addEventListener("click", () => {
-            eventBus.emit("world:create:request", {
-                seed: Date.now().toString()
-            });
-        });
+        eventBus.on("world:create:success", () => this.render());
+        eventBus.on("world:create:failed", () => this.render());
     }
 
     renderWorldList() {
         const container = document.getElementById("world-list");
-
-        if (!container) {
-            return;
-        }
+        if (!container) return;
 
         container.innerHTML = "";
 
@@ -88,10 +47,7 @@ class WorldUI {
 
             button.type = "button";
             button.textContent = world.name;
-
-            button.addEventListener("click", () => {
-                WorldManager.setActive(index);
-            });
+            button.dataset.worldIndex = String(index);
 
             item.innerHTML = `
                 <p>Lv ${world.level}</p>
@@ -105,34 +61,20 @@ class WorldUI {
 
     renderActiveWorld() {
         const world = WorldManager.getActive();
-
-        if (!world) {
-            return;
-        }
+        if (!world) return;
 
         const name = document.getElementById("world-name");
         const level = document.getElementById("world-level");
         const rarity = document.getElementById("world-rarity");
 
-        if (name) {
-            name.textContent = world.name;
-        }
-
-        if (level) {
-            level.textContent = world.level;
-        }
-
-        if (rarity) {
-            rarity.textContent = world.rarity;
-        }
+        if (name) name.textContent = world.name;
+        if (level) level.textContent = world.level;
+        if (rarity) rarity.textContent = world.rarity;
     }
 
     renderUnlockCost() {
         const element = document.getElementById("unlock-cost");
-
-        if (!element) {
-            return;
-        }
+        if (!element) return;
 
         element.textContent = Formatter.format(
             UnlockManager.getUnlockCost()
