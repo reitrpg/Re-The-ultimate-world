@@ -36,27 +36,21 @@ function initializeGame() {
     try {
         ErrorHandler.initialize();
 
-        const loaded = SaveManager.load();
+        // Update the service worker before application initialization.
+        // This reduces the chance that an old cached application remains
+        // in control of the page after a deployment.
+        registerServiceWorker();
 
-        // Loading a missing/invalid save must never prevent the game
-        // from creating its required initial state.
-        if (!loaded || WorldManager.getCount() === 0) {
-            ensureInitialState();
-        } else {
-            ensureInitialState();
-        }
-
+        SaveManager.load();
+        ensureInitialState();
         OfflineProgress.calculate();
 
-        // Input must be available before UI modules start.
-        // This keeps the input -> event path alive even if a UI module
-        // fails during startup.
         InputManager.initialize();
         InputActionController.initialize();
         UI.initialize();
+
         SaveManager.startAutoSave();
         Game.start();
-        registerServiceWorker();
     } catch (error) {
         ErrorHandler.record(error);
         console.error("World Creator initialization failed:", error);
