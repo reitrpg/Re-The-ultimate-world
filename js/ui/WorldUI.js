@@ -3,6 +3,7 @@ import UnlockManager from "../world/UnlockManager.js";
 import Formatter from "../utils/Formatter.js";
 import ResearchManager from "../research/Manager.js";
 import UpgradeManager from "../upgrades/Manager.js";
+import RebirthManager from "../rebirth/Manager.js";
 import eventBus from "../core/eventBus.js";
 
 class WorldUI {
@@ -143,9 +144,34 @@ class WorldUI {
         production.appendChild(productionTitle);
         production.appendChild(list);
 
+        const rebirth = document.createElement("div");
+        rebirth.className = "world-rebirth";
+        const rebirthTitle = document.createElement("p");
+        rebirthTitle.textContent = "転生";
+        const rebirthCount = document.createElement("p");
+        rebirthCount.textContent = "転生回数: " + RebirthManager.getCount();
+        const rebirthMultiplier = document.createElement("p");
+        rebirthMultiplier.textContent = "現在倍率: ×" + Formatter.format(RebirthManager.getMultiplier());
+        const rebirthSacrifice = document.createElement("p");
+        rebirthSacrifice.textContent = "今回倍率: ×" + Formatter.format(RebirthManager.getSacrificeMultiplier());
+        const rebirthButton = document.createElement("button");
+        rebirthButton.type = "button";
+        rebirthButton.textContent = "転生";
+        rebirthButton.disabled = !RebirthManager.canRebirth();
+        rebirthButton.addEventListener("click", event => {
+            event.stopPropagation();
+            RebirthManager.rebirth();
+        });
+        rebirth.appendChild(rebirthTitle);
+        rebirth.appendChild(rebirthCount);
+        rebirth.appendChild(rebirthMultiplier);
+        rebirth.appendChild(rebirthSacrifice);
+        rebirth.appendChild(rebirthButton);
+
         card.appendChild(nameRow);
         card.appendChild(stats);
         card.appendChild(production);
+        card.appendChild(rebirth);
         if (index === WorldManager.getActiveIndex()) {
             card.classList.add("active");
             card.setAttribute("aria-current", "true");
