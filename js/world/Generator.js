@@ -51,19 +51,21 @@ class WorldGenerator {
  }
 
  generateResourceFeatures(seed) {
-  const multipliers = {};
+  const ids = ["plant", "metal", "magic"];
+  const multipliers = [1.4, 1, 0.75];
+  const offset = Math.floor(this.random(seed, 5) * ids.length);
+  const order = ids.map((_, index) => ids[(index + offset) % ids.length]);
+
+  const values = {};
   const names = {};
 
-  Object.entries(FEATURE_DEFINITIONS).forEach(([id, definition], offset) => {
-   const valueIndex = Math.floor(
-    this.random(seed, 5 + offset) * definition.values.length
-   );
-
-   multipliers[id] = definition.values[valueIndex];
-   names[id] = definition.name;
+  order.forEach((id, index) => {
+   values[id] = multipliers[index];
+   names[id] = FEATURE_DEFINITIONS[id].name;
   });
 
-  return { multipliers, names };
+  return { multipliers: values, names };
+ }
  }
 
  generate(seed) {
