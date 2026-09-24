@@ -43,6 +43,14 @@ nav button {
     display: block;
 }
 
+.tab-content[hidden] {
+    display: none !important;
+}
+
+.tab-content.active {
+    display: block;
+}
+
 #world-list,
 #resource-list,
 #research-list,
@@ -96,7 +104,6 @@ button {
 }
 
 @media (max-width: 768px) {
-
     body {
         padding: 10px;
     }
@@ -122,5 +129,4 @@ button {
     .converter-item button {
         width: 100%;
     }
-
 }
