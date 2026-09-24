@@ -10,7 +10,7 @@ class World {
  getRarityMultiplier(){return this.rarity;}
  getTotalMultiplier(){return BigNumber.one();}
  getResourceMultiplier(id){const value=Number(this.resourceMultipliers?.[id]);return Number.isFinite(value)?value:1;}
- getResourceProduction(id){return this.getResourceMultiplier(id);}
+ getResourceProduction(id){return this.getResourceMultiplier(id)*this.rebirthMultiplier.toNumber();}
  gainExperience(amount){this.exp=this.exp.add(amount);}
  getRebirthMultiplier(){return BigNumber.one().add(this.exp.divide(100));}
  canRebirth(){return this.getRebirthMultiplier().greaterOrEqual(2.5);}
