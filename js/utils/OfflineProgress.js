@@ -7,110 +7,66 @@ import WorldManager from "../world/Manager.js";
 import ResourceManager from "../resource/Manager.js";
 import ResearchManager from "../research/Manager.js";
 import UpgradeManager from "../upgrades/Manager.js";
+import eventBus from "../core/eventBus.js";
 
 class OfflineProgress {
-
     constructor() {
-
-        this.maxOfflineTime =
-
-            1000 * 60 * 60 * 24;
-
+        this.maxOfflineTime = 1000 * 60 * 60 * 24;
     }
 
     saveTimestamp() {
-
         localStorage.setItem(
-
             "world_creator_last_time",
-
-            Date.now()
-
+            String(Date.now())
         );
-
     }
 
     getTimestamp() {
-
-        return Number(
-
-            localStorage.getItem(
-
-                "world_creator_last_time"
-
-            )
-
+        const value = Number(
+            localStorage.getItem("world_creator_last_time")
         );
-
+        return Number.isFinite(value) && value > 0 ? value : 0;
     }
 
     calculate() {
-
-        const lastTime =
-
-            this.getTimestamp();
+        const lastTime = this.getTimestamp();
 
         if (!lastTime) {
-
             this.saveTimestamp();
-
-            return;
-
+            return 0;
         }
 
-        const currentTime =
-            Date.now();
-
-        let elapsed =
-
-            currentTime - lastTime;
-
-        elapsed = Math.min(
-
-            elapsed,
-
+        const elapsed = Math.min(
+            Math.max(0, Date.now() - lastTime),
             this.maxOfflineTime
-
         );
 
-        const seconds =
-
-            Math.floor(
-
-                elapsed / 1000
-
-            );
-
+        const seconds = Math.floor(elapsed / 1000);
         if (seconds <= 0) {
-
             this.saveTimestamp();
-
-            return;
-
+            return 0;
         }
 
-        const world =
-            WorldManager.getActive();
-
+        const world = WorldManager.getActive();
         if (!world) {
-
             this.saveTimestamp();
-
-            return;
-
+            return 0;
         }
 
-        let multiplier =
+        let multiplier = world.getTotalMultiplier().toNumber();
+        multiplier *= ResearchManager.getTotalMultiplier();
+        multiplier *= UpgradeManager.getTotalMultiplier();
 
-            world
-                .getTotalMultiplier()
-                .toNumber();
+        ResourceManager.produce(multiplier * seconds);
+        this.saveTimestamp();
 
-        multiplier *=
+        eventBus.emit("offline:update", {
+            seconds,
+            amount: multiplier * seconds
+        });
 
-            ResearchManager
-                .getTotalMultiplier();
+        return seconds;
+    }
+}
 
-        multiplier *=
-
-           
+export default new OfflineProgress();
