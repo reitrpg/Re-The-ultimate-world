@@ -6,16 +6,21 @@ import eventBus from "../core/eventBus.js";
 class UnlockManager {
     constructor() {
         this.unlockedWorlds = 1;
-        this.baseCost = BigNumber.from(10000);
+        this.firstPaidWorldCost = BigNumber.from(1e100);
+        this.costMultiplier = BigNumber.from(1e100);
     }
 
     getUnlockCost() {
-        return BigNumber.from(
-            10000 * Math.pow(
-                10,
-                Math.max(0, this.unlockedWorlds - 1)
-            )
-        );
+        // World #1 is created for 0 EP during initialization.
+        // World #2 costs 1e100 EP.
+        // Every later world costs the previous world's unlock cost × 1e100.
+        let cost = this.firstPaidWorldCost.clone();
+
+        for (let i = 1; i < this.unlockedWorlds; i++) {
+            cost = cost.multiply(this.costMultiplier);
+        }
+
+        return cost;
     }
 
     getUnlockFailureReason() {
