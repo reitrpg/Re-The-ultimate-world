@@ -25,7 +25,11 @@ class UnlockManager {
             exponent *= 100;
         }
 
-        return new BigNumber(1, exponent);
+        const base1000Exponent = Math.floor(exponent / 3);
+        const decimalRemainder = exponent % 3;
+        const mantissa = Math.pow(10, decimalRemainder);
+
+        return new BigNumber(mantissa, base1000Exponent);
     }
 
     getUnlockFailureReason() {
