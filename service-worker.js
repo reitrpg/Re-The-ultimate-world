@@ -1,4 +1,4 @@
-const CACHE_NAME = "world-creator-v16";
+const CACHE_NAME = "world-creator-v17";
 
 const FILES_TO_CACHE = [
     "./",
@@ -52,35 +52,6 @@ const FILES_TO_CACHE = [
     "./icon-512.png"
 ];
 
-function isFreshResourceRequest(request) {
-    return (
-        request.destination === "document" ||
-        request.destination === "style" ||
-        request.destination === "script" ||
-        request.destination === "worker"
-    );
-}
-
-async function networkFirst(request) {
-    try {
-        const freshRequest = new Request(request, {
-            cache: "no-store"
-        });
-
-        const response = await fetch(freshRequest);
-
-        if (response && response.ok) {
-            const cache = await caches.open(CACHE_NAME);
-            await cache.put(request, response.clone());
-        }
-
-        return response;
-    } catch (error) {
-        const cached = await caches.match(request);
-        if (cached) return cached;
-        throw error;
-    }
-}
 
 async function cacheFirst(request) {
     const cached = await caches.match(request);
@@ -129,9 +100,5 @@ self.addEventListener("activate", event => {
 self.addEventListener("fetch", event => {
     if (event.request.method !== "GET") return;
 
-    event.respondWith(
-        isFreshResourceRequest(event.request)
-            ? networkFirst(event.request)
-            : cacheFirst(event.request)
-    );
+    event.respondWith(cacheFirst(event.request));
 });
