@@ -10,18 +10,19 @@ class UnlockManager {
     }
 
     getUnlockCost() {
-        // World #1: 0 EP
-        // World #2: 1e100
-        // World #3: 1e10000
-        // World #4: 1e1000000
-        // Each additional world multiplies the exponent by 100.
-        if (this.unlockedWorlds <= 1) {
+        // The first world is free.
+        // This method returns the cost of the NEXT world.
+        if (this.unlockedWorlds <= 0) {
             return BigNumber.zero();
         }
 
+        // World #2: 1e100
+        // World #3: 1e10000
+        // World #4: 1e1000000
+        // Each additional world multiplies the decimal exponent by 100.
         let exponent = this.firstPaidWorldExponent;
 
-        for (let i = 2; i < this.unlockedWorlds; i++) {
+        for (let i = 2; i <= this.unlockedWorlds; i++) {
             exponent *= 100;
         }
 
