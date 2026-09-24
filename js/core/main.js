@@ -5,6 +5,7 @@ import ResourceManager from "../resource/Manager.js";
 import WorldManager from "../world/Manager.js";
 import UI from "../ui/UI.js";
 import InputManager from "./InputManager.js";
+import InputActionController from "./InputActionController.js";
 import ErrorHandler from "./errorHandler.js";
 
 function ensureInitialState() {
@@ -51,6 +52,7 @@ function initializeGame() {
         // This keeps the input -> event path alive even if a UI module
         // fails during startup.
         InputManager.initialize();
+        InputActionController.initialize();
         UI.initialize();
         SaveManager.startAutoSave();
         Game.start();
