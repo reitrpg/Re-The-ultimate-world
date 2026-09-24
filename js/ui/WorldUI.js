@@ -104,16 +104,10 @@ class WorldUI {
         stats.className = "world-stats";
         const rarity = document.createElement("p");
         rarity.textContent = "レアリティ: " + world.rarity;
+        const feature = document.createElement("p");
+        feature.textContent = "特徴: " + world.getResourceFeatureName("plant");
         const level = document.createElement("p");
         level.textContent = "Lv: " + world.level;
-        const feature = document.createElement("p");
-        feature.textContent =
-            "特徴: " +
-            world.getResourceFeatureName("plant") + " ×" + world.getResourceMultiplier("plant") +
-            " / " +
-            world.getResourceFeatureName("metal") + " ×" + world.getResourceMultiplier("metal") +
-            " / " +
-            world.getResourceFeatureName("magic") + " ×" + world.getResourceMultiplier("magic");
         const exp = document.createElement("p");
         exp.textContent = "EXP: " + Formatter.format(world.exp) + "/" + Formatter.format(world.getRequiredExperience());
         const base = document.createElement("p");
@@ -129,10 +123,13 @@ class WorldUI {
         const productionTitle = document.createElement("p");
         productionTitle.textContent = "生産";
         const list = document.createElement("ul");
-        const globalMultiplier = ResearchManager.getTotalMultiplier() * UpgradeManager.getTotalMultiplier();
+        const globalMultiplier =
+            ResearchManager.getTotalMultiplier() *
+            UpgradeManager.getTotalMultiplier();
+
         [["plant","植物"],["metal","金属"],["magic","魔力"]].forEach(([id,label]) => {
             const item = document.createElement("li");
-            const rate = world.getResourceProduction(id) * globalMultiplier;
+            const rate = world.getResourceProduction(id).multiply(globalMultiplier);
             item.textContent =
                 world.getResourceFeatureName(id) +
                 " / " +
@@ -144,6 +141,7 @@ class WorldUI {
                 ")";
             list.appendChild(item);
         });
+
         production.appendChild(productionTitle);
         production.appendChild(list);
 
