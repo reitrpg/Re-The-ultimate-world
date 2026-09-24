@@ -8,7 +8,7 @@ import UpgradeManager from "../upgrades/Manager.js";
 import RebirthManager from "../rebirth/Manager.js";
 import SettingsManager from "../settings/Manager.js";
 class SaveManager{
- constructor(){this.key="world_creator_save";this.version=3;this.autoSaveTimer=null;}
+ constructor(){this.key="world_creator_save";this.version=4;this.autoSaveTimer=null;}
  createSaveData(){return{version:this.version,timestamp:Date.now(),worlds:WorldManager.toJSON(),worldUnlock:UnlockManager.toJSON(),resources:ResourceManager.toJSON(),ep:EPManager.toJSON(),research:ResearchManager.toJSON(),upgrades:UpgradeManager.toJSON(),rebirth:RebirthManager.toJSON(),settings:SettingsManager.toJSON()};}
  save(){try{localStorage.setItem(this.key,JSON.stringify(this.createSaveData()));eventBus.emit("save:success");return true;}catch(error){console.error(error);eventBus.emit("save:error",error);return false;}}
  load(){
@@ -19,7 +19,7 @@ class SaveManager{
    EPManager.load(data.ep);ResearchManager.load(data.research);UpgradeManager.load(data.upgrades);
    RebirthManager.load(data.rebirth);SettingsManager.load(data.settings);
    if(WorldManager.getCount()===0)WorldManager.create(Date.now().toString());
-   if(!ResourceManager.exists("material"))ResourceManager.createDefaultResources();
+   if(!ResourceManager.exists("plant")||!ResourceManager.exists("metal")||!ResourceManager.exists("magic"))ResourceManager.createDefaultResources();
    eventBus.emit("load:success");return true;
   }catch(error){console.error(error);eventBus.emit("load:error",error);localStorage.removeItem(this.key);return false;}
  }
