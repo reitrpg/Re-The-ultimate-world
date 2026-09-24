@@ -5,6 +5,7 @@
 
 import eventBus from "../core/eventBus.js";
 
+import TabUI from "./TabUI.js";
 import WorldUI from "./WorldUI.js";
 import ResearchUI from "./ResearchUI.js";
 import UpgradeUI from "./UpgradeUI.js";
@@ -17,109 +18,61 @@ import NotificationUI from "./NotificationUI.js";
 import ErrorUI from "./ErrorUI.js";
 
 class UI {
-
     constructor() {
-
         this.initialized = false;
-
     }
 
     initialize() {
-
-        if (this.initialized) {
-
-            return;
-
-        }
+        if (this.initialized) return;
 
         this.initialized = true;
 
+        TabUI.initialize();
         WorldUI.initialize();
-
         ResearchUI.initialize();
-
         UpgradeUI.initialize();
-
         ConverterUI.initialize();
-
         RebirthUI.initialize();
-
         SettingsUI.initialize();
-
         DebugUI.initialize();
-
         SaveUI.initialize();
-
         NotificationUI.initialize();
-
         ErrorUI.initialize();
 
         this.registerEvents();
-
         this.update();
-
     }
 
     registerEvents() {
-
         const events = [
-
             "world:update",
-
             "resource:update",
-
             "research:update",
-
             "upgrade:update",
-
             "converter:update",
-
             "rebirth:update",
-
             "settings:update",
-
-            "debug:update"
-
+            "debug:update",
+            "debug:reset"
         ];
 
-        events.forEach(
-
-            event => {
-
-                eventBus.on(
-
-                    event,
-
-                    () => {
-
-                        this.update();
-
-                    }
-
-                );
-
-            }
-
-        );
-
+        events.forEach(event => {
+            eventBus.on(event, () => {
+                this.update();
+            });
+        });
     }
 
     update() {
-
         WorldUI.render();
-
         ResearchUI.render();
-
         UpgradeUI.render();
-
         ConverterUI.render();
-
         RebirthUI.render();
-
+        SettingsUI.render();
+        DebugUI.updateVisibility();
         ErrorUI.render();
-
     }
-
 }
 
 export default new UI();
