@@ -20,17 +20,6 @@ class WorldUI {
         eventBus.on("world:update", () => this.render());
         eventBus.on("world:unlock", () => this.render());
 
-        eventBus.on("world:create:request", (payload = {}) => {
-            const seed = payload.seed ?? Date.now().toString();
-            const cost = UnlockManager.getUnlockCost();
-            const created = UnlockManager.unlock(seed);
-
-            eventBus.emit(
-                created ? "world:create:success" : "world:create:failed",
-                { seed, cost }
-            );
-        });
-
         eventBus.on("world:unlock:failed", failure => {
             if (!failure) return;
 
