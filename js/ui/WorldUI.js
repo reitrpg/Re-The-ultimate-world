@@ -6,13 +6,41 @@ import UpgradeManager from "../upgrades/Manager.js";
 import eventBus from "../core/eventBus.js";
 
 class WorldUI {
-    constructor() { this.initialized = false; }
+    constructor() { this.initialized = false; this.category = "world"; }
 
     initialize() {
         if (this.initialized) return;
         this.initialized = true;
         this.registerEvents();
+        this.registerCategoryInput();
+        this.renderCategory();
         this.render();
+    }
+
+    registerCategoryInput() {
+        document.addEventListener("click", event => {
+            const button = event.target?.closest("[data-world-category]");
+            if (!button) return;
+            this.setCategory(button.dataset.worldCategory);
+        }, true);
+    }
+
+    setCategory(category) {
+        if (category !== "world" && category !== "converter") return;
+        this.category = category;
+        this.renderCategory();
+    }
+
+    renderCategory() {
+        document.querySelectorAll("[data-world-category-panel]").forEach(panel => {
+            const active = panel.dataset.worldCategoryPanel === this.category;
+            panel.hidden = !active;
+        });
+        document.querySelectorAll("[data-world-category]").forEach(button => {
+            const active = button.dataset.worldCategory === this.category;
+            button.classList.toggle("active", active);
+            button.setAttribute("aria-selected", String(active));
+        });
     }
 
     registerEvents() {
@@ -145,6 +173,7 @@ class WorldUI {
     }
 
     render() {
+        this.renderCategory();
         this.renderWorldList();
         this.renderNextWorld();
     }
