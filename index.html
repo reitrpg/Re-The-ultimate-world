@@ -1,38 +1,135 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="description" content="World Creator - 自分だけの世界を育てる放置ゲーム">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="stylesheet" href="./style.css">
     <title>World Creator</title>
-
-    <link
-        rel="manifest"
-        href="./manifest.json">
-
-    <meta
-        name="theme-color"
-        content="#ffffff">
-
-    <link
-        rel="stylesheet"
-        href="./style.css">
-
 </head>
-
 <body>
-
     <header>
+        <h1>World Creator</h1>
+        <section id="status-panel">
+            <p>EP: <strong id="ep-value">0</strong></p>
+            <div id="resource-list"></div>
+        </section>
+    </header>
 
-        <h1>
+    <nav aria-label="ゲームメニュー">
+        <button type="button" data-tab="world" aria-selected="true">世界</button>
+        <button type="button" data-tab="research">研究</button>
+        <button type="button" data-tab="upgrade">強化</button>
+        <button type="button" data-tab="converter">変換</button>
+        <button type="button" data-tab="rebirth">転生</button>
+        <button type="button" data-tab="settings">設定</button>
+    </nav>
 
-            World Creator
+    <main>
+        <section id="world-tab" class="tab-content" data-tab-panel="world">
+            <h2>世界</h2>
+            <div id="world-list"></div>
+            <p>世界名: <span id="world-name">-</span></p>
+            <p>Lv: <span id="world-level">-</span></p>
+            <p>レアリティ: <span id="world-rarity">-</span></p>
+            <p>次の世界: <span id="unlock-cost">-</span> EP</p>
+            <button id="unlock-world" type="button">新しい世界を解放</button>
+        </section>
 
-        </h1>
+        <section id="research-tab" class="tab-content" data-tab-panel="research" hidden>
+            <h2>研究</h2>
+            <div id="research-list"></div>
+        </section>
 
-   
+        <section id="upgrade-tab" class="tab-content" data-tab-panel="upgrade" hidden>
+            <h2>強化</h2>
+            <div id="upgrade-list"></div>
+        </section>
+
+        <section id="converter-tab" class="tab-content" data-tab-panel="converter" hidden>
+            <h2>変換</h2>
+            <div id="converter-list"></div>
+        </section>
+
+        <section id="rebirth-tab" class="tab-content" data-tab-panel="rebirth" hidden>
+            <h2>転生</h2>
+            <p>転生回数: <span id="rebirth-count">0</span></p>
+            <p>転生倍率: ×<span id="rebirth-multiplier">1</span></p>
+            <button id="rebirth-button" type="button">転生</button>
+        </section>
+
+        <section id="settings-tab" class="tab-content" data-tab-panel="settings" hidden>
+            <h2>設定</h2>
+
+            <label>
+                数値表示:
+                <select id="settings-number-format">
+                    <option value="scientific">科学表記</option>
+                    <option value="standard">通常表記</option>
+                    <option value="engineering">工学表記</option>
+                </select>
+            </label>
+
+            <label>
+                ゲーム更新間隔(ms):
+                <input id="settings-tick-speed" type="number" min="1" step="1">
+            </label>
+
+            <label>
+                自動保存間隔(ms):
+                <input id="settings-autosave" type="number" min="0" step="1000">
+            </label>
+
+            <label>
+                デバッグ:
+                <input id="settings-debug" type="checkbox">
+            </label>
+
+            <label>
+                SpeedRun:
+                <input id="settings-speedrun" type="checkbox">
+            </label>
+
+            <label>
+                言語:
+                <select id="settings-language">
+                    <option value="ja">日本語</option>
+                </select>
+            </label>
+
+            <div id="save-controls">
+                <h3>セーブ</h3>
+                <button id="save-button" type="button">手動保存</button>
+                <button id="load-button" type="button">保存データを再読み込み</button>
+                <button id="export-button" type="button">セーブ出力</button>
+                <button id="import-button" type="button">セーブ入力</button>
+                <button id="delete-save-button" type="button">セーブ削除</button>
+            </div>
+
+            <div id="debug-panel" hidden>
+                <h3>デバッグ</h3>
+                <button id="debug-add-ep" type="button">EP +1000</button>
+                <button id="debug-add-material" type="button">素材 +1000</button>
+                <label>
+                    世界Lv:
+                    <input id="debug-world-level" type="number" min="1" step="1" value="1">
+                </label>
+                <button id="debug-set-world-level" type="button">世界Lv設定</button>
+                <button id="debug-reset" type="button">ゲームデータ初期化</button>
+            </div>
+
+            <div>
+                <h3>エラーログ</h3>
+                <div id="error-log"></div>
+                <button id="clear-error-log" type="button">エラーログ削除</button>
+            </div>
+        </section>
+    </main>
+
+    <div id="notification-container" aria-live="polite"></div>
+
+    <script type="module" src="./js/core/main.js"></script>
+</body>
+</html>
