@@ -41,7 +41,6 @@ class World {
         return Math.max(1, Math.floor(value / 10) + 1);
     }
 
-    getLevelMultiplier() { return Math.max(1, Math.pow(2, this.level - 1)); }
     getRarityMultiplier() { return this.rarity; }
     getTotalMultiplier() { return BigNumber.one(); }
 
@@ -54,7 +53,6 @@ class World {
 
     getResourceProduction(id) {
         return this.baseProduction
-            .multiply(this.getLevelMultiplier())
             .multiply(this.getResourceMultiplier(id))
             .multiply(this.rebirthMultiplier);
     }
@@ -66,7 +64,6 @@ class World {
         while (this.exp.greaterOrEqual(this.getRequiredExperience())) {
             this.level += 1;
             this.exp = BigNumber.zero();
-            this.baseProduction = this.baseProduction.multiply(2);
             leveledUp = true;
         }
 
@@ -92,7 +89,6 @@ class World {
     levelUp() {
         this.level += 1;
         this.exp = BigNumber.zero();
-        this.baseProduction = this.baseProduction.multiply(2);
     }
 
     update(deltaTime) {
