@@ -79,6 +79,8 @@ class WorldUI {
     createWorldCard(world, index) {
         const card = document.createElement("article");
         card.className = "world-card";
+        card.dataset.action = "world:select";
+        card.dataset.worldIndex = String(index);
 
         const nameRow = document.createElement("div");
         nameRow.className = "world-name-row";
@@ -148,8 +150,6 @@ class WorldUI {
         card.appendChild(nameRow);
         card.appendChild(stats);
         card.appendChild(production);
-        card.addEventListener("click", () => WorldManager.setActive(index));
-
         if (index === WorldManager.getActiveIndex()) {
             card.classList.add("active");
             card.setAttribute("aria-current", "true");
