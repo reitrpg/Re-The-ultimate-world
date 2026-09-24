@@ -24,14 +24,11 @@ class TabUI {
         }
 
         this.initialized = true;
-
         this.registerButtons();
         this.registerEvents();
 
         const initialTab = this.getInitialTab();
-        if (initialTab) {
-            this.setActive(initialTab);
-        }
+        if (initialTab) this.setActive(initialTab);
     }
 
     collectElements() {
@@ -40,7 +37,9 @@ class TabUI {
         );
 
         this.panels = Array.from(
-            document.querySelectorAll("[data-tab-panel], .tab-panel, .tab-content")
+            document.querySelectorAll(
+                "[data-tab-panel], .tab-panel, .tab-content"
+            )
         );
     }
 
@@ -66,11 +65,7 @@ class TabUI {
 
     getTabId(tab) {
         if (!tab) return null;
-
-        if (tab.dataset.tab) {
-            return tab.dataset.tab;
-        }
-
+        if (tab.dataset.tab) return tab.dataset.tab;
         if (tab.dataset.target) {
             return tab.dataset.target.replace(/^#/, "");
         }
@@ -85,37 +80,21 @@ class TabUI {
 
     getPanelId(panel) {
         if (!panel) return null;
-
-        if (panel.dataset.tabPanel) {
-            return panel.dataset.tabPanel;
-        }
-
-        if (panel.dataset.tabContent) {
-            return panel.dataset.tabContent;
-        }
-
-        if (panel.id) {
-            return panel.id.replace(/-tab$/, "");
-        }
-
+        if (panel.dataset.tabPanel) return panel.dataset.tabPanel;
+        if (panel.dataset.tabContent) return panel.dataset.tabContent;
+        if (panel.id) return panel.id.replace(/-tab$/, "");
         return null;
     }
 
     getInitialTab() {
-        const activeTab = this.tabs.find(tab => {
-            return (
-                tab.classList.contains("active") ||
-                tab.getAttribute("aria-selected") === "true" ||
-                tab.disabled === true
-            );
-        });
+        const activeTab = this.tabs.find(tab =>
+            tab.classList.contains("active") ||
+            tab.getAttribute("aria-selected") === "true"
+        );
 
-        if (activeTab) {
-            return this.getTabId(activeTab);
-        }
+        if (activeTab) return this.getTabId(activeTab);
 
-        const firstTab = this.tabs[0];
-        return firstTab ? this.getTabId(firstTab) : null;
+        return this.getTabId(this.tabs[0]);
     }
 
     setActive(tabId, emit = true) {
@@ -129,49 +108,30 @@ class TabUI {
             panel => this.getPanelId(panel) === tabId
         );
 
-        if (!targetTab && !targetPanel) {
-            return false;
-        }
+        if (!targetTab && !targetPanel) return false;
 
         this.tabs.forEach(tab => {
             const active = this.getTabId(tab) === tabId;
-
             tab.classList.toggle("active", active);
 
             if (tab.hasAttribute("aria-selected")) {
-                tab.setAttribute(
-                    "aria-selected",
-                    String(active)
-                );
+                tab.setAttribute("aria-selected", String(active));
             }
 
             if (tab.hasAttribute("aria-expanded")) {
-                tab.setAttribute(
-                    "aria-expanded",
-                    String(active)
-                );
+                tab.setAttribute("aria-expanded", String(active));
             }
 
-            // Keep compatibility with the existing WC tab behavior.
-            if (
-                tab.tagName === "BUTTON" &&
-                !tab.classList.contains("tab-button") &&
-                !tab.hasAttribute("aria-selected")
-            ) {
+            if (tab.tagName === "BUTTON") {
                 tab.disabled = active;
             }
         });
 
         this.panels.forEach(panel => {
             const active = this.getPanelId(panel) === tabId;
-
             panel.hidden = !active;
             panel.classList.toggle("active", active);
-
-            panel.setAttribute(
-                "aria-hidden",
-                String(!active)
-            );
+            panel.setAttribute("aria-hidden", String(!active));
         });
 
         this.activeTab = tabId;
