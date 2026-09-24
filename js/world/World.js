@@ -171,20 +171,24 @@ class World {
    ...(data.resourceFeatures || {})
   };
 
-  // Migrate old worlds that had the broken all-0.75 feature distribution.
-  const multipliers = RESOURCE_IDS.map(id => this.getResourceMultiplier(id));
-  if (multipliers.every(value => value === 0.75)) {
-   const hash = text => {
-    let value = 0;
-    for (let i = 0; i < text.length; i++) {
-     value = ((value << 5) - value + text.charCodeAt(i)) | 0;
-    }
-    return Math.abs(value);
-   };
+  // Normalize old worlds to exactly one ×1.4, one ×1.0, and one ×0.75 feature.
+  const current = RESOURCE_IDS.map(id => this.getResourceMultiplier(id)).sort((a, b) => a - b);
+  const balanced = current.length === 3 &&
+   current[0] === 0.75 &&
+   current[1] === 1 &&
+   current[2] === 1.4;
+
+  if (!balanced) {
+   let hash = 0;
+   for (let i = 0; i < this.seed.length; i++) {
+    hash = ((hash << 5) - hash + this.seed.charCodeAt(i)) | 0;
+   }
+   const offset = Math.abs(hash) % RESOURCE_IDS.length;
+   const values = [1.4, 1, 0.75];
+
    RESOURCE_IDS.forEach((id, index) => {
-    const values = [0.75, 1, 1.4];
     this.resourceMultipliers[id] =
-     values[hash(this.seed + "_" + (5 + index)) % values.length];
+     values[(index + offset) % values.length];
    });
   }
  }
