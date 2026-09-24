@@ -8,6 +8,8 @@ import InputManager from "./InputManager.js";
 import InputActionController from "./InputActionController.js";
 import ErrorHandler from "./errorHandler.js";
 
+const APP_VERSION = "0.0.14";
+
 function ensureInitialState() {
     if (!ResourceManager.exists("material")) {
         ResourceManager.createDefaultResources();
@@ -16,6 +18,17 @@ function ensureInitialState() {
     if (WorldManager.getCount() === 0) {
         WorldManager.create(Date.now().toString());
     }
+}
+
+function setBootVersion() {
+    const version = document.getElementById("app-version");
+
+    if (version) {
+        version.textContent = "World Creator v" + APP_VERSION;
+        version.dataset.booted = "true";
+    }
+
+    document.documentElement.dataset.appVersion = APP_VERSION;
 }
 
 function registerServiceWorker() {
@@ -35,10 +48,9 @@ function registerServiceWorker() {
 function initializeGame() {
     try {
         ErrorHandler.initialize();
+        setBootVersion();
 
-        // Update the service worker before application initialization.
-        // This reduces the chance that an old cached application remains
-        // in control of the page after a deployment.
+        // Start SW update without making application startup depend on it.
         registerServiceWorker();
 
         SaveManager.load();
@@ -51,9 +63,21 @@ function initializeGame() {
 
         SaveManager.startAutoSave();
         Game.start();
+
+        document.documentElement.dataset.appReady = "true";
     } catch (error) {
         ErrorHandler.record(error);
         console.error("World Creator initialization failed:", error);
+
+        const version = document.getElementById("app-version");
+
+        if (version) {
+            version.textContent =
+                "World Creator v" +
+                APP_VERSION +
+                " / 起動エラー";
+            version.dataset.booted = "error";
+        }
     }
 }
 
