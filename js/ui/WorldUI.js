@@ -1,45 +1,149 @@
 import WorldManager from "../world/Manager.js";
 import UnlockManager from "../world/UnlockManager.js";
 import Formatter from "../utils/Formatter.js";
+import ResearchManager from "../research/Manager.js";
+import UpgradeManager from "../upgrades/Manager.js";
 import eventBus from "../core/eventBus.js";
 
-class WorldUI{
- constructor(){this.initialized=false;}
- initialize(){if(this.initialized)return;this.initialized=true;this.registerEvents();this.render();}
- registerEvents(){
-  eventBus.on("world:update",()=>this.render());
-  eventBus.on("world:unlock",()=>this.render());
-  eventBus.on("world:create:success",()=>this.render());
-  eventBus.on("world:create:failed",()=>this.render());
-  eventBus.on("world:unlock:failed",failure=>{
-   if(!failure)return;
-   eventBus.emit("notification:show",{type:"warning",message:this.getUnlockFailureMessage(failure)});
-  });
- }
- getUnlockFailureMessage(f){
-  switch(f.code){
-   case "INSUFFICIENT_EP":return "EPが不足しています。必要: "+Formatter.format(f.required)+" / 現在: "+Formatter.format(f.current);
-   case "EP_CONSUME_FAILED":return "EPの消費に失敗しました。もう一度試してください。";
-   default:return "世界の解放に失敗しました。";
-  }
- }
- renderWorldList(){
-  const c=document.getElementById("world-list");if(!c)return;
-  c.innerHTML="";
-  WorldManager.getAll().forEach((world,index)=>{
-   const item=document.createElement("div"),button=document.createElement("button");
-   button.type="button";button.textContent=world.name;button.dataset.action="world:select";button.dataset.worldIndex=String(index);
-   if(index===WorldManager.getActiveIndex())button.setAttribute("aria-current","true");
-   item.innerHTML="<p>Lv "+world.level+"</p><p>★ "+world.rarity+"</p>";
-   item.appendChild(button);c.appendChild(item);
-  });
- }
- renderActiveWorld(){
-  const w=WorldManager.getActive(),name=document.getElementById("world-name"),level=document.getElementById("world-level"),rarity=document.getElementById("world-rarity");
-  if(!w){if(name)name.textContent="-";if(level)level.textContent="-";if(rarity)rarity.textContent="-";return;}
-  if(name)name.textContent=w.name;if(level)level.textContent=w.level;if(rarity)rarity.textContent=w.rarity;
- }
- renderUnlockCost(){const e=document.getElementById("unlock-cost");if(e)e.textContent=Formatter.format(UnlockManager.getUnlockCost());}
- render(){this.renderActiveWorld();this.renderWorldList();this.renderUnlockCost();}
+class WorldUI {
+    constructor() { this.initialized = false; }
+
+    initialize() {
+        if (this.initialized) return;
+        this.initialized = true;
+        this.registerEvents();
+        this.render();
+    }
+
+    registerEvents() {
+        ["world:update","world:unlock","world:create:success","world:create:failed","resource:update","research:update","upgrade:update","rebirth:update"].forEach(event => {
+            eventBus.on(event, () => this.render());
+        });
+        eventBus.on("world:unlock:failed", failure => {
+            if (!failure) return;
+            eventBus.emit("notification:show", {
+                type: "warning",
+                message: this.getUnlockFailureMessage(failure)
+            });
+        });
+    }
+
+    getUnlockFailureMessage(failure) {
+        switch (failure.code) {
+            case "INSUFFICIENT_EP":
+                return "EPが不足しています。必要: " + Formatter.format(failure.required) + " / 現在: " + Formatter.format(failure.current);
+            case "EP_CONSUME_FAILED":
+                return "EPの消費に失敗しました。もう一度試してください。";
+            default:
+                return "世界の解放に失敗しました。";
+        }
+    }
+
+    renameWorld(index) {
+        const world = WorldManager.get(index);
+        if (!world) return;
+        const name = window.prompt("世界名を入力してください", world.name);
+        if (name === null) return;
+        const trimmed = name.trim();
+        if (!trimmed) return;
+        world.name = trimmed;
+        eventBus.emit("world:update");
+    }
+
+    createWorldCard(world, index) {
+        const card = document.createElement("article");
+        card.className = "world-card";
+
+        const title = document.createElement("h3");
+        title.textContent = "世界" + index + "個目";
+
+        const nameRow = document.createElement("div");
+        nameRow.className = "world-name-row";
+        const name = document.createElement("span");
+        name.textContent = world.name;
+
+        const renameButton = document.createElement("button");
+        renameButton.type = "button";
+        renameButton.className = "world-rename-button";
+        renameButton.textContent = "✎";
+        renameButton.setAttribute("aria-label", "世界名を変更");
+        renameButton.addEventListener("click", event => {
+            event.stopPropagation();
+            this.renameWorld(index);
+        });
+
+        nameRow.appendChild(name);
+        nameRow.appendChild(renameButton);
+
+        const stats = document.createElement("div");
+        stats.className = "world-stats";
+        const rarity = document.createElement("p");
+        rarity.textContent = "レアリティ: " + world.rarity;
+        const level = document.createElement("p");
+        level.textContent = "Lv: " + world.level;
+        stats.appendChild(rarity);
+        stats.appendChild(level);
+
+        const production = document.createElement("div");
+        production.className = "world-production";
+        const productionTitle = document.createElement("p");
+        productionTitle.textContent = "生産";
+        const list = document.createElement("ul");
+        const material = document.createElement("li");
+        const rate = world.getTotalMultiplier().toNumber() * ResearchManager.getTotalMultiplier() * UpgradeManager.getTotalMultiplier();
+        material.textContent = "素材: +" + Formatter.format(rate) + "/秒";
+        list.appendChild(material);
+        production.appendChild(productionTitle);
+        production.appendChild(list);
+
+        card.appendChild(title);
+        card.appendChild(nameRow);
+        card.appendChild(stats);
+        card.appendChild(production);
+        card.addEventListener("click", () => WorldManager.setActive(index));
+
+        if (index === WorldManager.getActiveIndex()) {
+            card.classList.add("active");
+            card.setAttribute("aria-current", "true");
+        }
+        return card;
+    }
+
+    renderWorldList() {
+        const container = document.getElementById("world-list");
+        if (!container) return;
+        container.innerHTML = "";
+        WorldManager.getAll().forEach((world, index) => {
+            container.appendChild(this.createWorldCard(world, index));
+        });
+    }
+
+    renderNextWorld() {
+        const container = document.getElementById("next-world");
+        if (!container) return;
+        const nextIndex = WorldManager.getCount();
+        const cost = UnlockManager.getUnlockCost();
+        container.innerHTML = "";
+        const title = document.createElement("h3");
+        title.className = "next-world-title";
+        title.textContent = "世界" + nextIndex + "個目";
+        const costText = document.createElement("p");
+        costText.className = "next-world-cost";
+        costText.textContent = "必要EP: " + Formatter.format(cost) + " EP";
+        const button = document.createElement("button");
+        button.id = "unlock-world";
+        button.type = "button";
+        button.dataset.action = "world:create:request";
+        button.textContent = "世界作成";
+        container.appendChild(title);
+        container.appendChild(costText);
+        container.appendChild(button);
+    }
+
+    render() {
+        this.renderWorldList();
+        this.renderNextWorld();
+    }
 }
+
 export default new WorldUI();
