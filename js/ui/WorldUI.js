@@ -80,9 +80,6 @@ class WorldUI {
         const card = document.createElement("article");
         card.className = "world-card";
 
-        const title = document.createElement("h3");
-        title.textContent = "世界" + index + "個目";
-
         const nameRow = document.createElement("div");
         nameRow.className = "world-name-row";
         const name = document.createElement("span");
@@ -115,7 +112,6 @@ class WorldUI {
         const productionTitle = document.createElement("p");
         productionTitle.textContent = "生産";
         const list = document.createElement("ul");
-        const material = document.createElement("li");
         const globalMultiplier = ResearchManager.getTotalMultiplier() * UpgradeManager.getTotalMultiplier();
         [["plant","植物"],["metal","金属"],["magic","魔力"]].forEach(([id,label]) => {
             const item = document.createElement("li");
@@ -126,7 +122,6 @@ class WorldUI {
         production.appendChild(productionTitle);
         production.appendChild(list);
 
-        card.appendChild(title);
         card.appendChild(nameRow);
         card.appendChild(stats);
         card.appendChild(production);
@@ -151,12 +146,8 @@ class WorldUI {
     renderNextWorld() {
         const container = document.getElementById("next-world");
         if (!container) return;
-        const nextIndex = WorldManager.getCount();
         const cost = UnlockManager.getUnlockCost();
         container.innerHTML = "";
-        const title = document.createElement("h3");
-        title.className = "next-world-title";
-        title.textContent = "世界" + nextIndex + "個目";
         const costText = document.createElement("p");
         costText.className = "next-world-cost";
         costText.textContent = "必要EP: " + Formatter.format(cost) + " EP";
@@ -165,7 +156,6 @@ class WorldUI {
         button.type = "button";
         button.dataset.action = "world:create:request";
         button.textContent = "世界作成";
-        container.appendChild(title);
         container.appendChild(costText);
         container.appendChild(button);
     }
