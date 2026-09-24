@@ -39,33 +39,19 @@ class ResourceManager {
 
     createDefaultResources() {
 
-        if (
+        const defaults = [
+            ["plant", "植物"],
+            ["metal", "金属"],
+            ["magic", "魔力"]
+        ];
 
-            this.exists(
-                "material"
-            )
-
-        ) {
-
-            return;
-
-        }
-
-        this.create(
-
-            new Resource(
-
-                "material",
-
-                "素材",
-
-                0,
-
-                0
-
-            )
-
-        );
+        defaults.forEach(([id, name]) => {
+            if (!this.exists(id)) {
+                this.create(
+                    new Resource(id, name, 0, 1)
+                );
+            }
+        });
 
     }
 
@@ -265,28 +251,24 @@ class ResourceManager {
 
         }
 
-        data.forEach(
-
-            resourceData => {
-
-                const resource =
-                    new Resource();
-
-                resource.load(
-                    resourceData
-                );
-
-                this.resources.set(
-
-                    resource.id,
-
-                    resource
-
-                );
-
+        data.forEach(resourceData => {
+            const resource = new Resource();
+            resource.load(resourceData);
+            if (resource.id === "material") {
+                resource.id = "plant";
+                resource.name = "植物";
             }
+            this.resources.set(resource.id, resource);
+        });
 
-        );
+        this.createDefaultResources();
+
+        ["plant", "metal", "magic"].forEach(id => {
+            const resource = this.get(id);
+            if (resource && resource.production.lt(1)) {
+                resource.production = BigNumber.one();
+            }
+        });
 
     }
 

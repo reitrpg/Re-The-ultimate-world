@@ -12,13 +12,15 @@ class OfflineProgress {
   const seconds=Math.floor(Math.min(Math.max(0,Date.now()-last),this.maxOfflineTime)/1000);
   if(seconds<=0){this.saveTimestamp();return 0;}
   const world=WorldManager.getActive(); if(!world){this.saveTimestamp();return 0;}
-  let multiplier=world.getTotalMultiplier().toNumber();
-  multiplier*=ResearchManager.getTotalMultiplier();
-  multiplier*=UpgradeManager.getTotalMultiplier();
-  const amount=multiplier*seconds;
-  ResourceManager.produce(amount);
+  const globalMultiplier=ResearchManager.getTotalMultiplier()*UpgradeManager.getTotalMultiplier();
+  const amounts={};
+  ["plant","metal","magic"].forEach(id=>{
+   const amount=world.getResourceProduction(id)*globalMultiplier*seconds;
+   ResourceManager.produce(id,amount);
+   amounts[id]=amount;
+  });
   this.saveTimestamp();
-  eventBus.emit("offline:update",{seconds,amount});
+  eventBus.emit("offline:update",{seconds,amounts});
   return seconds;
  }
 }

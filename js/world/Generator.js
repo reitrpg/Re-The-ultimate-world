@@ -12,7 +12,7 @@ class WorldGenerator{
   world.name=this.generateName(worldSeed);
   world.rarity=this.generateRarity(worldSeed);
   world.uniqueEffect=this.generateEffect(worldSeed);
-  world.baseProduction=world.baseProduction.multiply(this.generateProductionMultiplier(worldSeed));
+  world.resourceMultipliers=this.generateResourceMultipliers(worldSeed);
   return world;
  }
 }
