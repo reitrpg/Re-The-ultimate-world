@@ -8,7 +8,7 @@ import InputManager from "./InputManager.js";
 import InputActionController from "./InputActionController.js";
 import ErrorHandler from "./errorHandler.js";
 
-const APP_VERSION = "0.0.22";
+const APP_VERSION = "0.0.23";
 
 function ensureInitialState() {
     if (!ResourceManager.exists("plant") || !ResourceManager.exists("metal") || !ResourceManager.exists("magic")) {
