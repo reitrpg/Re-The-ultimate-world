@@ -11,26 +11,16 @@ class UnlockManager {
     }
 
     getUnlockCost() {
-        if (this.unlockedWorlds <= 1) {
-            return BigNumber.zero();
+        // World #1 is created for 0 EP during initialization.
+        // World #2 costs 1e100 EP.
+        // Every later world costs the previous world's unlock cost × 1e100.
+        let cost = this.firstPaidWorldCost.clone();
+
+        for (let i = 1; i < this.unlockedWorlds; i++) {
+            cost = cost.multiply(this.costMultiplier);
         }
 
-        if (this.unlockedWorlds === 2) {
-            return this.firstPaidWorldCost.clone();
-        }
-
-        return this.firstPaidWorldCost.multiply(
-            this.costMultiplier.multiply(
-                BigNumber.from(1)
-            ).multiply(
-                BigNumber.from(
-                    Math.pow(
-                        1e100,
-                        this.unlockedWorlds - 2
-                    )
-                )
-            )
-        );
+        return cost;
     }
 
     getUnlockFailureReason() {
