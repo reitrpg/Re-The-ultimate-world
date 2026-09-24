@@ -104,8 +104,11 @@ class WorldUI {
         rarity.textContent = "レアリティ: " + world.rarity;
         const level = document.createElement("p");
         level.textContent = "Lv: " + world.level;
+        const exp = document.createElement("p");
+        exp.textContent = "EXP: " + Formatter.format(world.exp) + "/" + Formatter.format(world.getRequiredExperience());
         stats.appendChild(rarity);
         stats.appendChild(level);
+        stats.appendChild(exp);
 
         const production = document.createElement("div");
         production.className = "world-production";
