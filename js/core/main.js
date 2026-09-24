@@ -5,30 +5,30 @@
 
 import SaveManager from "./save.js";
 import Game from "./game.js";
-
 import OfflineProgress from "../utils/OfflineProgress.js";
-
 import ResourceManager from "../resource/Manager.js";
 import WorldManager from "../world/Manager.js";
-
 import UI from "../ui/UI.js";
 
 function initializeResources() {
-    if (ResourceManager.exists("material")) {
-        return;
+    if (!ResourceManager.exists("material")) {
+        ResourceManager.createDefaultResources();
     }
-
-    ResourceManager.createDefaultResources();
 }
 
 function initializeWorld() {
-    if (WorldManager.getCount() > 0) {
-        return;
+    if (WorldManager.getCount() === 0) {
+        WorldManager.create(Date.now().toString());
     }
+}
 
-    WorldManager.create(
-        Date.now().toString()
-    );
+function registerServiceWorker() {
+    if (!("serviceWorker" in navigator)) return;
+
+    navigator.serviceWorker.register("./service-worker.js")
+        .catch(error => {
+            console.warn("Service Worker registration failed:", error);
+        });
 }
 
 function initializeGame() {
@@ -37,27 +37,21 @@ function initializeGame() {
     if (!loaded) {
         initializeResources();
         initializeWorld();
+    } else {
+        initializeResources();
+        initializeWorld();
     }
 
     OfflineProgress.calculate();
-
     UI.initialize();
-
     SaveManager.startAutoSave();
     Game.start();
+    registerServiceWorker();
 }
 
-window.addEventListener(
-    "beforeunload",
-    () => {
-        OfflineProgress.saveTimestamp();
-        SaveManager.save();
-    }
-);
+window.addEventListener("beforeunload", () => {
+    OfflineProgress.saveTimestamp();
+    SaveManager.save();
+});
 
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
-        initializeGame();
-    }
-);
+document.addEventListener("DOMContentLoaded", initializeGame);
