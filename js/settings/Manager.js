@@ -5,14 +5,14 @@
 
 import eventBus from "../core/eventBus.js";
 
-const DEFAULT_SETTINGS = {
+export const DEFAULT_SETTINGS = Object.freeze({
     numberFormat: "scientific",
     tickSpeed: 1000,
     autoSaveInterval: 30000,
     debugMode: false,
     speedRunMode: false,
     language: "ja"
-};
+});
 
 class SettingsManager {
     constructor() {
@@ -28,17 +28,29 @@ class SettingsManager {
     }
 
     set(key, value) {
-        if (!Object.prototype.hasOwnProperty.call(this.settings, key)) {
+        if (!Object.prototype.hasOwnProperty.call(DEFAULT_SETTINGS, key)) {
             return false;
+        }
+
+        if (key === "tickSpeed") {
+            const numeric = Number(value);
+            if (!Number.isFinite(numeric) || numeric <= 0) return false;
+            value = numeric;
+        }
+
+        if (key === "autoSaveInterval") {
+            const numeric = Number(value);
+            if (!Number.isFinite(numeric) || numeric < 0) return false;
+            value = numeric;
+        }
+
+        if (key === "debugMode" || key === "speedRunMode") {
+            value = Boolean(value);
         }
 
         this.settings[key] = value;
 
-        eventBus.emit("settings:update", {
-            key,
-            value
-        });
-
+        eventBus.emit("settings:update", { key, value });
         return true;
     }
 
@@ -66,7 +78,6 @@ class SettingsManager {
 
     reset() {
         this.settings = { ...DEFAULT_SETTINGS };
-
         eventBus.emit("settings:update");
     }
 
@@ -75,17 +86,17 @@ class SettingsManager {
     }
 
     load(data) {
-        if (!data || typeof data !== "object") {
-            return false;
+        this.settings = { ...DEFAULT_SETTINGS };
+
+        if (data && typeof data === "object") {
+            Object.keys(DEFAULT_SETTINGS).forEach(key => {
+                if (Object.prototype.hasOwnProperty.call(data, key)) {
+                    this.set(key, data[key]);
+                }
+            });
         }
 
-        this.settings = {
-            ...DEFAULT_SETTINGS,
-            ...data
-        };
-
         eventBus.emit("settings:update");
-
         return true;
     }
 }
