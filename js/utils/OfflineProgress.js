@@ -28,10 +28,7 @@ class OfflineProgress {
         }
 
         const seconds = Math.floor(
-            Math.min(
-                Math.max(0, Date.now() - last),
-                this.maxOfflineTime
-            ) / 1000
+            Math.min(Math.max(0, Date.now() - last), this.maxOfflineTime) / 1000
         );
 
         if (seconds <= 0) {
@@ -46,20 +43,21 @@ class OfflineProgress {
             return 0;
         }
 
-        const globalMultiplier =
-            ResearchManager.getTotalMultiplier() *
-            UpgradeManager.getTotalMultiplier();
+        const globalMultiplier = BigNumber.from(ResearchManager.getTotalMultiplier())
+            .multiply(UpgradeManager.getTotalMultiplier());
 
         const amounts = {};
         let experienceGain = BigNumber.zero();
 
         ["plant", "metal", "magic"].forEach(id => {
-            const amount = world
-                .getResourceProduction(id)
-                .multiply(globalMultiplier)
-                .multiply(seconds);
+            const production = world.getResourceProduction(id).multiply(globalMultiplier);
+            const amount = production.multiply(seconds);
+
+            if (amount.lessOrEqual(0)) return;
 
             if (ResourceManager.produce(id, amount)) {
+                const resource = ResourceManager.get(id);
+                if (resource) resource.production = production;
                 amounts[id] = amount;
                 experienceGain = experienceGain.add(amount);
             }
