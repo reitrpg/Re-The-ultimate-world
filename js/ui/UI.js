@@ -1,8 +1,3 @@
-/**
- * World Creator
- * UI Manager
- */
-
 import eventBus from "../core/eventBus.js";
 import TabUI from "./TabUI.js";
 import EPUI from "./EPUI.js";
@@ -28,19 +23,31 @@ class UI {
 
         this.initialized = true;
 
-        TabUI.initialize();
-        EPUI.initialize();
-        ResourceUI.initialize();
-        WorldUI.initialize();
-        ResearchUI.initialize();
-        UpgradeUI.initialize();
-        ConverterUI.initialize();
-        RebirthUI.initialize();
-        SettingsUI.initialize();
-        DebugUI.initialize();
-        SaveUI.initialize();
-        NotificationUI.initialize();
-        ErrorUI.initialize();
+        const modules = [
+            TabUI,
+            EPUI,
+            ResourceUI,
+            WorldUI,
+            ResearchUI,
+            UpgradeUI,
+            ConverterUI,
+            RebirthUI,
+            SettingsUI,
+            DebugUI,
+            SaveUI,
+            NotificationUI,
+            ErrorUI
+        ];
+
+        // A single broken optional UI module must not kill the entire UI.
+        modules.forEach(module => {
+            try {
+                module.initialize();
+            } catch (error) {
+                console.error("World Creator UI initialization failed:", error);
+                queueMicrotask(() => { throw error; });
+            }
+        });
 
         this.registerEvents();
         this.update();
@@ -57,23 +64,39 @@ class UI {
             "settings:update",
             "debug:update",
             "debug:reset",
-            "error:update"
+            "error:update",
+            "ep:update"
         ].forEach(event => {
             eventBus.on(event, () => this.update());
         });
     }
 
     update() {
-        EPUI.render();
-        ResourceUI.render();
-        WorldUI.render();
-        ResearchUI.render();
-        UpgradeUI.render();
-        ConverterUI.render();
-        RebirthUI.render();
-        SettingsUI.render();
-        DebugUI.updateVisibility();
-        ErrorUI.render();
+        const modules = [
+            EPUI,
+            ResourceUI,
+            WorldUI,
+            ResearchUI,
+            UpgradeUI,
+            ConverterUI,
+            RebirthUI,
+            SettingsUI,
+            DebugUI,
+            ErrorUI
+        ];
+
+        modules.forEach(module => {
+            try {
+                if (typeof module.render === "function") {
+                    module.render();
+                } else if (typeof module.updateVisibility === "function") {
+                    module.updateVisibility();
+                }
+            } catch (error) {
+                console.error("World Creator UI render failed:", error);
+                queueMicrotask(() => { throw error; });
+            }
+        });
     }
 }
 
