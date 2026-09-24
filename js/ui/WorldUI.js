@@ -104,11 +104,20 @@ class WorldUI {
         rarity.textContent = "レアリティ: " + world.rarity;
         const level = document.createElement("p");
         level.textContent = "Lv: " + world.level;
+        const feature = document.createElement("p");
+        feature.textContent =
+            "特徴: " +
+            world.getResourceFeatureName("plant") + " ×" + world.getResourceMultiplier("plant") +
+            " / " +
+            world.getResourceFeatureName("metal") + " ×" + world.getResourceMultiplier("metal") +
+            " / " +
+            world.getResourceFeatureName("magic") + " ×" + world.getResourceMultiplier("magic");
         const exp = document.createElement("p");
         exp.textContent = "EXP: " + Formatter.format(world.exp) + "/" + Formatter.format(world.getRequiredExperience());
         const base = document.createElement("p");
         base.textContent = "基礎能力: ×" + Formatter.format(world.getLevelMultiplier());
         stats.appendChild(rarity);
+        stats.appendChild(feature);
         stats.appendChild(level);
         stats.appendChild(exp);
         stats.appendChild(base);
