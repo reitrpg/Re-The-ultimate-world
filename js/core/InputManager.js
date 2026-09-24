@@ -15,9 +15,17 @@ class InputManager {
 
         const handle = event => this.dispatch(event);
 
-        // Cross-platform input bridge:
-        // pointer events are preferred; touch/mouse/click remain fallbacks.
-        ["pointerup", "touchend", "mouseup", "click"].forEach(type => {
+        // Mobile WebView/browser compatibility:
+        // pointerdown/touchstart provide an early fallback, while the
+        // release/click events cover platforms that do not expose them.
+        [
+            "pointerdown",
+            "touchstart",
+            "pointerup",
+            "touchend",
+            "mouseup",
+            "click"
+        ].forEach(type => {
             document.addEventListener(type, handle, true);
         });
 
@@ -29,7 +37,9 @@ class InputManager {
     }
 
     resolveTarget(event) {
-        const selectors = "[data-action], [data-tab], [data-world-category], button, [role='button']";
+        const selectors =
+            "[data-action], [data-tab], [data-world-category], button, [role='button']";
+
         const path = typeof event.composedPath === "function"
             ? event.composedPath()
             : [];
@@ -42,6 +52,7 @@ class InputManager {
         }
 
         const target = event.target;
+
         return target && typeof target.closest === "function"
             ? target.closest(selectors)
             : null;
@@ -50,8 +61,8 @@ class InputManager {
     shouldDispatch(target, event) {
         const now = Date.now();
 
-        // Native mobile input can produce touchend -> pointerup -> click.
-        // Treat these as one user interaction for the same target.
+        // The same physical press can arrive as several browser events.
+        // Suppress only repeated events for the same target.
         if (
             this.lastDispatchTarget === target &&
             now - this.lastDispatchTime < 500
@@ -62,6 +73,7 @@ class InputManager {
         this.lastDispatchTarget = target;
         this.lastDispatchTime = now;
         this.lastPointerType = event.pointerType || event.type;
+
         return true;
     }
 
@@ -80,8 +92,6 @@ class InputManager {
             inputType: event.pointerType || event.type
         };
 
-        // Always expose the raw press event so platform/UI-specific
-        // listeners can observe the same normalized input.
         eventBus.emit("input:pressed", payload);
 
         if (action) {
