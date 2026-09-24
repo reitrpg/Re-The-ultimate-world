@@ -90,9 +90,13 @@ class WorldUI {
         productionTitle.textContent = "生産";
         const list = document.createElement("ul");
         const material = document.createElement("li");
-        const rate = world.getTotalMultiplier().toNumber() * ResearchManager.getTotalMultiplier() * UpgradeManager.getTotalMultiplier();
-        material.textContent = "素材: +" + Formatter.format(rate) + "/秒";
-        list.appendChild(material);
+        const globalMultiplier = ResearchManager.getTotalMultiplier() * UpgradeManager.getTotalMultiplier();
+        [["plant","植物"],["metal","金属"],["magic","魔力"]].forEach(([id,label]) => {
+            const item = document.createElement("li");
+            const rate = world.getResourceProduction(id) * globalMultiplier;
+            item.textContent = label + ": +" + Formatter.format(rate) + "/秒 (×" + world.getResourceMultiplier(id) + ")";
+            list.appendChild(item);
+        });
         production.appendChild(productionTitle);
         production.appendChild(list);
 
