@@ -169,6 +169,23 @@ class World {
    magic: "魔力の源泉",
    ...(data.resourceFeatures || {})
   };
+
+  // Migrate old worlds that had the broken all-0.75 feature distribution.
+  const multipliers = RESOURCE_IDS.map(id => this.getResourceMultiplier(id));
+  if (multipliers.every(value => value === 0.75)) {
+   const hash = text => {
+    let value = 0;
+    for (let i = 0; i < text.length; i++) {
+     value = ((value << 5) - value + text.charCodeAt(i)) | 0;
+    }
+    return Math.abs(value);
+   };
+   RESOURCE_IDS.forEach((id, index) => {
+    const values = [0.75, 1, 1.4];
+    this.resourceMultipliers[id] =
+     values[hash(this.seed + "_" + (5 + index)) % values.length];
+   });
+  }
  }
 }
 
