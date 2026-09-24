@@ -1,97 +1,32 @@
 import eventBus from "./eventBus.js";
 
 class InputManager {
-    constructor() {
-        this.initialized = false;
-        this.lastDispatchTime = 0;
-        this.lastDispatchTarget = null;
-    }
-
-    initialize() {
-        if (this.initialized) return;
-
-        this.initialized = true;
-
-        // pointerdown is the primary input path because it is emitted
-        // consistently by touch and mouse/pointer devices.
-        document.addEventListener(
-            "pointerdown",
-            event => this.dispatch(event),
-            true
-        );
-
-        // Keep click as a compatibility path for browsers/WebViews that
-        // do not expose a usable PointerEvent sequence.
-        document.addEventListener(
-            "click",
-            event => this.dispatch(event),
-            true
-        );
-    }
-
-    resolveTarget(event) {
-        const path = typeof event.composedPath === "function"
-            ? event.composedPath()
-            : [];
-
-        for (const node of path) {
-            if (node && typeof node.closest === "function") {
-                const target = node.closest(
-                    "[data-action], button, [role='button']"
-                );
-
-                if (target) return target;
-            }
-        }
-
-        const target = event.target;
-
-        if (target && typeof target.closest === "function") {
-            return target.closest(
-                "[data-action], button, [role='button']"
-            );
-        }
-
-        return null;
-    }
-
-    dispatch(event) {
-        const target = this.resolveTarget(event);
-
-        if (!target) return false;
-
-        const now = Date.now();
-
-        if (
-            this.lastDispatchTarget === target &&
-            now - this.lastDispatchTime < 800
-        ) {
-            return false;
-        }
-
-        this.lastDispatchTarget = target;
-        this.lastDispatchTime = now;
-
-        const action = target.dataset?.action || null;
-        const payload = {
-            target,
-            originalEvent: event
-        };
-
-        // Action events are the application-level input contract.
-        // Any registered feature listener receives the event here.
-        if (action) {
-            eventBus.emit(action, payload);
-        }
-
-        eventBus.emit("input:pressed", {
-            action,
-            target,
-            originalEvent: event
-        });
-
-        return true;
-    }
+ constructor(){this.initialized=false;this.lastDispatchTime=0;this.lastDispatchTarget=null;}
+ initialize(){
+  if(this.initialized)return;
+  this.initialized=true;
+  const handle=e=>this.dispatch(e);
+  ["pointerup","touchend","mouseup","click"].forEach(type=>document.addEventListener(type,handle,true));
+  document.addEventListener("keyup",e=>{if(e.key==="Enter"||e.key===" ")this.dispatch(e);},true);
+ }
+ resolveTarget(event){
+  const path=typeof event.composedPath==="function"?event.composedPath():[];
+  for(const node of path){if(node&&typeof node.closest==="function"){const t=node.closest("[data-action], button, [role='button']");if(t)return t;}}
+  const t=event.target;
+  return t&&typeof t.closest==="function"?t.closest("[data-action], button, [role='button']"):null;
+ }
+ dispatch(event){
+  const target=this.resolveTarget(event);
+  if(!target||target.disabled)return false;
+  const action=target.dataset?.action||null;
+  if(!action){eventBus.emit("input:pressed",{action:null,target,originalEvent:event});return true;}
+  const now=Date.now();
+  if(this.lastDispatchTarget===target&&now-this.lastDispatchTime<500)return false;
+  this.lastDispatchTarget=target;this.lastDispatchTime=now;
+  const payload={target,originalEvent:event};
+  eventBus.emit(action,payload);
+  eventBus.emit("input:pressed",{action,target,originalEvent:event});
+  return true;
+ }
 }
-
 export default new InputManager();
