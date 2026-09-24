@@ -10,6 +10,7 @@ class WorldUI {
 
     initialize() {
         if (this.initialized) return;
+
         this.initialized = true;
         this.registerEvents();
         this.render();
@@ -19,7 +20,6 @@ class WorldUI {
         eventBus.on("world:update", () => this.render());
         eventBus.on("world:unlock", () => this.render());
 
-        // InputManager が発火した入力イベントをゲームイベントへ変換する。
         eventBus.on("world:create:request", (payload = {}) => {
             const seed = payload.seed ?? Date.now().toString();
             const cost = UnlockManager.getUnlockCost();
@@ -31,8 +31,33 @@ class WorldUI {
             );
         });
 
+        eventBus.on("world:unlock:failed", failure => {
+            if (!failure) return;
+
+            eventBus.emit("notification:show", {
+                type: "warning",
+                message: this.getUnlockFailureMessage(failure)
+            });
+        });
+
         eventBus.on("world:create:success", () => this.render());
         eventBus.on("world:create:failed", () => this.render());
+    }
+
+    getUnlockFailureMessage(failure) {
+        switch (failure.code) {
+            case "INSUFFICIENT_EP":
+                return "EPが不足しています。必要: " +
+                    Formatter.format(failure.required) +
+                    " / 現在: " +
+                    Formatter.format(failure.current);
+
+            case "EP_CONSUME_FAILED":
+                return "EPの消費に失敗しました。もう一度試してください。";
+
+            default:
+                return "世界の解放に失敗しました。";
+        }
     }
 
     renderWorldList() {
@@ -49,10 +74,9 @@ class WorldUI {
             button.textContent = world.name;
             button.dataset.worldIndex = String(index);
 
-            item.innerHTML = `
-                <p>Lv ${world.level}</p>
-                <p>★ ${world.rarity}</p>
-            `;
+            item.innerHTML =
+                "<p>Lv " + world.level + "</p>" +
+                "<p>★ " + world.rarity + "</p>";
 
             item.appendChild(button);
             container.appendChild(item);
