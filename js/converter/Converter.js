@@ -22,11 +22,11 @@ class Converter {
 
         this.addRecipe({
 
-            id: "material_to_ep",
+            id: "plant_to_ep",
 
-            name: "素材 → EP",
+            name: "植物 → EP",
 
-            resourceId: "material",
+            resourceId: "plant",
 
             resourceCost: 10,
 
