@@ -6,117 +6,203 @@
 import eventBus from "../core/eventBus.js";
 
 class TabUI {
-
     constructor() {
-
-        this.activeTab = "world";
-
         this.initialized = false;
-
+        this.activeTab = null;
+        this.tabs = [];
+        this.panels = [];
     }
 
     initialize() {
+        if (this.initialized) return;
 
-        if (this.initialized) {
+        this.collectElements();
 
+        if (this.tabs.length === 0) {
+            this.initialized = true;
             return;
-
         }
 
         this.initialized = true;
 
-        const buttons =
-            document.querySelectorAll(
-                "[data-tab]"
-            );
+        this.registerButtons();
+        this.registerEvents();
 
-        buttons.forEach(
-
-            button => {
-
-                button.addEventListener(
-
-                    "click",
-
-                    () => {
-
-                        this.open(
-
-                            button.dataset.tab
-
-                        );
-
-                    }
-
-                );
-
-            }
-
-        );
-
-        this.open(
-            this.activeTab
-        );
-
+        const initialTab = this.getInitialTab();
+        if (initialTab) {
+            this.setActive(initialTab);
+        }
     }
 
-    open(tabName) {
+    collectElements() {
+        this.tabs = Array.from(
+            document.querySelectorAll("[data-tab], .tab-button")
+        );
 
-        const contents =
-            document.querySelectorAll(
-                ".tab-content"
+        this.panels = Array.from(
+            document.querySelectorAll("[data-tab-panel], .tab-panel, .tab-content")
+        );
+    }
+
+    registerButtons() {
+        this.tabs.forEach(tab => {
+            tab.addEventListener("click", event => {
+                event.preventDefault();
+
+                const tabId = this.getTabId(tab);
+                if (!tabId) return;
+
+                this.setActive(tabId);
+            });
+        });
+    }
+
+    registerEvents() {
+        eventBus.on("tab:change", tabId => {
+            if (!tabId || tabId === this.activeTab) return;
+            this.setActive(tabId, false);
+        });
+    }
+
+    getTabId(tab) {
+        if (!tab) return null;
+
+        if (tab.dataset.tab) {
+            return tab.dataset.tab;
+        }
+
+        if (tab.dataset.target) {
+            return tab.dataset.target.replace(/^#/, "");
+        }
+
+        const href = tab.getAttribute("href");
+        if (href && href.startsWith("#")) {
+            return href.slice(1).replace(/-tab$/, "");
+        }
+
+        return null;
+    }
+
+    getPanelId(panel) {
+        if (!panel) return null;
+
+        if (panel.dataset.tabPanel) {
+            return panel.dataset.tabPanel;
+        }
+
+        if (panel.dataset.tabContent) {
+            return panel.dataset.tabContent;
+        }
+
+        if (panel.id) {
+            return panel.id.replace(/-tab$/, "");
+        }
+
+        return null;
+    }
+
+    getInitialTab() {
+        const activeTab = this.tabs.find(tab => {
+            return (
+                tab.classList.contains("active") ||
+                tab.getAttribute("aria-selected") === "true" ||
+                tab.disabled === true
             );
+        });
 
-        contents.forEach(
+        if (activeTab) {
+            return this.getTabId(activeTab);
+        }
 
-            content => {
+        const firstTab = this.tabs[0];
+        return firstTab ? this.getTabId(firstTab) : null;
+    }
 
-                content.hidden =
+    setActive(tabId, emit = true) {
+        if (!tabId) return false;
 
-                    content.id !==
-                    `${tabName}-tab`;
+        const targetTab = this.tabs.find(
+            tab => this.getTabId(tab) === tabId
+        );
 
+        const targetPanel = this.panels.find(
+            panel => this.getPanelId(panel) === tabId
+        );
+
+        if (!targetTab && !targetPanel) {
+            return false;
+        }
+
+        this.tabs.forEach(tab => {
+            const active = this.getTabId(tab) === tabId;
+
+            tab.classList.toggle("active", active);
+
+            if (tab.hasAttribute("aria-selected")) {
+                tab.setAttribute(
+                    "aria-selected",
+                    String(active)
+                );
             }
 
-        );
-
-        const buttons =
-            document.querySelectorAll(
-                "[data-tab]"
-            );
-
-        buttons.forEach(
-
-            button => {
-
-                button.disabled =
-
-                    button.dataset.tab ===
-                    tabName;
-
+            if (tab.hasAttribute("aria-expanded")) {
+                tab.setAttribute(
+                    "aria-expanded",
+                    String(active)
+                );
             }
 
-        );
+            // Keep compatibility with the existing WC tab behavior.
+            if (
+                tab.tagName === "BUTTON" &&
+                !tab.classList.contains("tab-button") &&
+                !tab.hasAttribute("aria-selected")
+            ) {
+                tab.disabled = active;
+            }
+        });
 
-        this.activeTab =
-            tabName;
+        this.panels.forEach(panel => {
+            const active = this.getPanelId(panel) === tabId;
 
-        eventBus.emit(
+            panel.hidden = !active;
+            panel.classList.toggle("active", active);
 
-            "tab:change",
+            panel.setAttribute(
+                "aria-hidden",
+                String(!active)
+            );
+        });
 
-            tabName
+        this.activeTab = tabId;
 
-        );
+        if (emit) {
+            eventBus.emit("tab:change", tabId);
+            eventBus.emit("tab:update", tabId);
+        }
 
+        return true;
+    }
+
+    open(tabId) {
+        return this.setActive(tabId);
     }
 
     getActiveTab() {
-
         return this.activeTab;
-
     }
 
+    getActive() {
+        return this.activeTab;
+    }
+
+    getTabs() {
+        return [...this.tabs];
+    }
+
+    getPanels() {
+        return [...this.panels];
+    }
 }
 
 export default new TabUI();
