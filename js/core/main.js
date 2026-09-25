@@ -8,7 +8,7 @@ import InputManager from "./InputManager.js";
 import InputActionController from "./InputActionController.js";
 import ErrorHandler from "./errorHandler.js";
 
-const APP_VERSION = "0.0.24";
+const APP_VERSION = "0.0.25";
 
 function ensureInitialState() {
     if (!ResourceManager.exists("plant") || !ResourceManager.exists("metal") || !ResourceManager.exists("magic")) {
@@ -37,8 +37,8 @@ function registerServiceWorker() {
     }
 
     navigator.serviceWorker
-        .register("./service-worker.js?v=16")
-        .then(registration => registration.update())
+        .register("./service-worker.js?v=18")
+        .then(registration => {\n            if (registration.waiting) registration.waiting.postMessage({ type: "SKIP_WAITING" });\n            return registration.update();\n        })
         .catch(error => {
             console.warn("Service Worker registration failed:", error);
             ErrorHandler.record(error);
