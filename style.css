@@ -1,3 +1,12 @@
+:root {
+    --border: #777;
+    --border-strong: #222;
+    --surface: #eee;
+    --surface-active: #ddd;
+    --gap: 10px;
+    --radius: 6px;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -7,6 +16,7 @@
 body {
     padding: 16px;
     font-family: sans-serif;
+    line-height: 1.5;
 }
 
 header {
@@ -27,39 +37,56 @@ p {
     margin-bottom: 8px;
 }
 
+button,
+input,
+select {
+    padding: 8px;
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+button:disabled {
+    cursor: default;
+    opacity: 0.6;
+}
+
+/* Main navigation */
 nav {
     display: flex;
     flex-direction: column;
     gap: 2px;
     margin-bottom: 12px;
-    overflow: hidden;
     padding: 3px;
-    border: 1px solid #777;
-    max-height: 20vh;
+    overflow: hidden;
+    border: 1px solid var(--border);
 }
 
 nav button {
-    flex: 1 1 0;
-    min-height: 24px;
     width: 100%;
-    padding: 3px 8px;
-    border: 1px solid #777;
-    background: #eee;
-    cursor: pointer;
+    min-height: 28px;
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
     line-height: 1.2;
 }
 
 nav button.active {
-    background: #ddd;
-    border-color: #222;
+    border-color: var(--border-strong);
+    background: var(--surface-active);
     font-weight: 700;
 }
 
+/* Tabs */
 .tab-content {
     display: block;
 }
 
-.tab-content[hidden] {
+.tab-content[hidden],
+.world-category-panel[hidden],
+#debug-panel[hidden] {
     display: none !important;
 }
 
@@ -67,106 +94,38 @@ nav button.active {
     display: block;
 }
 
+/* Lists */
 #world-list,
 #resource-list,
 #research-list,
 #upgrade-list,
-#converter-list {
+#converter-list,
+#next-world {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--gap);
 }
 
-#world-list div,
+#world-list > div,
 .research-item,
 .upgrade-item,
 .converter-item {
     padding: 12px;
-    border: 1px solid;
+    border: 1px solid var(--border);
 }
 
 #world-list button,
 .research-item button,
 .upgrade-item button,
 .converter-item button {
-    margin-right: 8px;
+    margin: 0 8px 8px 0;
     padding: 8px 12px;
-    cursor: pointer;
 }
 
-input,
-select,
-button {
-    padding: 8px;
-}
-
-#debug-panel {
-    padding: 12px;
-    border: 1px solid;
-}
-
-#debug-panel button,
-#debug-panel input {
-    margin-top: 8px;
-}
-
-#save-button,
-#load-button,
-#export-button,
-#import-button,
-#delete-save-button {
-    margin-right: 8px;
-    margin-top: 8px;
-}
-
-@media (max-width: 768px) {
-    body {
-        padding: 10px;
-    }
-
-    nav {
-        flex-direction: column;
-        gap: 2px;
-        max-height: 20vh;
-    }
-
-    nav button {
-        width: 100%;
-        min-height: 24px;
-        padding: 3px 8px;
-        margin: 0;
-        margin-bottom: 0;
-    }
-
-    input,
-    select,
-    button {
-        width: 100%;
-        margin-bottom: 8px;
-    }
-
-    #world-list button,
-    .research-item button,
-    .upgrade-item button,
-    .converter-item button {
-        width: 100%;
-    }
-}
-
-#app-version{margin-top:24px;padding:12px 0;text-align:center;font-size:12px;opacity:.65}
-
-
-/* World screen */
-#world-list,
-#next-world {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
+/* World */
 .world-card {
     padding: 16px;
-    border: 1px solid;
+    border: 1px solid var(--border);
     cursor: pointer;
 }
 
@@ -188,11 +147,13 @@ button {
 
 .world-name-row span {
     flex: 1;
+    min-width: 0;
     font-size: 20px;
     font-weight: 600;
 }
 
 .world-rename-button {
+    flex: 0 0 auto;
     width: auto !important;
     margin: 0 !important;
     padding: 4px 8px !important;
@@ -214,18 +175,119 @@ button {
 #next-world {
     margin-top: 16px;
     padding-top: 16px;
-    border-top: 1px solid;
+    border-top: 1px solid var(--border);
 }
 
 #next-world #unlock-world {
     width: 100%;
 }
 
-.world-category-tabs{display:flex;gap:4px;margin-bottom:12px;border-bottom:1px solid #777}
-.world-category-button{flex:1;padding:10px;border:1px solid #777;background:#eee;cursor:pointer}
-.world-category-button.active{background:#ddd;border-bottom:2px solid #222;font-weight:700}
-.world-category-panel[hidden]{display:none!important}
+/* World category tabs */
+.world-category-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
 
-.world-rebirth { margin-top: 0.75rem; padding: 0.75rem; border: 1px solid #ccc; border-radius: 0.5rem; }
-.world-rebirth p { margin: 0.25rem 0; }
-.world-rebirth button { margin-top: 0.5rem; }
+.world-category-button {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+}
+
+.world-category-button.active {
+    border-bottom: 2px solid var(--border-strong);
+    background: var(--surface-active);
+    font-weight: 700;
+}
+
+/* Rebirth */
+.world-rebirth {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: var(--radius);
+}
+
+.world-rebirth p {
+    margin: 0.25rem 0;
+}
+
+.world-rebirth button {
+    margin-top: 0.5rem;
+}
+
+/* Settings / debug */
+#debug-panel {
+    padding: 12px;
+    border: 1px solid var(--border);
+}
+
+#debug-panel button,
+#debug-panel input {
+    margin-top: 8px;
+}
+
+#save-controls button {
+    margin: 8px 8px 0 0;
+}
+
+/* Footer */
+#app-version {
+    margin-top: 24px;
+    padding: 12px 0;
+    text-align: center;
+    font-size: 12px;
+    opacity: 0.65;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    /*
+     * Do not apply width:100% to every button.
+     * Category tabs and other button groups rely on flex sizing.
+     */
+    input,
+    select {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+
+    #world-list button,
+    .research-item button,
+    .upgrade-item button,
+    .converter-item button {
+        width: 100%;
+        margin-right: 0;
+    }
+
+    .world-category-tabs {
+        width: 100%;
+    }
+
+    .world-category-button {
+        width: auto;
+        margin-bottom: 0;
+    }
+
+    .world-name-row {
+        align-items: stretch;
+    }
+
+    .world-rename-button {
+        width: auto !important;
+    }
+
+    #save-controls button {
+        width: 100%;
+        margin-right: 0;
+    }
+}
