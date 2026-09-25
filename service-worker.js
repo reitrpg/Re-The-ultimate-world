@@ -1,4 +1,4 @@
-const CACHE_NAME = "world-creator-v17";
+const CACHE_NAME = "world-creator-v18";
 
 const FILES_TO_CACHE = [
     "./",
@@ -52,25 +52,34 @@ const FILES_TO_CACHE = [
     "./icon-512.png"
 ];
 
-
-async function cacheFirst(request) {
-    const cached = await caches.match(request);
-    if (cached) return cached;
-
-    const response = await fetch(request);
-
+async function putInCache(request, response) {
     if (response && response.ok) {
         const cache = await caches.open(CACHE_NAME);
         await cache.put(request, response.clone());
     }
-
     return response;
+}
+
+async function staleWhileRevalidate(request) {
+    const cached = await caches.match(request);
+
+    const network = fetch(request)
+        .then(response => putInCache(request, response))
+        .catch(() => null);
+
+    if (cached) {
+        return cached;
+    }
+
+    const response = await network;
+    if (response) return response;
+
+    throw new Error("World Creator: resource unavailable");
 }
 
 self.addEventListener("install", event => {
     event.waitUntil(
-        caches
-            .open(CACHE_NAME)
+        caches.open(CACHE_NAME)
             .then(cache =>
                 Promise.allSettled(
                     FILES_TO_CACHE.map(file => cache.add(file))
@@ -82,15 +91,12 @@ self.addEventListener("install", event => {
 
 self.addEventListener("activate", event => {
     event.waitUntil(
-        caches
-            .keys()
+        caches.keys()
             .then(keys =>
                 Promise.all(
-                    keys.map(key =>
-                        key !== CACHE_NAME
-                            ? caches.delete(key)
-                            : undefined
-                    )
+                    keys
+                        .filter(key => key !== CACHE_NAME)
+                        .map(key => caches.delete(key))
                 )
             )
             .then(() => self.clients.claim())
@@ -98,7 +104,14 @@ self.addEventListener("activate", event => {
 });
 
 self.addEventListener("fetch", event => {
-    if (event.request.method !== "GET") return;
+    const request = event.request;
 
-    event.respondWith(cacheFirst(event.request));
+    if (request.method !== "GET") return;
+
+    const url = new URL(request.url);
+
+    // Only cache same-origin application resources.
+    if (url.origin !== self.location.origin) return;
+
+    event.respondWith(staleWhileRevalidate(request));
 });
