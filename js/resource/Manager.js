@@ -181,7 +181,8 @@ class ResourceManager {
 
     produce(
         id,
-        amount
+        amount,
+        emitUpdate = true
     ) {
 
         const resource =
@@ -199,11 +200,9 @@ class ResourceManager {
                 amount
             );
 
-        eventBus.emit(
-
-            "resource:update"
-
-        );
+        if (emitUpdate) {
+            eventBus.emit("resource:update");
+        }
 
         return true;
 
