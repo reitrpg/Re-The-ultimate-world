@@ -13,48 +13,42 @@ import SaveUI from "./SaveUI.js";
 import NotificationUI from "./NotificationUI.js";
 import ErrorUI from "./ErrorUI.js";
 
+const INITIALIZE_MODULES = [
+    TabUI, EPUI, ResourceUI, WorldUI, ResearchUI, UpgradeUI,
+    ConverterUI, RebirthUI, SettingsUI, DebugUI, SaveUI,
+    NotificationUI, ErrorUI
+];
+
+const RENDER_MODULES = [
+    EPUI, ResourceUI, WorldUI, ResearchUI, UpgradeUI,
+    ConverterUI, RebirthUI, SettingsUI, DebugUI, ErrorUI
+];
+
 class UI {
     constructor() {
         this.initialized = false;
+        this.renderQueued = false;
     }
 
     initialize() {
         if (this.initialized) return;
-
         this.initialized = true;
 
-        const modules = [
-            TabUI,
-            EPUI,
-            ResourceUI,
-            WorldUI,
-            ResearchUI,
-            UpgradeUI,
-            ConverterUI,
-            RebirthUI,
-            SettingsUI,
-            DebugUI,
-            SaveUI,
-            NotificationUI,
-            ErrorUI
-        ];
-
-        // A single broken optional UI module must not kill the entire UI.
-        modules.forEach(module => {
+        for (const module of INITIALIZE_MODULES) {
             try {
                 module.initialize();
             } catch (error) {
                 console.error("World Creator UI initialization failed:", error);
-                queueMicrotask(() => { throw error; });
             }
-        });
+        }
 
         this.registerEvents();
-        this.update();
+        this.scheduleUpdate();
     }
 
     registerEvents() {
         [
+            "game:update",
             "world:update",
             "resource:update",
             "research:update",
@@ -65,27 +59,32 @@ class UI {
             "debug:update",
             "debug:reset",
             "error:update",
-            "ep:update"
-        ].forEach(event => {
-            eventBus.on(event, () => this.update());
+            "ep:update",
+            "load:success",
+            "save:success"
+        ].forEach(eventName => {
+            eventBus.on(eventName, () => this.scheduleUpdate());
         });
     }
 
-    update() {
-        const modules = [
-            EPUI,
-            ResourceUI,
-            WorldUI,
-            ResearchUI,
-            UpgradeUI,
-            ConverterUI,
-            RebirthUI,
-            SettingsUI,
-            DebugUI,
-            ErrorUI
-        ];
+    scheduleUpdate() {
+        if (this.renderQueued) return;
+        this.renderQueued = true;
 
-        modules.forEach(module => {
+        const render = () => {
+            this.renderQueued = false;
+            this.update();
+        };
+
+        if (typeof requestAnimationFrame === "function") {
+            requestAnimationFrame(render);
+        } else {
+            setTimeout(render, 16);
+        }
+    }
+
+    update() {
+        for (const module of RENDER_MODULES) {
             try {
                 if (typeof module.render === "function") {
                     module.render();
@@ -94,9 +93,8 @@ class UI {
                 }
             } catch (error) {
                 console.error("World Creator UI render failed:", error);
-                queueMicrotask(() => { throw error; });
             }
-        });
+        }
     }
 }
 

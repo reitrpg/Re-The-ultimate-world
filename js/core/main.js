@@ -38,7 +38,7 @@ function registerServiceWorker() {
 
     navigator.serviceWorker
         .register("./service-worker.js?v=18")
-        .then(registration => {\n            if (registration.waiting) registration.waiting.postMessage({ type: "SKIP_WAITING" });\n            return registration.update();\n        })
+
         .catch(error => {
             console.warn("Service Worker registration failed:", error);
             ErrorHandler.record(error);

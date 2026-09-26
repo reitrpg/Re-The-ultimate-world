@@ -94,9 +94,7 @@ class Game {
             deltaTime
         );
 
-        eventBus.emit(
-            "game:update"
-        );
+        eventBus.emit("game:update");
 
     }
 
