@@ -113,6 +113,10 @@ class World {
             }
         });
 
+        if (experienceGain.greater(0)) {
+            eventBus.emit("resource:update");
+        }
+
         this.gainExperience(experienceGain);
         return experienceGain;
     }
