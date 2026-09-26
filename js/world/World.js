@@ -106,7 +106,7 @@ class World {
 
             if (amount.lessOrEqual(0)) return;
 
-            if (ResourceManager.produce(id, amount)) {
+            if (ResourceManager.produce(id, amount, false)) {
                 const resource = ResourceManager.get(id);
                 if (resource) resource.production = production;
                 experienceGain = experienceGain.add(amount);
