@@ -7,26 +7,35 @@ import RebirthManager from "../rebirth/Manager.js";
 import eventBus from "../core/eventBus.js";
 
 class WorldUI {
-    constructor() { this.initialized = false; this.category = "world"; }
+    constructor() {
+        this.initialized = false;
+        this.category = "world";
+        this.renderQueued = false;
+        this.lastRenderTime = 0;
+        this.renderInterval = 100;
+    }
 
     initialize() {
         if (this.initialized) return;
+
         this.initialized = true;
         this.registerEvents();
-        this.registerCategoryInput();
-        this.render();
-    }
 
-    registerCategoryInput() {
-        document.addEventListener("click", event => {
-            const button = event.target?.closest("[data-world-category]");
-            if (!button) return;
-            this.setCategory(button.dataset.worldCategory);
-        }, true);
+        eventBus.on("input:pressed", payload => {
+            const target = payload?.target;
+            const button = target?.closest?.("[data-world-category]");
+
+            if (button) {
+                this.setCategory(button.dataset.worldCategory);
+            }
+        });
+
+        this.render();
     }
 
     setCategory(category) {
         if (category !== "world" && category !== "converter") return;
+
         this.category = category;
         this.renderCategory();
     }
@@ -35,6 +44,7 @@ class WorldUI {
         document.querySelectorAll("[data-world-category-panel]").forEach(panel => {
             panel.hidden = panel.dataset.worldCategoryPanel !== this.category;
         });
+
         document.querySelectorAll("[data-world-category]").forEach(button => {
             const active = button.dataset.worldCategory === this.category;
             button.classList.toggle("active", active);
@@ -43,11 +53,22 @@ class WorldUI {
     }
 
     registerEvents() {
-        ["world:update","world:unlock","world:create:success","world:create:failed","resource:update","research:update","upgrade:update","rebirth:update"].forEach(event => {
-            eventBus.on(event, () => this.render());
+        [
+            "world:update",
+            "world:unlock",
+            "world:create:success",
+            "world:create:failed",
+            "resource:update",
+            "research:update",
+            "upgrade:update",
+            "rebirth:update"
+        ].forEach(event => {
+            eventBus.on(event, () => this.scheduleRender());
         });
+
         eventBus.on("world:unlock:failed", failure => {
             if (!failure) return;
+
             eventBus.emit("notification:show", {
                 type: "warning",
                 message: this.getUnlockFailureMessage(failure)
@@ -55,12 +76,33 @@ class WorldUI {
         });
     }
 
+    scheduleRender() {
+        if (this.renderQueued) return;
+
+        this.renderQueued = true;
+
+        const now = Date.now();
+        const elapsed = now - this.lastRenderTime;
+        const delay = Math.max(0, this.renderInterval - elapsed);
+
+        window.setTimeout(() => {
+            this.renderQueued = false;
+            this.lastRenderTime = Date.now();
+            this.render();
+        }, delay);
+    }
+
     getUnlockFailureMessage(failure) {
         switch (failure.code) {
             case "INSUFFICIENT_EP":
-                return "EPが不足しています。必要: " + Formatter.format(failure.required) + " / 現在: " + Formatter.format(failure.current);
+                return "EPが不足しています。必要: " +
+                    Formatter.format(failure.required) +
+                    " / 現在: " +
+                    Formatter.format(failure.current);
+
             case "EP_CONSUME_FAILED":
                 return "EPの消費に失敗しました。もう一度試してください。";
+
             default:
                 return "世界の解放に失敗しました。";
         }
@@ -68,11 +110,17 @@ class WorldUI {
 
     renameWorld(index) {
         const world = WorldManager.get(index);
+
         if (!world) return;
+
         const name = window.prompt("世界名を入力してください", world.name);
+
         if (name === null) return;
+
         const trimmed = name.trim();
+
         if (!trimmed) return;
+
         world.name = trimmed;
         eventBus.emit("world:update");
     }
@@ -85,6 +133,7 @@ class WorldUI {
 
         const nameRow = document.createElement("div");
         nameRow.className = "world-name-row";
+
         const name = document.createElement("span");
         name.textContent = world.name;
 
@@ -93,6 +142,7 @@ class WorldUI {
         renameButton.className = "world-rename-button";
         renameButton.textContent = "✎";
         renameButton.setAttribute("aria-label", "世界名を変更");
+
         renameButton.addEventListener("click", event => {
             event.stopPropagation();
             this.renameWorld(index);
@@ -103,16 +153,28 @@ class WorldUI {
 
         const stats = document.createElement("div");
         stats.className = "world-stats";
+
         const rarity = document.createElement("p");
         rarity.textContent = "レアリティ: " + world.rarity;
+
         const feature = document.createElement("p");
         feature.textContent = "特徴: " + world.getResourceFeatureName("plant");
+
         const level = document.createElement("p");
         level.textContent = "Lv: " + world.level;
+
         const exp = document.createElement("p");
-        exp.textContent = "EXP: " + Formatter.format(world.exp) + "/" + Formatter.format(world.getRequiredExperience());
+        exp.textContent =
+            "EXP: " +
+            Formatter.format(world.exp) +
+            "/" +
+            Formatter.format(world.getRequiredExperience());
+
         const base = document.createElement("p");
-        base.textContent = "基礎能力: ×" + Formatter.format(world.getLevelMultiplier());
+        base.textContent =
+            "基礎能力: ×" +
+            Formatter.format(world.getLevelMultiplier());
+
         stats.appendChild(rarity);
         stats.appendChild(feature);
         stats.appendChild(level);
@@ -121,47 +183,68 @@ class WorldUI {
 
         const production = document.createElement("div");
         production.className = "world-production";
+
         const productionTitle = document.createElement("p");
         productionTitle.textContent = "生産";
+
         const list = document.createElement("ul");
+
         const globalMultiplier =
             ResearchManager.getTotalMultiplier() *
             UpgradeManager.getTotalMultiplier();
 
-        [["plant","植物"],["metal","金属"],["magic","魔力"]].forEach(([id,label]) => {
-            const item = document.createElement("li");
-            const rate = world.getResourceProduction(id).multiply(globalMultiplier);
-            item.textContent =
-                label +
-                ": +" +
-                Formatter.format(rate) +
-                "/秒 (×" +
-                world.getResourceMultiplier(id) +
-                ")";
-            list.appendChild(item);
-        });
+        [["plant", "植物"], ["metal", "金属"], ["magic", "魔力"]].forEach(
+            ([id, label]) => {
+                const item = document.createElement("li");
+                const rate =
+                    world.getResourceProduction(id).multiply(globalMultiplier);
+
+                item.textContent =
+                    label +
+                    ": +" +
+                    Formatter.format(rate) +
+                    "/秒 (×" +
+                    world.getResourceMultiplier(id) +
+                    ")";
+
+                list.appendChild(item);
+            }
+        );
 
         production.appendChild(productionTitle);
         production.appendChild(list);
 
         const rebirth = document.createElement("div");
         rebirth.className = "world-rebirth";
+
         const rebirthTitle = document.createElement("p");
         rebirthTitle.textContent = "転生";
+
         const rebirthCount = document.createElement("p");
-        rebirthCount.textContent = "転生回数: " + RebirthManager.getCount();
+        rebirthCount.textContent =
+            "転生回数: " +
+            RebirthManager.getCount();
+
         const rebirthMultiplier = document.createElement("p");
-        rebirthMultiplier.textContent = "現在倍率: ×" + Formatter.format(RebirthManager.getMultiplier());
+        rebirthMultiplier.textContent =
+            "現在倍率: ×" +
+            Formatter.format(RebirthManager.getMultiplier());
+
         const rebirthSacrifice = document.createElement("p");
-        rebirthSacrifice.textContent = "今回倍率: ×" + Formatter.format(RebirthManager.getSacrificeMultiplier());
+        rebirthSacrifice.textContent =
+            "今回倍率: ×" +
+            Formatter.format(RebirthManager.getSacrificeMultiplier());
+
         const rebirthButton = document.createElement("button");
         rebirthButton.type = "button";
         rebirthButton.textContent = "転生";
         rebirthButton.disabled = !RebirthManager.canRebirth();
+
         rebirthButton.addEventListener("click", event => {
             event.stopPropagation();
             RebirthManager.rebirth();
         });
+
         rebirth.appendChild(rebirthTitle);
         rebirth.appendChild(rebirthCount);
         rebirth.appendChild(rebirthMultiplier);
@@ -172,35 +255,51 @@ class WorldUI {
         card.appendChild(stats);
         card.appendChild(production);
         card.appendChild(rebirth);
+
         if (index === WorldManager.getActiveIndex()) {
             card.classList.add("active");
             card.setAttribute("aria-current", "true");
         }
+
         return card;
     }
 
     renderWorldList() {
         const container = document.getElementById("world-list");
+
         if (!container) return;
+
         container.innerHTML = "";
+
         WorldManager.getAll().forEach((world, index) => {
-            container.appendChild(this.createWorldCard(world, index));
+            container.appendChild(
+                this.createWorldCard(world, index)
+            );
         });
     }
 
     renderNextWorld() {
         const container = document.getElementById("next-world");
+
         if (!container) return;
+
         const cost = UnlockManager.getUnlockCost();
+
         container.innerHTML = "";
+
         const costText = document.createElement("p");
         costText.className = "next-world-cost";
-        costText.textContent = "必要EP: " + Formatter.format(cost) + " EP";
+        costText.textContent =
+            "必要EP: " +
+            Formatter.format(cost) +
+            " EP";
+
         const button = document.createElement("button");
         button.id = "unlock-world";
         button.type = "button";
         button.dataset.action = "world:create:request";
         button.textContent = "世界作成";
+
         container.appendChild(costText);
         container.appendChild(button);
     }
