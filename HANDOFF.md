@@ -3,43 +3,38 @@
 ## 現在地
 - Repository: reitrpg/Re-The-ultimate-world
 - Pages: https://reitrpg.github.io/Re-The-ultimate-world/
-- Base commit: `c0d970fbedae081e10fe06e7ceb50a57d4b15d7c`
 - App version: 0.0.25
-- Service Worker cache: world-creator-v18
-- 現在は「読み込みが遅い」問題を原因切り分け中。
-- 方針: **可能性の高い原因から1個ずつ修正し、修正前後で原因への影響を確認する。最終的には候補を全て処理する。**
+- Service Worker cache: world-creator-v19
+- 「読み込みが遅い」問題は**解決済み**。
+- 原因切り分けでは、原因候補を1個ずつ変更して確認する方針を採用。
 
-## 読み込み遅延の調査記録（2026-09-29）
-- 現行mainを再調査し、以下を確認。
-- `service-worker.js` に文字列化された `\\n` が混入している。
-- `service-worker.js` はキャッシュ済みでも毎回ネットワーク `fetch()` を開始する stale-while-revalidate。
-- `World.js` は `eventBus.emit("resource:update")` を使用しているが、`eventBus` importがない。
-- 原因切り分けのため、これらは同時修正せず優先順位順に1件ずつ処理する。
+## 読み込み遅延の原因調査・確定（2026-09-29）
+### 原因
+**Service Worker の stale-while-revalidate 処理が読み込み遅延の原因だった。**
 
-## 読み込み遅延の原因候補（優先順）
-### 1. Service Worker のコード破損
-現行 `service-worker.js` に、通常の改行ではなく文字列として `\\n` が混入している箇所を確認済み。
-対象:
-- `self.addEventListener("message", ...)` 周辺
-- `self.addEventListener("activate", ...)` の直前
+`service-worker.js` では、キャッシュが存在していても毎回バックグラウンドでネットワーク `fetch()` を開始する構成になっていた。
 
-このため Service Worker の構文解析・インストールに失敗する可能性がある。
-**最初にここだけを修正して挙動を確認する。**
+WCは静的SPAのため、キャッシュ済みのリソースに対しても毎回ネットワーク処理を発生させる必要性が低く、これが読み込み遅延につながっていた。
 
-### 2. Service Worker の stale-while-revalidate
-現行SWは同一オリジンのGETについて、キャッシュが存在していても毎回 `fetch()` を開始する。
-WCは静的SPAなので、通信を毎回発生させる構成は読み込み遅延・通信負荷の原因候補。
-1の検証後、必要なら cache-first に変更して比較する。
+### 検証結果
+- stale-while-revalidate → cache-first に変更
+- Service Worker cache: v18 → v19
+- `js/core/main.js` の登録URLも `?v=18` → `?v=19`
+- 変更後、**読み込み遅延が解決したことをユーザー確認済み**。
+- よって今回の読み込み遅延については、**Service Workerのstale-while-revalidateが確定原因**として記録する。
 
-### 3. World.js の eventBus import不足
-現行 `js/world/World.js` では `eventBus.emit("resource:update")` を使用しているが、確認時点のimportに `eventBus` が存在しない。
-これは読み込みそのものより起動後エラーの候補。
-Service Worker原因を検証した後に個別修正する。
+### 対応コミット
+- `8cdebda1433d9135a4343e83278a27bba690d490` — Service Workerをcache-firstへ変更
+- `96c6f7d623df54c4f5a8f2547307382c8f245276` — Service Workerキャッシュバージョンをv19へ更新
+
+### 今回の調査で未対応の候補
+以前候補として挙げていた `World.js` の `eventBus` import不足は、今回の読み込み遅延の解決とは無関係だったため、**この問題の原因としては扱わない**。
+必要になった場合は別問題として調査する。
 
 ## 既に実施済みの主な変更
 - CSS重複整理・レスポンシブボタン修正
 - iOS / Windows / Linux / Chrome向け入力処理整理
-- Service Worker cache v18
+- Service Worker cache-first化
 - UI更新のrequestAnimationFrameバッチ化
 - Resource更新イベントのバッチ化
 - 起動時Service Worker更新処理の簡略化
@@ -47,12 +42,11 @@ Service Worker原因を検証した後に個別修正する。
 
 ## 調査時の注意
 - 複数原因を同時に変更しない。
-- 各修正後に読み込み速度・Service Worker状態・起動エラーを確認する。
-- 改善しなかった場合も「その原因では改善しなかった」という結果を記録し、次の候補へ進む。
-- 現在の問題を理由に、いきなり大規模リファクタリングを行わない。
-- 既存仕様を変更せず、原因候補に直接関係する最小変更を優先する。
+- 原因候補を1個ずつ変更し、変更前後で確認する。
+- 原因が確定した場合は、原因・変更内容・検証結果・コミットを引き継ぎ書に記録する。
+- 問題が解決した場合、未検証の候補を原因として扱わない。
+- 既存仕様を変更せず、問題に直接関係する最小変更を優先する。
 
 ## 次の作業
-1. `service-worker.js` の混入した `\\n` を修正。
-2. それだけで再確認。
-3. 改善しなければ候補2へ進む。
+- 読み込み遅延については原因究明・修正完了。
+- 次のWC作業へ進む。
