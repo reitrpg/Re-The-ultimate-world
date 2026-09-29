@@ -7,7 +7,7 @@ const MAX_DECIMAL_EXPONENT = 1000000;
 
 class UnlockManager {
     constructor() {
-        this.unlockedWorlds = 1;
+        this.unlockedWorlds = 0;
         this.firstPaidWorldExponent = 100;
     }
 
@@ -86,7 +86,7 @@ class UnlockManager {
     }
 
     reset() {
-        this.unlockedWorlds = 1;
+        this.unlockedWorlds = 0;
         eventBus.emit("world:unlock:update");
     }
 
@@ -100,9 +100,9 @@ class UnlockManager {
         const count = data && Number(data.unlockedWorlds);
 
         this.unlockedWorlds =
-            Number.isInteger(count) && count >= 1
+            Number.isInteger(count) && count >= 0
                 ? count
-                : Math.max(1, WorldManager.getCount());
+                : Math.max(0, WorldManager.getCount());
     }
 }
 
