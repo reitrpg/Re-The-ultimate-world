@@ -1,182 +1,91 @@
-/**
- * World Creator
- * Converter UI
- */
-
 import Converter from "../converter/Converter.js";
-
 import Formatter from "../utils/Formatter.js";
-
 import eventBus from "../core/eventBus.js";
 
 class ConverterUI {
-
     constructor() {
-
         this.initialized = false;
-
+        this.renderQueued = false;
+        this.lastRenderTime = 0;
+        this.renderInterval = 200;
     }
 
     initialize() {
-
-        if (this.initialized) {
-
-            return;
-
-        }
+        if (this.initialized) return;
 
         this.initialized = true;
-
         this.registerEvents();
-
         this.render();
-
     }
 
     registerEvents() {
-
-        eventBus.on(
-
-            "converter:update",
-
-            () => {
-
-                this.render();
-
-            }
-
-        );
-
-        eventBus.on(
-
-            "resource:update",
-
-            () => {
-
-                this.render();
-
-            }
-
-        );
-
+        eventBus.on("converter:update", () => this.scheduleRender());
+        eventBus.on("resource:update", () => this.scheduleRender());
     }
 
-    createConverterElement(
-        recipe
-    ) {
+    scheduleRender() {
+        if (this.renderQueued) return;
 
-        const item =
+        this.renderQueued = true;
 
-            document.createElement(
-                "div"
-            );
+        const now = Date.now();
+        const elapsed = now - this.lastRenderTime;
+        const delay = Math.max(0, this.renderInterval - elapsed);
 
-        item.className =
-            "converter-item";
+        window.setTimeout(() => {
+            this.renderQueued = false;
+            this.lastRenderTime = Date.now();
+            this.render();
+        }, delay);
+    }
 
-        const convertButton =
+    createConverterElement(recipe) {
+        const item = document.createElement("div");
+        item.className = "converter-item";
 
-            document.createElement(
-                "button"
-            );
+        const convertButton = document.createElement("button");
+        convertButton.type = "button";
+        convertButton.textContent = "変換";
 
-        convertButton.textContent =
-            "変換";
+        convertButton.addEventListener("click", () => {
+            Converter.convert(recipe.id);
+        });
 
-        convertButton.addEventListener(
+        const convertAllButton = document.createElement("button");
+        convertAllButton.type = "button";
+        convertAllButton.textContent = "全変換";
 
-            "click",
-
-            () => {
-
-                Converter.convert(
-                    recipe.id
-                );
-
-            }
-
-        );
-
-        const convertAllButton =
-
-            document.createElement(
-                "button"
-            );
-
-        convertAllButton.textContent =
-            "全変換";
-
-        convertAllButton.addEventListener(
-
-            "click",
-
-            () => {
-
-                Converter.convertAll(
-                    recipe.id
-                );
-
-            }
-
-        );
+        convertAllButton.addEventListener("click", () => {
+            Converter.convertAll(recipe.id);
+        });
 
         item.innerHTML =
+            "<h3>" + recipe.name + "</h3>" +
+            "<p>" +
+            Formatter.format(recipe.resourceCost) +
+            " → " +
+            Formatter.format(recipe.epReward) +
+            " EP</p>";
 
-            `
-            <h3>${recipe.name}</h3>
-            <p>
-                ${Formatter.format(recipe.resourceCost)}
-                →
-                ${Formatter.format(recipe.epReward)} EP
-            </p>
-            `;
-
-        item.appendChild(
-            convertButton
-        );
-
-        item.appendChild(
-            convertAllButton
-        );
+        item.appendChild(convertButton);
+        item.appendChild(convertAllButton);
 
         return item;
-
     }
 
     render() {
+        const container = document.getElementById("converter-list");
 
-        const container =
-
-            document.getElementById(
-                "converter-list"
-            );
-
-        if (!container) {
-
-            return;
-
-        }
+        if (!container) return;
 
         container.innerHTML = "";
 
-        Converter.getRecipes().forEach(
-
-            recipe => {
-
-                container.appendChild(
-
-                    this.createConverterElement(
-                        recipe
-                    )
-
-                );
-
-            }
-
-        );
-
+        Converter.getRecipes().forEach(recipe => {
+            container.appendChild(
+                this.createConverterElement(recipe)
+            );
+        });
     }
-
 }
 
 export default new ConverterUI();
