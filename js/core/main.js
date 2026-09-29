@@ -9,6 +9,7 @@ import InputActionController from "./InputActionController.js";
 import ErrorHandler from "./errorHandler.js";
 
 const APP_VERSION = "0.0.25";
+const SERVICE_WORKER_VERSION = "19";
 
 function ensureInitialState() {
     if (!ResourceManager.exists("plant") || !ResourceManager.exists("metal") || !ResourceManager.exists("magic")) {
@@ -37,21 +38,26 @@ function registerServiceWorker() {
     }
 
     navigator.serviceWorker
-        .register("./service-worker.js?v=19")
-
+        .register("./service-worker.js?v=" + SERVICE_WORKER_VERSION)
         .catch(error => {
             console.warn("Service Worker registration failed:", error);
             ErrorHandler.record(error);
         });
 }
 
+function scheduleServiceWorkerRegistration() {
+    if (typeof window.requestIdleCallback === "function") {
+        window.requestIdleCallback(registerServiceWorker, { timeout: 3000 });
+        return;
+    }
+
+    window.setTimeout(registerServiceWorker, 1000);
+}
+
 function initializeGame() {
     try {
         ErrorHandler.initialize();
         setBootVersion();
-
-        // Start SW update without making application startup depend on it.
-        registerServiceWorker();
 
         SaveManager.load();
         ensureInitialState();
@@ -65,6 +71,8 @@ function initializeGame() {
         Game.start();
 
         document.documentElement.dataset.appReady = "true";
+
+        scheduleServiceWorkerRegistration();
     } catch (error) {
         ErrorHandler.record(error);
         console.error("World Creator initialization failed:", error);
