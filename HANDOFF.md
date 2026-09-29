@@ -3,8 +3,8 @@
 ## 現在地
 - Repository: reitrpg/Re-The-ultimate-world
 - Pages: https://reitrpg.github.io/Re-The-ultimate-world/
-- App version: 0.0.28
-- Service Worker cache: world-creator-v23
+- App version: 0.0.29
+- Service Worker cache: world-creator-v24
 - 「読み込みが遅い」問題は解決済み。
 - 追加の起動・描画パフォーマンス改善も実施済み。
 
@@ -149,3 +149,21 @@ Commit:
 - 47359433 — アプリバージョン0.0.28 / SW v23
 - 7c22ad04 — 表示バージョン更新
 - 144472d9 — Service Worker cache v23
+
+
+## セーブ削除時の完全リセット修正（2026-09-29）
+- 原因: `SaveManager.clear()` はLocalStorageだけを削除しており、実行中のManager状態をリセットしていなかった。
+- さらに削除直後の `beforeunload` が `SaveManager.save()` を実行するため、削除したはずの古い状態が再保存される経路があった。
+- 修正: セーブ削除時にGameを停止し、World / Unlock / Resource / EP / Research / Upgrade / Rebirthをランタイム上でも初期化。
+- 削除処理中は `SaveManager.save()` を無効化し、beforeunloadによる旧データ再保存を防止。
+- その後のページ再読み込みでは初期状態から開始する。
+- 世界数・世界解放コスト・リソース・生産処理も初期状態へ戻る。
+- アプリバージョンを 0.0.28 → 0.0.29。
+- Service Worker cacheを v23 → v24。
+
+対応コミット:
+- dd9439d7 — Unlock状態リセット
+- c1e75476 — セーブ削除時の完全リセット
+- 1dc91a5e — アプリバージョン0.0.29 / SW v24
+- 72e5ec15 — 表示バージョン更新
+- a0d87673 — Service Worker cache v24
