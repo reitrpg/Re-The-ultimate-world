@@ -30,7 +30,7 @@ class World {
         this.level = 1;
         this.exp = BigNumber.zero();
         this.rebirthMultiplier = BigNumber.one();
-        this.baseProduction = BigNumber.one();
+        this.baseProduction = BigNumber.from(10);
         this.uniqueEffect = 1;
         this.resourceMultipliers = { plant: 1.4, metal: 0.75, magic: 1 };
         this.resourceFeatures = {
@@ -50,7 +50,7 @@ class World {
         return this.rarity;
     }
 
-    getLevelMultiplier() {
+    getLevelProductionBonus() {
         return BigNumber.from(
             Math.max(1, Math.floor(this.level / 10))
         );
@@ -70,8 +70,11 @@ class World {
     }
 
     getResourceProduction(id) {
-        return this.baseProduction
-            .multiply(this.getLevelMultiplier())
+        const levelAdjustedProduction = this.baseProduction.add(
+            this.getLevelProductionBonus()
+        );
+
+        return levelAdjustedProduction
             .multiply(this.getResourceMultiplier(id))
             .multiply(this.rebirthMultiplier);
     }
@@ -110,7 +113,7 @@ class World {
         this.rebirthCount += 1;
         this.exp = BigNumber.zero();
         this.level = 1;
-        this.baseProduction = BigNumber.one();
+        this.baseProduction = BigNumber.from(10);
 
         return true;
     }
@@ -190,10 +193,10 @@ class World {
         this.exp = BigNumber.from(data.exp);
         this.rebirthMultiplier = BigNumber.from(data.rebirthMultiplier ?? 1);
         this.rebirthCount = Math.max(0, Number(data.rebirthCount) || 0);
-        this.baseProduction = BigNumber.from(data.baseProduction ?? 1);
+        this.baseProduction = BigNumber.from(data.baseProduction ?? 10);
 
-        if (this.baseProduction.lessOrEqual(0)) {
-            this.baseProduction = BigNumber.one();
+        if (this.baseProduction.lessOrEqual(1)) {
+            this.baseProduction = BigNumber.from(10);
         }
 
         this.uniqueEffect =
