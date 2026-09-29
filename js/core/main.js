@@ -8,8 +8,8 @@ import InputManager from "./InputManager.js";
 import InputActionController from "./InputActionController.js";
 import ErrorHandler from "./errorHandler.js";
 
-const APP_VERSION = "0.0.30";
-const SERVICE_WORKER_VERSION = "25";
+const APP_VERSION = "0.0.31";
+const SERVICE_WORKER_VERSION = "26";
 
 function ensureInitialState() {
     if (!ResourceManager.exists("plant") || !ResourceManager.exists("metal") || !ResourceManager.exists("magic")) {
@@ -59,8 +59,24 @@ function initializeGame() {
         ErrorHandler.initialize();
         setBootVersion();
 
+        const resetPending =
+            localStorage.getItem("world_creator_reset_pending") === "true";
+
+        if (resetPending) {
+            localStorage.removeItem("world_creator_save");
+            localStorage.removeItem("world_creator_last_time");
+            sessionStorage.setItem(
+                "world_creator_skip_offline_once",
+                "true"
+            );
+        }
+
         SaveManager.load();
         ensureInitialState();
+
+        if (resetPending) {
+            localStorage.removeItem("world_creator_reset_pending");
+        }
         const skipOfflineProgress = sessionStorage.getItem("world_creator_skip_offline_once") === "true";
         if (skipOfflineProgress) {
             sessionStorage.removeItem("world_creator_skip_offline_once");
@@ -95,7 +111,9 @@ function initializeGame() {
 }
 
 window.addEventListener("beforeunload", () => {
-    const clearing = sessionStorage.getItem("world_creator_skip_offline_once") === "true";
+    const clearing =
+        sessionStorage.getItem("world_creator_skip_offline_once") === "true" ||
+        localStorage.getItem("world_creator_reset_pending") === "true";
 
     if (!clearing) {
         OfflineProgress.saveTimestamp();
