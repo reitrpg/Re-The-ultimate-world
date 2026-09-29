@@ -3,8 +3,8 @@
 ## 現在地
 - Repository: reitrpg/Re-The-ultimate-world
 - Pages: https://reitrpg.github.io/Re-The-ultimate-world/
-- App version: 0.0.29
-- Service Worker cache: world-creator-v24
+- App version: 0.0.30
+- Service Worker cache: world-creator-v25
 - 「読み込みが遅い」問題は解決済み。
 - 追加の起動・描画パフォーマンス改善も実施済み。
 
@@ -167,3 +167,22 @@ Commit:
 - 1dc91a5e — アプリバージョン0.0.29 / SW v24
 - 72e5ec15 — 表示バージョン更新
 - a0d87673 — Service Worker cache v24
+
+
+## セーブ削除後の表示・オフライン進行修正（2026-09-29）
+- スクリーンショットで確認された「世界カードが消えているのに解放コストが高い」状態を調査。
+- 原因の一つとして `WorldUI.createWorldCard()` 内に削除済みの `rebirth` 変数を `appendChild()` している残存コードがあり、世界カード描画が例外終了していた。これを削除。
+- そのため実際には初期世界が生成されていても、カードだけ表示されず、下部の世界作成UIだけが表示される状態になっていた。
+- セーブ削除直後の `beforeunload` でオフライン進行用タイムスタンプを再保存していた問題も修正。
+- セーブ削除時に1回だけオフライン進行をスキップするフラグをsessionStorageへ設定し、削除直後のリロードで過去時間分の生産を発生させない。
+- 削除処理中はbeforeunloadのタイムスタンプ保存・セーブ保存も実行しない。
+- アプリバージョンを 0.0.29 → 0.0.30。
+- Service Worker cacheを v24 → v25。
+
+対応コミット:
+- a3d0d094 — 世界カード描画例外修正・リセット後再描画対応
+- 8be6ed22 — セーブ削除後のオフライン進行抑止
+- 8720dd48 — beforeunloadによる再保存・タイムスタンプ保存抑止
+- 7c2e8945 — アプリバージョン0.0.30 / SW v25
+- a2efa6ee — 表示バージョン更新
+- f5d6584a — Service Worker cache v25
