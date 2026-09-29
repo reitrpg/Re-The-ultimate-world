@@ -9,7 +9,7 @@ import InputActionController from "./InputActionController.js";
 import ErrorHandler from "./errorHandler.js";
 
 const APP_VERSION = "0.0.25";
-const SERVICE_WORKER_VERSION = "19";
+const SERVICE_WORKER_VERSION = "20";
 
 function ensureInitialState() {
     if (!ResourceManager.exists("plant") || !ResourceManager.exists("metal") || !ResourceManager.exists("magic")) {
