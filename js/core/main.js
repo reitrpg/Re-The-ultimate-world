@@ -8,8 +8,8 @@ import InputManager from "./InputManager.js";
 import InputActionController from "./InputActionController.js";
 import ErrorHandler from "./errorHandler.js";
 
-const APP_VERSION = "0.0.31";
-const SERVICE_WORKER_VERSION = "26";
+const APP_VERSION = "0.0.32";
+const SERVICE_WORKER_VERSION = "27";
 
 function ensureInitialState() {
     if (!ResourceManager.exists("plant") || !ResourceManager.exists("metal") || !ResourceManager.exists("magic")) {
@@ -37,8 +37,27 @@ function registerServiceWorker() {
         return;
     }
 
+    const hadController = Boolean(navigator.serviceWorker.controller);
+
+    if (hadController) {
+        navigator.serviceWorker.addEventListener(
+            "controllerchange",
+            () => {
+                window.location.reload();
+            },
+            { once: true }
+        );
+    }
+
     navigator.serviceWorker
         .register("./service-worker.js?v=" + SERVICE_WORKER_VERSION)
+        .then(registration => {
+            if (registration.waiting) {
+                registration.waiting.postMessage({
+                    type: "SKIP_WAITING"
+                });
+            }
+        })
         .catch(error => {
             console.warn("Service Worker registration failed:", error);
             ErrorHandler.record(error);
