@@ -3,6 +3,8 @@ import EPManager from "../ep/Manager.js";
 import WorldManager from "./Manager.js";
 import eventBus from "../core/eventBus.js";
 
+const MAX_DECIMAL_EXPONENT = 1000000;
+
 class UnlockManager {
     constructor() {
         this.unlockedWorlds = 1;
@@ -10,20 +12,19 @@ class UnlockManager {
     }
 
     getUnlockCost() {
-        // The first world is free.
-        // This method returns the cost of the NEXT world.
-        if (this.unlockedWorlds <= 0) {
-            return BigNumber.zero();
+        const count = Number(this.unlockedWorlds);
+
+        if (!Number.isInteger(count) || count <= 1) {
+            return new BigNumber(1, 33);
         }
 
-        // World #2: 1e100
-        // World #3: 1e10000
-        // World #4: 1e1000000
-        // Each additional world multiplies the decimal exponent by 100.
         let exponent = this.firstPaidWorldExponent;
 
-        for (let i = 2; i <= this.unlockedWorlds; i++) {
-            exponent *= 100;
+        for (let i = 2; i <= count && exponent < MAX_DECIMAL_EXPONENT; i++) {
+            exponent = Math.min(
+                MAX_DECIMAL_EXPONENT,
+                exponent * 100
+            );
         }
 
         const base1000Exponent = Math.floor(exponent / 3);
