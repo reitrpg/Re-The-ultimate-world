@@ -2,6 +2,7 @@ import BigNumber from "../number/BigNumber.js";
 import ResourceManager from "../resource/Manager.js";
 import ResearchManager from "../research/Manager.js";
 import UpgradeManager from "../upgrades/Manager.js";
+import eventBus from "../core/eventBus.js";
 
 const RESOURCE_IDS = ["plant", "metal", "magic"];
 
@@ -32,7 +33,11 @@ class World {
         this.baseProduction = BigNumber.one();
         this.uniqueEffect = 1;
         this.resourceMultipliers = { plant: 1.4, metal: 0.75, magic: 1 };
-        this.resourceFeatures = { plant: "植物の大地", metal: "植物の大地", magic: "植物の大地" };
+        this.resourceFeatures = {
+            plant: "植物の大地",
+            metal: "植物の大地",
+            magic: "植物の大地"
+        };
         this.rebirthCount = 0;
     }
 
@@ -41,15 +46,26 @@ class World {
         return Math.max(1, Math.floor(value / 10) + 1);
     }
 
-    getRarityMultiplier() { return this.rarity; }
-    getTotalMultiplier() { return BigNumber.one(); }
+    getRarityMultiplier() {
+        return this.rarity;
+    }
+
+    getLevelMultiplier() {
+        return BigNumber.from(this.level * this.level).divide(100);
+    }
+
+    getTotalMultiplier() {
+        return BigNumber.one();
+    }
 
     getResourceMultiplier(id) {
         const value = Number(this.resourceMultipliers?.[id]);
         return Number.isFinite(value) && value > 0 ? value : 1;
     }
 
-    getResourceFeatureName(id) { return this.resourceFeatures?.[id] || id; }
+    getResourceFeatureName(id) {
+        return this.resourceFeatures?.[id] || id;
+    }
 
     getResourceProduction(id) {
         return this.baseProduction
@@ -70,19 +86,29 @@ class World {
         return leveledUp;
     }
 
-    getRequiredExperience() { return BigNumber.from(this.level * this.level * 100); }
+    getRequiredExperience() {
+        return BigNumber.from(this.level * this.level * 100);
+    }
 
-    getRebirthMultiplier() { return BigNumber.one().add(this.exp.divide(100)); }
-    canRebirth() { return this.getRebirthMultiplier().greaterOrEqual(2.5); }
+    getRebirthMultiplier() {
+        return BigNumber.one().add(this.exp.divide(100));
+    }
+
+    canRebirth() {
+        return this.getRebirthMultiplier().greaterOrEqual(2.5);
+    }
 
     performRebirth() {
         if (!this.canRebirth()) return false;
+
         const sacrifice = this.getRebirthMultiplier();
+
         this.rebirthMultiplier = this.rebirthMultiplier.multiply(sacrifice);
         this.rebirthCount += 1;
         this.exp = BigNumber.zero();
         this.level = 1;
         this.baseProduction = BigNumber.one();
+
         return true;
     }
 
@@ -93,22 +119,35 @@ class World {
 
     update(deltaTime) {
         const seconds = Number(deltaTime);
-        if (!Number.isFinite(seconds) || seconds <= 0) return BigNumber.zero();
 
-        const globalMultiplier = BigNumber.from(ResearchManager.getTotalMultiplier())
-            .multiply(UpgradeManager.getTotalMultiplier());
+        if (!Number.isFinite(seconds) || seconds <= 0) {
+            return BigNumber.zero();
+        }
+
+        const globalMultiplier = BigNumber.from(
+            ResearchManager.getTotalMultiplier()
+        ).multiply(
+            UpgradeManager.getTotalMultiplier()
+        );
 
         let experienceGain = BigNumber.zero();
 
         RESOURCE_IDS.forEach(id => {
-            const production = this.getResourceProduction(id).multiply(globalMultiplier);
+            const production = this
+                .getResourceProduction(id)
+                .multiply(globalMultiplier);
+
             const amount = production.multiply(seconds);
 
             if (amount.lessOrEqual(0)) return;
 
             if (ResourceManager.produce(id, amount, false)) {
                 const resource = ResourceManager.get(id);
-                if (resource) resource.production = production;
+
+                if (resource) {
+                    resource.production = production;
+                }
+
                 experienceGain = experienceGain.add(amount);
             }
         });
@@ -118,21 +157,29 @@ class World {
         }
 
         this.gainExperience(experienceGain);
+
         return experienceGain;
     }
 
     toJSON() {
         return {
-            seed: this.seed, name: this.name, rarity: this.rarity, level: this.level,
-            exp: this.exp.toJSON(), rebirthMultiplier: this.rebirthMultiplier.toJSON(),
-            rebirthCount: this.rebirthCount, baseProduction: this.baseProduction.toJSON(),
-            uniqueEffect: this.uniqueEffect, resourceMultipliers: { ...this.resourceMultipliers },
+            seed: this.seed,
+            name: this.name,
+            rarity: this.rarity,
+            level: this.level,
+            exp: this.exp.toJSON(),
+            rebirthMultiplier: this.rebirthMultiplier.toJSON(),
+            rebirthCount: this.rebirthCount,
+            baseProduction: this.baseProduction.toJSON(),
+            uniqueEffect: this.uniqueEffect,
+            resourceMultipliers: { ...this.resourceMultipliers },
             resourceFeatures: { ...this.resourceFeatures }
         };
     }
 
     load(data) {
         if (!data || typeof data !== "object") return;
+
         this.seed = String(data.seed ?? Date.now());
         this.name = data.name || `World-${this.seed.slice(-4)}`;
         this.rarity = Number(data.rarity) || 1;
@@ -141,12 +188,29 @@ class World {
         this.rebirthMultiplier = BigNumber.from(data.rebirthMultiplier ?? 1);
         this.rebirthCount = Math.max(0, Number(data.rebirthCount) || 0);
         this.baseProduction = BigNumber.from(data.baseProduction ?? 1);
-        if (this.baseProduction.lessOrEqual(0)) this.baseProduction = BigNumber.one();
 
-        this.uniqueEffect = Number.isFinite(Number(data.uniqueEffect)) ? Number(data.uniqueEffect) : 1;
+        if (this.baseProduction.lessOrEqual(0)) {
+            this.baseProduction = BigNumber.one();
+        }
 
-        const savedMultipliers = { plant: 1, metal: 1, magic: 1, ...(data.resourceMultipliers || {}) };
-        const savedFeatures = { plant: "", metal: "", magic: "", ...(data.resourceFeatures || {}) };
+        this.uniqueEffect =
+            Number.isFinite(Number(data.uniqueEffect))
+                ? Number(data.uniqueEffect)
+                : 1;
+
+        const savedMultipliers = {
+            plant: 1,
+            metal: 1,
+            magic: 1,
+            ...(data.resourceMultipliers || {})
+        };
+
+        const savedFeatures = {
+            plant: "",
+            metal: "",
+            magic: "",
+            ...(data.resourceFeatures || {})
+        };
 
         const featureName =
             Object.values(savedFeatures).find(name => getFeatureByName(name)) ||
@@ -154,10 +218,16 @@ class World {
             "植物の大地";
 
         const featureMultipliers =
-            getFeatureByName(featureName) || FEATURE_DEFINITIONS["植物の大地"];
+            getFeatureByName(featureName) ||
+            FEATURE_DEFINITIONS["植物の大地"];
 
         this.resourceMultipliers = { ...featureMultipliers };
-        this.resourceFeatures = { plant: featureName, metal: featureName, magic: featureName };
+
+        this.resourceFeatures = {
+            plant: featureName,
+            metal: featureName,
+            magic: featureName
+        };
     }
 }
 
