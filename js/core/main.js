@@ -61,7 +61,12 @@ function initializeGame() {
 
         SaveManager.load();
         ensureInitialState();
-        OfflineProgress.calculate();
+        const skipOfflineProgress = sessionStorage.getItem("world_creator_skip_offline_once") === "true";
+        if (skipOfflineProgress) {
+            sessionStorage.removeItem("world_creator_skip_offline_once");
+        } else {
+            OfflineProgress.calculate();
+        }
 
         InputManager.initialize();
         InputActionController.initialize();
@@ -90,8 +95,12 @@ function initializeGame() {
 }
 
 window.addEventListener("beforeunload", () => {
-    OfflineProgress.saveTimestamp();
-    SaveManager.save();
+    const clearing = sessionStorage.getItem("world_creator_skip_offline_once") === "true";
+
+    if (!clearing) {
+        OfflineProgress.saveTimestamp();
+        SaveManager.save();
+    }
 });
 
 document.addEventListener("DOMContentLoaded", initializeGame);
