@@ -174,7 +174,7 @@ class WorldUI {
         const base = document.createElement("p");
         base.textContent =
             "基礎能力: ×" +
-            Formatter.format(world.getLevelMultiplier());
+            Formatter.format(world.getTotalMultiplier());
 
         stats.appendChild(rarity);
         stats.appendChild(feature);
