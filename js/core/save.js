@@ -35,6 +35,7 @@ class SaveManager{
   ResearchManager.reset();
   UpgradeManager.reset();
   RebirthManager.reset();
+  localStorage.setItem("world_creator_reset_pending", "true");
   localStorage.removeItem(this.key);
   localStorage.removeItem("world_creator_last_time");
   sessionStorage.setItem("world_creator_skip_offline_once", "true");
