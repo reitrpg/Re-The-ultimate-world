@@ -3,39 +3,45 @@ import EPManager from "../ep/Manager.js";
 import WorldManager from "./Manager.js";
 import eventBus from "../core/eventBus.js";
 
-const MAX_DECIMAL_EXPONENT = 1000000;
+const FIRST_PAID_WORLD_EXPONENT = 100;
+const MAX_STANDARD_DECIMAL_EXPONENT = 1000000;
 
 class UnlockManager {
     constructor() {
         this.unlockedWorlds = 0;
-        this.firstPaidWorldExponent = 100;
+        this.firstPaidWorldExponent = FIRST_PAID_WORLD_EXPONENT;
     }
 
     getUnlockCost() {
         const count = Number(this.unlockedWorlds);
 
-        if (!Number.isInteger(count) || count < 0) {
+        if (!Number.isInteger(count) || count <= 0) {
             return BigNumber.zero();
         }
 
-        if (count === 0) {
-            return BigNumber.zero();
+        if (count <= 3) {
+            let exponent = this.firstPaidWorldExponent;
+
+            for (let i = 2; i <= count; i++) {
+                exponent *= 100;
+            }
+
+            const base1000Exponent = Math.floor(exponent / 3);
+            const decimalRemainder = exponent % 3;
+            const mantissa = Math.pow(10, decimalRemainder);
+
+            return new BigNumber(mantissa, base1000Exponent);
         }
 
-        let exponent = this.firstPaidWorldExponent;
+        const secondLayerExponent =
+            MAX_STANDARD_DECIMAL_EXPONENT +
+            (count - 4) * 2;
 
-        for (let i = 2; i <= count && exponent < MAX_DECIMAL_EXPONENT; i++) {
-            exponent = Math.min(
-                MAX_DECIMAL_EXPONENT,
-                exponent * 100
-            );
-        }
-
-        const base1000Exponent = Math.floor(exponent / 3);
-        const decimalRemainder = exponent % 3;
-        const mantissa = Math.pow(10, decimalRemainder);
-
-        return new BigNumber(mantissa, base1000Exponent);
+        return BigNumber.fromLayered(
+            1,
+            secondLayerExponent,
+            2
+        );
     }
 
     getUnlockFailureReason() {
