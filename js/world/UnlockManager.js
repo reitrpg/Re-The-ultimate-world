@@ -14,8 +14,12 @@ class UnlockManager {
     getUnlockCost() {
         const count = Number(this.unlockedWorlds);
 
-        if (!Number.isInteger(count) || count <= 1) {
-            return new BigNumber(10, 33);
+        if (!Number.isInteger(count) || count < 0) {
+            return BigNumber.zero();
+        }
+
+        if (count === 0) {
+            return BigNumber.zero();
         }
 
         let exponent = this.firstPaidWorldExponent;
