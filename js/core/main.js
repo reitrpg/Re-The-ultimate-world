@@ -8,17 +8,14 @@ import InputManager from "./InputManager.js";
 import InputActionController from "./InputActionController.js";
 import ErrorHandler from "./errorHandler.js";
 
-const APP_VERSION = "0.0.32";
-const SERVICE_WORKER_VERSION = "27";
+const APP_VERSION = "0.0.33";
+const SERVICE_WORKER_VERSION = "28";
 
 function ensureInitialState() {
     if (!ResourceManager.exists("plant") || !ResourceManager.exists("metal") || !ResourceManager.exists("magic")) {
         ResourceManager.createDefaultResources();
     }
 
-    if (WorldManager.getCount() === 0) {
-        WorldManager.create(Date.now().toString());
-    }
 }
 
 function setBootVersion() {
