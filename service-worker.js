@@ -1,4 +1,4 @@
-const CACHE_NAME = "world-creator-v18";
+const CACHE_NAME = "world-creator-v19";
 
 const FILES_TO_CACHE = [
     "./",
@@ -60,21 +60,20 @@ async function putInCache(request, response) {
     return response;
 }
 
-async function staleWhileRevalidate(request) {
+async function cacheFirst(request) {
     const cached = await caches.match(request);
-
-    const network = fetch(request)
-        .then(response => putInCache(request, response))
-        .catch(() => null);
 
     if (cached) {
         return cached;
     }
 
-    const response = await network;
-    if (response) return response;
+    const response = await fetch(request);
 
-    throw new Error("World Creator: resource unavailable");
+    if (response && response.ok) {
+        await putInCache(request, response);
+    }
+
+    return response;
 }
 
 self.addEventListener("install", event => {
@@ -116,8 +115,14 @@ self.addEventListener("fetch", event => {
 
     const url = new URL(request.url);
 
-    // Only cache same-origin application resources.
     if (url.origin !== self.location.origin) return;
 
-    event.respondWith(staleWhileRevalidate(request));
+    event.respondWith(
+        cacheFirst(request).catch(() =>
+            new Response("World Creator: resource unavailable", {
+                status: 503,
+                headers: { "Content-Type": "text/plain; charset=utf-8" }
+            })
+        )
+    );
 });
