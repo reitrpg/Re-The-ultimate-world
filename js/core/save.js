@@ -37,6 +37,7 @@ class SaveManager{
   RebirthManager.reset();
   localStorage.removeItem(this.key);
   localStorage.removeItem("world_creator_last_time");
+  sessionStorage.setItem("world_creator_skip_offline_once", "true");
   eventBus.emit("save:clear");
 }
  startAutoSave(){this.stopAutoSave();const interval=SettingsManager.getAutoSaveInterval();if(!Number.isFinite(interval)||interval<=0)return;this.autoSaveTimer=setInterval(()=>this.save(),interval);}
