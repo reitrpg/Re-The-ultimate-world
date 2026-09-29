@@ -60,7 +60,9 @@ class WorldUI {
             "resource:update",
             "research:update",
             "upgrade:update",
-            "rebirth:update"
+            "rebirth:update",
+            "world:unlock:update",
+            "save:clear"
         ].forEach(event => {
             eventBus.on(event, () => this.scheduleRender());
         });
@@ -216,7 +218,6 @@ class WorldUI {
         card.appendChild(nameRow);
         card.appendChild(stats);
         card.appendChild(production);
-        card.appendChild(rebirth);
 
         if (index === WorldManager.getActiveIndex()) {
             card.classList.add("active");
