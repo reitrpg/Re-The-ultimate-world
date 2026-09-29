@@ -89,7 +89,13 @@ self.addEventListener("install", event => {
     );
 });
 
-self.addEventListener("message", event => {\n    if (event.data?.type === "SKIP_WAITING") {\n        self.skipWaiting();\n    }\n});\n\nself.addEventListener("activate", event => {
+self.addEventListener("message", event => {
+    if (event.data?.type === "SKIP_WAITING") {
+        self.skipWaiting();
+    }
+});
+
+self.addEventListener("activate", event => {
     event.waitUntil(
         caches.keys()
             .then(keys =>
