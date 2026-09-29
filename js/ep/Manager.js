@@ -60,7 +60,7 @@ class EPManager {
 
         if (
 
-            this.amount.lt(
+            this.amount.less(
                 cost
             )
 
