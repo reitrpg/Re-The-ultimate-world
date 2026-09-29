@@ -86,9 +86,7 @@ class EPManager {
 
     has(value) {
 
-        return this.amount.gte(
-            value
-        );
+        return this.amount.greaterOrEqual(value);
 
     }
 
