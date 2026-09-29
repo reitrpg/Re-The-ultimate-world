@@ -306,8 +306,20 @@ class WorldUI {
 
     render() {
         this.renderCategory();
-        this.renderWorldList();
-        this.renderNextWorld();
+
+        try {
+            this.renderWorldList();
+        } catch (error) {
+            console.error("World list render failed:", error);
+            eventBus.emit("error:update", error);
+        }
+
+        try {
+            this.renderNextWorld();
+        } catch (error) {
+            console.error("World creation UI render failed:", error);
+            eventBus.emit("error:update", error);
+        }
     }
 }
 
