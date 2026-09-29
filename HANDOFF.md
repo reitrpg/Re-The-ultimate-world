@@ -195,3 +195,10 @@ Commit:
 - beforeunloadでもこのフラグを確認し、リセット処理中の再保存を防止。
 - アプリバージョンを **0.0.31**、Service Workerを **v26** に更新。
 - index.htmlのmain.jsにもバージョンクエリを付与して、旧アプリシェルから新ランタイムへの移行を促進。
+
+
+## v0.0.32 Service Worker更新反映対策（2026-09-29）
+- 既存のService Workerが制御中の場合、新しいWorkerのcontrollerchangeを検知してページを自動リロードする処理を追加。
+- 待機中Workerが存在する場合はSKIP_WAITINGを送信。
+- 初回起動時のcontrollerchangeでは自動リロードしない。
+- アプリバージョンを **0.0.32**、Service Workerを **v27** に更新。
