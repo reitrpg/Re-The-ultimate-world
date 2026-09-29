@@ -51,9 +51,24 @@ class World {
     }
 
     getLevelProductionBonus() {
-        return BigNumber.from(
-            Math.max(1, Math.floor(this.level / 10))
-        );
+        const level = Math.max(1, Math.floor(Number(this.level) || 1));
+
+        if (level < 10) {
+            return BigNumber.one();
+        }
+
+        const tier = Math.floor(level / 10);
+        const remainder = level - tier * 10;
+
+        let bonus = 1;
+
+        for (let i = 1; i < tier; i++) {
+            bonus += i * 10;
+        }
+
+        bonus += tier * remainder;
+
+        return BigNumber.from(bonus);
     }
 
     getTotalMultiplier() {
