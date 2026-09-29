@@ -11,11 +11,8 @@ class InputManager {
         if (this.initialized) return;
         this.initialized = true;
 
-        // Pointer Events cover mouse, touch, pen, iOS/iPadOS Safari,
-        // Windows and Linux browsers, and Chromium-based WebViews.
         document.addEventListener("pointerup", event => this.dispatch(event), true);
 
-        // Keyboard activation for buttons and custom controls.
         document.addEventListener("keydown", event => {
             if (event.key !== "Enter" && event.key !== " ") return;
             const target = this.resolveTarget(event);
@@ -23,7 +20,6 @@ class InputManager {
             this.dispatch(event);
         }, true);
 
-        // Fallback for environments without usable Pointer Events.
         if (!("PointerEvent" in window)) {
             document.addEventListener("click", event => this.dispatch(event), true);
         }
@@ -58,9 +54,8 @@ class InputManager {
 
         if (!target || target.disabled) return false;
 
-        // iOS/Android browsers may emit a compatibility click after pointerup.
-        // Suppress only the matching target within a short physical-input window.
         const now = Date.now();
+
         if (target === this.lastTarget && now - this.lastEventTime < 350) {
             return false;
         }
@@ -69,6 +64,7 @@ class InputManager {
         this.lastEventTime = now;
 
         const action = target.dataset?.action || null;
+
         const payload = {
             action,
             target,
