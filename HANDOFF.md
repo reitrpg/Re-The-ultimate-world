@@ -202,3 +202,15 @@ Commit:
 - 待機中Workerが存在する場合はSKIP_WAITINGを送信。
 - 初回起動時のcontrollerchangeでは自動リロードしない。
 - アプリバージョンを **0.0.32**、Service Workerを **v27** に更新。
+
+
+## v0.0.33 初期世界0個仕様への修正（2026-09-29）
+- 初期状態は **世界0個** が正しい仕様であることを確認。
+- `main.js` の起動時自動世界生成を削除。
+- `SaveManager.load()` の世界0個時自動生成を削除。
+- `UnlockManager.unlockedWorlds` の初期値を **0** に変更。
+- セーブロード時も0を有効値として扱うよう変更。
+- セーブ削除時の `UnlockManager.reset()` も0に変更。
+- セーブ削除直後は「世界0個・資源0・EP0」となり、世界はユーザーが「世界作成」を押すまで生産を開始しない。
+- `WorldUI.js` に残っていた存在しない `world.getLevelMultiplier()` 呼び出しを `getTotalMultiplier()` に修正。世界カード描画時の例外も解消。
+- アプリバージョンを **0.0.33**、Service Workerを **v28** に更新。
