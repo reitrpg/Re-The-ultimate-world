@@ -37,7 +37,7 @@ function registerServiceWorker() {
     }
 
     navigator.serviceWorker
-        .register("./service-worker.js?v=18")
+        .register("./service-worker.js?v=19")
 
         .catch(error => {
             console.warn("Service Worker registration failed:", error);
