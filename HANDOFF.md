@@ -3,8 +3,8 @@
 ## 現在地
 - Repository: reitrpg/Re-The-ultimate-world
 - Pages: https://reitrpg.github.io/Re-The-ultimate-world/
-- App version: 0.0.25
-- Service Worker cache: world-creator-v19
+- App version: 0.0.26
+- Service Worker cache: world-creator-v21
 - 「読み込みが遅い」問題は解決済み。
 - 追加の起動・描画パフォーマンス改善も実施済み。
 
@@ -94,6 +94,21 @@ Commit:
 - ゲーム仕様そのものの変更は目的としていない。
 - World.jsのeventBus import不足は今回の読み込み遅延の原因ではないが、別の実行時エラー要因だったため修正済み。
 - 既存仕様を変更する大型改修は別途扱う。
+
+## 世界作成UI修正（2026-09-29）
+- 旧修正では「世界作成」ボタンが表示されない問題を解消できていなかった。
+- 追加調査で、`EPManager` が存在しない `BigNumber.lt()` / `BigNumber.gte()` を呼び出していたことを確認。`less()` / `greaterOrEqual()` に修正。
+- `WorldUI.render()` を部分的に例外処理し、世界カード描画失敗時でも世界作成UIの描画を継続。
+- `index.html` に世界作成ボタンの初期フォールバックを追加。
+- アプリバージョンを `0.0.25` → `0.0.26` に更新。
+- Service Worker cacheを `v21` に更新。
+
+対応コミット:
+- `9a81cc2` — BigNumber比較メソッド修正
+- `6b0b53c` — 世界作成UIの描画継続
+- `9cd8dc7` — 世界作成ボタンのHTMLフォールバック・バージョン更新
+- `806128d` — アプリバージョン0.0.26
+- `5061184` / `7004dcc` — Service Worker v21
 
 ## 次の作業
 - 読み込み遅延対策は完了。
