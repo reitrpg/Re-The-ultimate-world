@@ -19,7 +19,6 @@ class SaveManager{
    WorldManager.load(data.worlds);UnlockManager.load(data.worldUnlock);ResourceManager.load(data.resources);
    EPManager.load(data.ep);ResearchManager.load(data.research);UpgradeManager.load(data.upgrades);
    RebirthManager.load(data.rebirth);SettingsManager.load(data.settings);
-   if(WorldManager.getCount()===0)WorldManager.create(Date.now().toString());
    if(!ResourceManager.exists("plant")||!ResourceManager.exists("metal")||!ResourceManager.exists("magic"))ResourceManager.createDefaultResources();
    eventBus.emit("load:success");return true;
   }catch(error){console.error(error);eventBus.emit("load:error",error);localStorage.removeItem(this.key);return false;}
