@@ -85,6 +85,11 @@ class UnlockManager {
         return this.unlockedWorlds;
     }
 
+    reset() {
+        this.unlockedWorlds = 1;
+        eventBus.emit("world:unlock:update");
+    }
+
     toJSON() {
         return {
             unlockedWorlds: this.unlockedWorlds
