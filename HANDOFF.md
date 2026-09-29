@@ -3,8 +3,8 @@
 ## 現在地
 - Repository: reitrpg/Re-The-ultimate-world
 - Pages: https://reitrpg.github.io/Re-The-ultimate-world/
-- App version: 0.0.27
-- Service Worker cache: world-creator-v22
+- App version: 0.0.28
+- Service Worker cache: world-creator-v23
 - 「読み込みが遅い」問題は解決済み。
 - 追加の起動・描画パフォーマンス改善も実施済み。
 
@@ -132,3 +132,20 @@ Commit:
 - 12a67b7e — アプリバージョン0.0.27 / SW v22
 - c44b2239 — 表示バージョン更新
 - a8ddab38 — Service Worker cache v22
+
+
+## Lv生産補正・基礎生産量再調整（2026-09-29）
+- Lv補正を「倍率」ではなく「加算値」に変更。
+- 生産計算: `(基礎生産量 + max(1, floor(Lv / 10))) × 資源補正 × 転生倍率 × 全体補正`。
+- Lv1〜19は +1、Lv20〜29は +2、Lv30〜39は +3……。
+- 基礎生産量を 1 → 10 に増加。
+- 既存セーブで基礎生産量が1以下の場合も10へ補正。
+- 転生後の基礎生産量も10へ変更。
+- アプリバージョンを 0.0.27 → 0.0.28。
+- Service Worker cacheを v22 → v23。
+
+対応コミット:
+- b90584d8 — 加算式への変更・基礎生産量増加
+- 47359433 — アプリバージョン0.0.28 / SW v23
+- 7c22ad04 — 表示バージョン更新
+- 144472d9 — Service Worker cache v23
