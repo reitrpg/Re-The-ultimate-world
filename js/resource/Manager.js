@@ -133,7 +133,7 @@ class ResourceManager {
 
         if (
 
-            resource.amount.lt(
+            resource.amount.less(
                 cost
             )
 
@@ -173,7 +173,7 @@ class ResourceManager {
 
         }
 
-        return resource.amount.gte(
+        return resource.amount.greaterOrEqual(
             amount
         );
 
@@ -266,7 +266,7 @@ class ResourceManager {
 
         ["plant", "metal", "magic"].forEach(id => {
             const resource = this.get(id);
-            if (resource && resource.production.lt(1)) {
+            if (resource && resource.production.less(1)) {
                 resource.production = BigNumber.one();
             }
         });
