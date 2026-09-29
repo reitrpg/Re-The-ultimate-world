@@ -51,7 +51,9 @@ class World {
     }
 
     getLevelMultiplier() {
-        return BigNumber.from(this.level * this.level).divide(100);
+        return BigNumber.from(
+            Math.max(1, Math.floor(this.level / 10))
+        );
     }
 
     getTotalMultiplier() {
@@ -69,6 +71,7 @@ class World {
 
     getResourceProduction(id) {
         return this.baseProduction
+            .multiply(this.getLevelMultiplier())
             .multiply(this.getResourceMultiplier(id))
             .multiply(this.rebirthMultiplier);
     }
