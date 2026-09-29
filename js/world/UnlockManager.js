@@ -15,7 +15,7 @@ class UnlockManager {
         const count = Number(this.unlockedWorlds);
 
         if (!Number.isInteger(count) || count <= 1) {
-            return new BigNumber(1, 33);
+            return new BigNumber(10, 33);
         }
 
         let exponent = this.firstPaidWorldExponent;
