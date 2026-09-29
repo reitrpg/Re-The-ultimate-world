@@ -3,8 +3,8 @@
 ## 現在地
 - Repository: reitrpg/Re-The-ultimate-world
 - Pages: https://reitrpg.github.io/Re-The-ultimate-world/
-- App version: 0.0.26
-- Service Worker cache: world-creator-v21
+- App version: 0.0.27
+- Service Worker cache: world-creator-v22
 - 「読み込みが遅い」問題は解決済み。
 - 追加の起動・描画パフォーマンス改善も実施済み。
 
@@ -115,3 +115,20 @@ Commit:
 - 2026-09-29: 「世界作成」ボタンが表示されない問題を修正。WorldUIの #next-world が空になる経路を確認し、UnlockManagerの解放コスト計算を安全化。異常に大きい/不正な unlockedWorlds 値でも計算ループが暴走しないよう上限を設定。
 - Service Worker cache: v20 に更新し、今回の修正を確実に配布する構成へ変更。
 - 次のWC機能・不具合対応へ進む。
+
+
+## 世界カード・Lv生産補正変更（2026-09-29）
+- 世界カード内の「転生」ボタンを削除。転生機能自体は上部の「転生」タブ側に残す。
+- 世界の生産量にLv補正を追加。
+- Lv補正は max(1, floor(Lv / 10))。
+- Lv1〜19: ×1、Lv20〜29: ×2、Lv30〜39: ×3……。
+- これまでのLv²/100方式は廃止。
+- アプリバージョンを 0.0.26 → 0.0.27。
+- Service Worker cacheを v21 → v22。
+
+対応コミット:
+- 85c547e8 — Lvによる生産倍率を変更
+- f2c528d2 — 世界カードの転生ボタン削除
+- 12a67b7e — アプリバージョン0.0.27 / SW v22
+- c44b2239 — 表示バージョン更新
+- a8ddab38 — Service Worker cache v22
