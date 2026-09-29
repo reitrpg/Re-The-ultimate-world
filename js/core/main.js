@@ -8,7 +8,7 @@ import InputManager from "./InputManager.js";
 import InputActionController from "./InputActionController.js";
 import ErrorHandler from "./errorHandler.js";
 
-const APP_VERSION = "0.0.25";
+const APP_VERSION = "0.0.26";
 const SERVICE_WORKER_VERSION = "20";
 
 function ensureInitialState() {
