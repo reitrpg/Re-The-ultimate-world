@@ -158,6 +158,11 @@ class WorldUI {
         const rarity = document.createElement("p");
         rarity.textContent = "レアリティ: " + world.rarity;
 
+        const rarityMultiplier = document.createElement("p");
+        rarityMultiplier.textContent =
+            "レアリティ倍率: ×" +
+            Formatter.format(world.getRarityMultiplier());
+
         const feature = document.createElement("p");
         feature.textContent = "特徴: " + world.getResourceFeatureName("plant");
 
@@ -177,6 +182,7 @@ class WorldUI {
             Formatter.format(world.getTotalMultiplier());
 
         stats.appendChild(rarity);
+        stats.appendChild(rarityMultiplier);
         stats.appendChild(feature);
         stats.appendChild(level);
         stats.appendChild(exp);
