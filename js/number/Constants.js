@@ -5,7 +5,7 @@
 
 const BASE = 1000;
 const PRECISION = 6;
-const MIN_EXPONENT = 0;
+const MIN_EXPONENT = -1000000;
 const MAX_EXPONENT = 1000000;
 const MAX_EXPONENT_LAYER = 2;
 
