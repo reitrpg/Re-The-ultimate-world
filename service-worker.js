@@ -1,4 +1,4 @@
-const CACHE_NAME = "world-creator-v33";
+const CACHE_NAME = "world-creator-v34";
 
 const FILES_TO_CACHE = [
     "./",
@@ -76,6 +76,28 @@ async function cacheFirst(request) {
     return response;
 }
 
+async function networkFirst(request) {
+    try {
+        const response = await fetch(request, {
+            cache: "no-store"
+        });
+
+        if (response && response.ok) {
+            await putInCache(request, response);
+        }
+
+        return response;
+    } catch (error) {
+        const cached = await caches.match(request);
+
+        if (cached) {
+            return cached;
+        }
+
+        throw error;
+    }
+}
+
 self.addEventListener("install", event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
@@ -117,8 +139,12 @@ self.addEventListener("fetch", event => {
 
     if (url.origin !== self.location.origin) return;
 
+    const strategy = request.mode === "navigate"
+        ? networkFirst
+        : cacheFirst;
+
     event.respondWith(
-        cacheFirst(request).catch(() =>
+        strategy(request).catch(() =>
             new Response("World Creator: resource unavailable", {
                 status: 503,
                 headers: { "Content-Type": "text/plain; charset=utf-8" }
