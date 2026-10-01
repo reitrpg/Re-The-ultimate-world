@@ -3,8 +3,8 @@
 ## 現在地
 - Repository: reitrpg/Re-The-ultimate-world
 - Pages: https://reitrpg.github.io/Re-The-ultimate-world/
-- App version: 0.0.30
-- Service Worker cache: world-creator-v25
+- App version: 0.0.40
+- Service Worker cache: world-creator-v35
 - 「読み込みが遅い」問題は解決済み。
 - 追加の起動・描画パフォーマンス改善も実施済み。
 
@@ -287,3 +287,16 @@ Commit:
 - 世界カードに「レアリティ」と分離して「レアリティ倍率」を表示。現時点では表示のみで、生産計算へは追加していない。
 - アプリバージョン: **0.0.38 → 0.0.39**
 - Service Worker cache: **v33 → v34**
+
+
+## v0.0.40 レアリティ名表示（2026-10-01）
+- 既存の内部レアリティ値は変更せず、表示名だけを段階名へ変換。
+- 1〜5: コモンⅠ〜Ⅴ
+- 6〜10: アンコモンⅠ〜Ⅴ
+- 11〜15: レアⅠ〜Ⅴ
+- 16〜20: スーパーレアⅠ〜Ⅴ
+- 21〜25: エピックⅠ〜Ⅴ
+- 26〜30: レジェンダリーⅠ〜Ⅴ
+- 今回は表示名のみの実装で、抽選確率・Luck・レアリティ倍率の計算は変更していない。
+- アプリバージョン: **0.0.39 → 0.0.40**
+- Service Worker cache: **v34 → v35**
