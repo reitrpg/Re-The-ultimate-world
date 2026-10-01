@@ -70,8 +70,12 @@
 <label>デバッグ: <input id="settings-debug" type="checkbox"></label>
 <label>SpeedRun: <input id="settings-speedrun" type="checkbox"></label>
 <label>言語:
-<select id="settings-language"><option value="ja">日本語</option></select>
+<select id="settings-language"><option value="ja">日本語</option><option value="en">English</option></select>
 </label>
+<label>シード値:
+<input id="settings-seed" type="text" placeholder="次回の世界作成に使用">
+</label>
+<button id="settings-seed-output" type="button">現在の世界のシード値を出力</button>
 <div id="save-controls">
 <h3>セーブ</h3>
 <button id="save-button" type="button">手動保存</button>
@@ -92,7 +96,7 @@
 </section>
 </main>
 <div id="notification-container" aria-live="polite"></div>
-<footer id="app-version">World Creator v0.0.42</footer>
-<script type="module" src="./js/core/main.js?v=0.0.42"></script>
+<footer id="app-version">World Creator v0.0.43</footer>
+<script type="module" src="./js/core/main.js?v=0.0.43"></script>
 </body>
 </html>
