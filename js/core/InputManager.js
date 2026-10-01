@@ -20,9 +20,10 @@ class InputManager {
             this.dispatch(event);
         }, true);
 
-        if (!("PointerEvent" in window)) {
-            document.addEventListener("click", event => this.dispatch(event), true);
-        }
+        document.addEventListener("click", event => {
+            if (event.detail === 0) return;
+            this.dispatch(event);
+        }, true);
 
         document.documentElement.style.setProperty("touch-action", "manipulation");
     }
