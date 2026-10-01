@@ -1,79 +1,73 @@
-import SaveManager from "./save.js";
-import Game from "./game.js";
-import OfflineProgress from "../utils/OfflineProgress.js";
-import ResourceManager from "../resource/Manager.js";
-import WorldManager from "../world/Manager.js";
-import UI from "../ui/UI.js";
-import InputManager from "./InputManager.js";
-import InputActionController from "./InputActionController.js";
 import ErrorHandler from "./errorHandler.js";
 
-const APP_VERSION = "0.0.50";
-const SERVICE_WORKER_VERSION = "45";
+const APP_VERSION = "0.0.51";
+const SERVICE_WORKER_VERSION = "46";
 
-function ensureInitialState() {
-    if (!ResourceManager.exists("plant") || !ResourceManager.exists("metal") || !ResourceManager.exists("magic")) {
-        ResourceManager.createDefaultResources();
+async function loadModule(path) {
+    try {
+        const module = await import(path);
+        return module.default ?? module;
+    } catch (error) {
+        console.error("World Creator module load failed:", path, error);
+        try {
+            ErrorHandler.record(error);
+        } catch (_) {}
+        return null;
     }
-
 }
 
 function setBootVersion() {
     const version = document.getElementById("app-version");
-
     if (version) {
         version.textContent = "World Creator v" + APP_VERSION;
         version.dataset.booted = "true";
     }
-
     document.documentElement.dataset.appVersion = APP_VERSION;
 }
 
-function registerServiceWorker() {
-    if (!("serviceWorker" in navigator)) {
-        return;
-    }
+async function registerServiceWorker() {
+    if (!("serviceWorker" in navigator)) return;
 
-    const hadController = Boolean(navigator.serviceWorker.controller);
+    try {
+        const hadController = Boolean(navigator.serviceWorker.controller);
 
-    if (hadController) {
-        navigator.serviceWorker.addEventListener(
-            "controllerchange",
-            () => {
-                window.location.reload();
-            },
-            { once: true }
+        if (hadController) {
+            navigator.serviceWorker.addEventListener(
+                "controllerchange",
+                () => window.location.reload(),
+                { once: true }
+            );
+        }
+
+        const registration = await navigator.serviceWorker.register(
+            "./service-worker.js?v=" + SERVICE_WORKER_VERSION
         );
-    }
 
-    navigator.serviceWorker
-        .register("./service-worker.js?v=" + SERVICE_WORKER_VERSION)
-        .then(registration => {
-            if (registration.waiting) {
-                registration.waiting.postMessage({
-                    type: "SKIP_WAITING"
-                });
-            }
-        })
-        .catch(error => {
-            console.warn("Service Worker registration failed:", error);
-            ErrorHandler.record(error);
-        });
+        if (registration.waiting) {
+            registration.waiting.postMessage({ type: "SKIP_WAITING" });
+        }
+    } catch (error) {
+        console.warn("Service Worker registration failed:", error);
+        ErrorHandler.record(error);
+    }
 }
 
-function scheduleServiceWorkerRegistration() {
-    if (typeof window.requestIdleCallback === "function") {
-        window.requestIdleCallback(registerServiceWorker, { timeout: 3000 });
-        return;
-    }
-
-    window.setTimeout(registerServiceWorker, 1000);
-}
-
-function initializeGame() {
+async function initializeGame() {
     try {
         ErrorHandler.initialize();
         setBootVersion();
+
+        const SaveManager = await loadModule("./save.js");
+        const Game = await loadModule("./game.js");
+        const OfflineProgress = await loadModule("../utils/OfflineProgress.js");
+        const ResourceManager = await loadModule("../resource/Manager.js");
+        const InputManager = await loadModule("./InputManager.js");
+        const InputActionController = await loadModule("./InputActionController.js");
+        const UI = await loadModule("../ui/UI.js");
+
+        if (!SaveManager || !Game || !ResourceManager || !InputManager || !InputActionController || !UI) {
+            throw new Error("World Creator: core module initialization failed");
+        }
 
         const resetPending =
             localStorage.getItem("world_creator_reset_pending") === "true";
@@ -81,22 +75,29 @@ function initializeGame() {
         if (resetPending) {
             localStorage.removeItem("world_creator_save");
             localStorage.removeItem("world_creator_last_time");
-            sessionStorage.setItem(
-                "world_creator_skip_offline_once",
-                "true"
-            );
+            sessionStorage.setItem("world_creator_skip_offline_once", "true");
         }
 
         SaveManager.load();
-        ensureInitialState();
+
+        if (
+            !ResourceManager.exists("plant") ||
+            !ResourceManager.exists("metal") ||
+            !ResourceManager.exists("magic")
+        ) {
+            ResourceManager.createDefaultResources();
+        }
 
         if (resetPending) {
             localStorage.removeItem("world_creator_reset_pending");
         }
-        const skipOfflineProgress = sessionStorage.getItem("world_creator_skip_offline_once") === "true";
-        if (skipOfflineProgress) {
+
+        const skipOffline =
+            sessionStorage.getItem("world_creator_skip_offline_once") === "true";
+
+        if (skipOffline) {
             sessionStorage.removeItem("world_creator_skip_offline_once");
-        } else {
+        } else if (OfflineProgress) {
             OfflineProgress.calculate();
         }
 
@@ -108,32 +109,33 @@ function initializeGame() {
         Game.start();
 
         document.documentElement.dataset.appReady = "true";
-
-        scheduleServiceWorkerRegistration();
+        registerServiceWorker();
     } catch (error) {
         ErrorHandler.record(error);
         console.error("World Creator initialization failed:", error);
 
         const version = document.getElementById("app-version");
-
         if (version) {
-            version.textContent =
-                "World Creator v" +
-                APP_VERSION +
-                " / 起動エラー";
+            version.textContent = "World Creator v" + APP_VERSION + " / 起動エラー";
             version.dataset.booted = "error";
         }
     }
 }
 
-window.addEventListener("beforeunload", () => {
+window.addEventListener("beforeunload", async () => {
     const clearing =
         sessionStorage.getItem("world_creator_skip_offline_once") === "true" ||
         localStorage.getItem("world_creator_reset_pending") === "true";
 
-    if (!clearing) {
-        OfflineProgress.saveTimestamp();
-        SaveManager.save();
+    if (clearing) return;
+
+    try {
+        const OfflineProgress = await import("../utils/OfflineProgress.js");
+        const SaveManager = await import("./save.js");
+        OfflineProgress.default.saveTimestamp();
+        SaveManager.default.save();
+    } catch (error) {
+        console.error("World Creator shutdown save failed:", error);
     }
 });
 
