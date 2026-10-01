@@ -14,7 +14,7 @@ class InputActionController {
  handleWorldCreate(payload={}){
   try{
    const configuredSeed = SettingsManager.get("seed").trim();
-   const seed=payload.seed ?? configuredSeed || Date.now().toString();
+   const seed=(payload.seed ?? configuredSeed) || Date.now().toString();
    const cost=UnlockManager.getUnlockCost();
    const created=UnlockManager.unlock(seed);
    eventBus.emit(created?"world:create:success":"world:create:failed",{seed,cost});
