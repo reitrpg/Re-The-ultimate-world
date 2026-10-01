@@ -31,10 +31,22 @@ class WorldGenerator {
         return value / 233280;
     }
 
-    generateName(seed) {
-        const prefixes = ["Ancient","Crystal","Divine","Forgotten","Eternal","Sacred","Mystic","Infinite","Golden","Shadow"];
-        const suffixes = ["Forest","Kingdom","Ocean","World","Empire","Garden","Sanctuary","Abyss","Realm","Tree"];
-        return `${prefixes[Math.floor(this.random(seed, 1) * prefixes.length)]} ${suffixes[Math.floor(this.random(seed, 2) * suffixes.length)]}`;
+    generateName(seed, language = "ja") {
+        const names = {
+            ja: {
+                prefixes: ["古代","水晶","神聖","忘却","永遠","聖なる","神秘","無限","黄金","影"],
+                suffixes: ["森林","王国","海洋","世界","帝国","庭園","聖域","深淵","領域","樹"]
+            },
+            en: {
+                prefixes: ["Ancient","Crystal","Divine","Forgotten","Eternal","Sacred","Mystic","Infinite","Golden","Shadow"],
+                suffixes: ["Forest","Kingdom","Ocean","World","Empire","Garden","Sanctuary","Abyss","Realm","Tree"]
+            }
+        };
+        const locale = names[language] || names.ja;
+        return language === "ja"
+            ? locale.prefixes[Math.floor(this.random(seed, 1) * locale.prefixes.length)] +
+              locale.suffixes[Math.floor(this.random(seed, 2) * locale.suffixes.length)]
+            : `${locale.prefixes[Math.floor(this.random(seed, 1) * locale.prefixes.length)]} ${locale.suffixes[Math.floor(this.random(seed, 2) * locale.suffixes.length)]}`;
     }
 
     getBaseRarityProbabilities() {
@@ -112,11 +124,13 @@ class WorldGenerator {
         };
     }
 
-    generate(seed) {
+    generate(seed, language = "ja") {
         const worldSeed = String(seed);
         const world = new World(worldSeed);
 
-        world.name = this.generateName(worldSeed);
+        world.name = this.generateName(worldSeed, language);
+        world.nameCustom = false;
+        world.nameLanguage = language;
         world.luck = 0;
         world.rarity = this.generateRarity(worldSeed, world.getLuck());
         world.uniqueEffect = this.generateEffect(worldSeed);
