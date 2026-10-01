@@ -199,11 +199,15 @@ class ResourceManager {
 
         }
 
+        const gain = BigNumber.from(amount);
+
         resource.amount =
 
             resource.amount.add(
-                amount
+                gain
             );
+
+        StatisticsManager.recordResource(id, gain);
 
         if (emitUpdate) {
             eventBus.emit("resource:update");
