@@ -23,6 +23,7 @@
 <button type="button" data-tab="research" aria-selected="false">研究</button>
 <button type="button" data-tab="upgrade" aria-selected="false">強化</button>
 <button type="button" data-tab="rebirth" aria-selected="false">転生</button>
+<button type="button" data-tab="statistics" aria-selected="false">統計・倍率</button>
 <button type="button" data-tab="settings" aria-selected="false">設定</button>
 </nav>
 <main>
@@ -56,6 +57,9 @@
 <p>世界経験値: <span id="rebirth-world-exp">0</span></p>
 <button id="rebirth-button" type="button" disabled>転生</button>
 </section>
+<section id="statistics-tab" class="tab-content" data-tab-panel="statistics" hidden>
+<div id="statistics-content"></div>
+</section>
 <section id="settings-tab" class="tab-content" data-tab-panel="settings" hidden>
 <h2>設定</h2>
 <label>数値表示:
@@ -88,7 +92,7 @@
 </section>
 </main>
 <div id="notification-container" aria-live="polite"></div>
-<footer id="app-version">World Creator v0.0.41</footer>
-<script type="module" src="./js/core/main.js?v=0.0.41"></script>
+<footer id="app-version">World Creator v0.0.42</footer>
+<script type="module" src="./js/core/main.js?v=0.0.42"></script>
 </body>
 </html>
