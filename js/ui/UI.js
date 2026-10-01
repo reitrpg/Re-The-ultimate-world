@@ -11,7 +11,6 @@ import DebugUI from "./DebugUI.js";
 import SaveUI from "./SaveUI.js";
 import NotificationUI from "./NotificationUI.js";
 import ErrorUI from "./ErrorUI.js";
-import StatisticsUI from "./StatisticsUI.js";
 
 const INITIALIZE_MODULES = [
     TabUI,
@@ -50,6 +49,24 @@ class UI {
                 );
             }
         }
+
+        import("./StatisticsUI.js")
+            .then(module => {
+                try {
+                    module.default.initialize();
+                } catch (error) {
+                    console.error(
+                        "World Creator Statistics UI initialization failed:",
+                        error
+                    );
+                }
+            })
+            .catch(error => {
+                console.error(
+                    "World Creator Statistics UI module load failed:",
+                    error
+                );
+            });
     }
 }
 
