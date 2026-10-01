@@ -393,3 +393,10 @@ Commit:
 - InputManagerをpointerup中心に整理し、clickとの二重発火経路を廃止。
 - InputActionControllerの例外を入力基盤全体へ再送出しない構造へ変更。
 - Service Workerをv46へ更新。
+
+
+## v0.0.52 基盤互換調整
+- UI.initialize()を非同期化し、main.jsが全UIモジュールの初期化完了を待ってからゲーム開始する構造へ調整。
+- UIモジュール個別失敗は引き続き隔離。
+- 動的ロード化によるbeforeunload時の遅延import依存を廃止し、起動時にロード済みのSaveManager/OfflineProgressを終了処理で再利用。
+- Service Worker v47。
