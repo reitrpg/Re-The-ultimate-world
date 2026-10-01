@@ -1,4 +1,4 @@
-const CACHE_NAME = "world-creator-v36";
+const CACHE_NAME = "world-creator-v37";
 
 const FILES_TO_CACHE = [
     "./",
@@ -48,6 +48,7 @@ const FILES_TO_CACHE = [
     "./js/ui/SaveUI.js",
     "./js/ui/NotificationUI.js",
     "./js/ui/ErrorUI.js",
+    "./js/ui/StatisticsUI.js",
     "./icon-192.png",
     "./icon-512.png"
 ];
