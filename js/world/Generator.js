@@ -37,13 +37,60 @@ class WorldGenerator {
         return `${prefixes[Math.floor(this.random(seed, 1) * prefixes.length)]} ${suffixes[Math.floor(this.random(seed, 2) * suffixes.length)]}`;
     }
 
-    generateRarity(seed) {
+    getBaseRarityProbabilities() {
+        return [0.5, 0.25, 0.15, 0.08, 0.02];
+    }
+
+    getEffectiveLuck(luck) {
+        const value = Math.max(0, Number(luck) || 0);
+        return Math.log1p(value);
+    }
+
+    getRarityLuckCost(rarityIndex) {
+        const baseCost = 10;
+        const exponent = 1.5;
+        return baseCost * Math.pow(rarityIndex, exponent);
+    }
+
+    getLuckAdjustedRarityProbabilities(luck = 0) {
+        const probabilities = this.getBaseRarityProbabilities().slice();
+        let remainingLuck = this.getEffectiveLuck(luck);
+
+        for (let index = 0; index < probabilities.length - 1; index += 1) {
+            const cost = this.getRarityLuckCost(index + 1);
+            const transfer = Math.min(
+                probabilities[index],
+                remainingLuck / cost
+            );
+
+            probabilities[index] -= transfer;
+            probabilities[index + 1] += transfer;
+            remainingLuck = Math.max(
+                0,
+                remainingLuck - transfer * cost
+            );
+
+            if (remainingLuck <= 0) break;
+        }
+
+        return probabilities;
+    }
+
+    generateRarity(seed, luck = 0) {
         const value = this.random(seed, 3);
-        if (value < 0.5) return 1;
-        if (value < 0.75) return 2;
-        if (value < 0.9) return 3;
-        if (value < 0.98) return 4;
-        return 5;
+        const probabilities = this.getLuckAdjustedRarityProbabilities(luck);
+
+        let cumulative = 0;
+
+        for (let index = 0; index < probabilities.length; index += 1) {
+            cumulative += probabilities[index];
+
+            if (value < cumulative) {
+                return index + 1;
+            }
+        }
+
+        return probabilities.length;
     }
 
     generateEffect(seed) {
@@ -70,7 +117,8 @@ class WorldGenerator {
         const world = new World(worldSeed);
 
         world.name = this.generateName(worldSeed);
-        world.rarity = this.generateRarity(worldSeed);
+        world.luck = 0;
+        world.rarity = this.generateRarity(worldSeed, world.getLuck());
         world.uniqueEffect = this.generateEffect(worldSeed);
 
         const features = this.generateResourceFeatures(worldSeed);
