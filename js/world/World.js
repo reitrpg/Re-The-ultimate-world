@@ -51,7 +51,7 @@ class World {
 
     getLuck() {
         const value = Number(this.luck);
-        return Number.isFinite(value) && value >= 0 ? value : 0;
+        return Number.isFinite(value) && value >= 1 ? value : 1;
     }
 
     getRarityMultiplier() {
@@ -214,8 +214,6 @@ class World {
         this.nameLanguage = ["ja", "en"].includes(data.nameLanguage) ? data.nameLanguage : "ja";
         this.rarity = Number(data.rarity) || 1;
         this.luck = Math.max(1, Number(data.luck) || 1);
-        this.nameCustom = data.nameCustom === true;
-        this.nameLanguage = ["ja", "en"].includes(data.nameLanguage) ? data.nameLanguage : "ja";
         this.level = Math.max(1, Number(data.level) || 1);
         this.exp = BigNumber.from(data.exp);
         this.rebirthMultiplier = BigNumber.from(data.rebirthMultiplier ?? 1);
