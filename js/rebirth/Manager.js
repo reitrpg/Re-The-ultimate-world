@@ -1,5 +1,6 @@
 import eventBus from "../core/eventBus.js";
 import WorldManager from "../world/Manager.js";
+import StatisticsManager from "../statistics/Manager.js";
 
 class RebirthManager {
     getWorld() { return WorldManager.getActive(); }
@@ -11,6 +12,7 @@ class RebirthManager {
     rebirth() {
         const world=this.getWorld();
         if(!world || !world.performRebirth()) return false;
+        StatisticsManager.recordRebirth();
         eventBus.emit("rebirth:update");
         eventBus.emit("world:update");
         return true;
