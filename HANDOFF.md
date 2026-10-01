@@ -3,8 +3,8 @@
 ## 現在地
 - Repository: reitrpg/Re-The-ultimate-world
 - Pages: https://reitrpg.github.io/Re-The-ultimate-world/
-- App version: 0.0.45
-- Service Worker cache: world-creator-v40
+- App version: 0.0.46
+- Service Worker cache: world-creator-v41
 - 「読み込みが遅い」問題は解決済み。
 - 追加の起動・描画パフォーマンス改善も実施済み。
 
@@ -351,3 +351,5 @@ Commit:
 - v0.0.44: 統計・倍率から世界別情報であるレアリティ表示を削除。能力値も幸運のみを表示。
 
 - v0.0.45: 世界カードから幸運値の表示を削除。幸運は「統計・倍率」の能力値で確認する。
+
+- v0.0.46: 統計・倍率の構文不具合を修正し、世界カードから幸運値表示を確実に削除。
