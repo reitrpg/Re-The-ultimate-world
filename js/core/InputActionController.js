@@ -1,6 +1,7 @@
 import eventBus from "./eventBus.js";
 import UnlockManager from "../world/UnlockManager.js";
 import WorldManager from "../world/Manager.js";
+import SettingsManager from "../settings/Manager.js";
 
 class InputActionController {
  constructor(){this.initialized=false;}
@@ -12,7 +13,8 @@ class InputActionController {
  }
  handleWorldCreate(payload={}){
   try{
-   const seed=payload.seed??Date.now().toString();
+   const configuredSeed = SettingsManager.get("seed").trim();
+   const seed=payload.seed ?? configuredSeed || Date.now().toString();
    const cost=UnlockManager.getUnlockCost();
    const created=UnlockManager.unlock(seed);
    eventBus.emit(created?"world:create:success":"world:create:failed",{seed,cost});
