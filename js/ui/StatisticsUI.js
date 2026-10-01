@@ -207,6 +207,16 @@ class StatisticsUI {
         );
 
         if (world) {
+            multipliers.content.appendChild(
+                this.createRow("固有効果", world.getUniqueEffectName?.() || "なし")
+            );
+            multipliers.content.appendChild(
+                this.createRow(
+                    "固有効果倍率",
+                    "×" + Formatter.format(world.getUniqueEffectMultiplier?.() ?? 1)
+                )
+            );
+
             [
                 ["plant", "植物"],
                 ["metal", "金属"],
