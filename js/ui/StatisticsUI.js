@@ -240,8 +240,6 @@ class StatisticsUI {
             )
         );
 
-        }
-
         container.appendChild(section.section);
     }
 
