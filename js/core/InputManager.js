@@ -3,34 +3,37 @@ import eventBus from "./eventBus.js";
 class InputManager {
     constructor() {
         this.initialized = false;
-        this.lastTarget = null;
-        this.lastEventTime = 0;
+        this.lastPointerTarget = null;
+        this.lastPointerTime = 0;
     }
 
     initialize() {
         if (this.initialized) return;
         this.initialized = true;
 
-        document.addEventListener("pointerup", event => this.dispatch(event), true);
+        document.addEventListener("pointerup", event => {
+            this.handlePointer(event);
+        }, true);
 
         document.addEventListener("keydown", event => {
             if (event.key !== "Enter" && event.key !== " ") return;
+
             const target = this.resolveTarget(event);
             if (!target || target.disabled) return;
-            this.dispatch(event);
+
+            event.preventDefault();
+            this.dispatch(target, event, "keyboard");
         }, true);
 
-        document.addEventListener("click", event => {
-            if (event.detail === 0) return;
-            this.dispatch(event);
-        }, true);
-
-        document.documentElement.style.setProperty("touch-action", "manipulation");
+        document.documentElement.style.setProperty(
+            "touch-action",
+            "manipulation"
+        );
     }
 
     resolveTarget(event) {
         const selectors =
-            "[data-action], [data-tab], [data-world-category], button, [role='button']";
+            "[data-action], [data-tab], [data-world-category], [data-upgrade-category], button, [role='button']";
 
         const path = typeof event.composedPath === "function"
             ? event.composedPath()
@@ -50,33 +53,40 @@ class InputManager {
             : null;
     }
 
-    dispatch(event) {
+    handlePointer(event) {
         const target = this.resolveTarget(event);
 
-        if (!target || target.disabled) return false;
+        if (!target || target.disabled) return;
 
         const now = Date.now();
 
-        if (target === this.lastTarget && now - this.lastEventTime < 350) {
-            return false;
+        if (
+            target === this.lastPointerTarget &&
+            now - this.lastPointerTime < 300
+        ) {
+            return;
         }
 
-        this.lastTarget = target;
-        this.lastEventTime = now;
+        this.lastPointerTarget = target;
+        this.lastPointerTime = now;
 
-        const action = target.dataset?.action || null;
+        this.dispatch(target, event, "pointer");
+    }
+
+    dispatch(target, originalEvent, inputType) {
+        if (!target || target.disabled) return false;
 
         const payload = {
-            action,
+            action: target.dataset?.action || null,
             target,
-            originalEvent: event,
-            inputType: event.pointerType || event.type
+            originalEvent,
+            inputType
         };
 
         eventBus.emit("input:pressed", payload);
 
-        if (action) {
-            eventBus.emit(action, payload);
+        if (payload.action) {
+            eventBus.emit(payload.action, payload);
         }
 
         return true;
