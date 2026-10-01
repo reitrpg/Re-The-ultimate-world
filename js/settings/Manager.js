@@ -1,5 +1,5 @@
 import eventBus from "../core/eventBus.js";
-export const DEFAULT_SETTINGS=Object.freeze({numberFormat:"scientific",tickSpeed:1000,autoSaveInterval:30000,debugMode:false,speedRunMode:false,language:"ja"});
+export const DEFAULT_SETTINGS=Object.freeze({numberFormat:"scientific",tickSpeed:1000,autoSaveInterval:30000,debugMode:false,speedRunMode:false,language:"ja",seed:""});
 class SettingsManager{
  constructor(){this.settings={...DEFAULT_SETTINGS};}
  get(key){return this.settings[key];}
@@ -9,6 +9,8 @@ class SettingsManager{
   if(key==="tickSpeed"){const n=Number(value);if(!Number.isFinite(n)||n<=0)return false;value=n;}
   if(key==="autoSaveInterval"){const n=Number(value);if(!Number.isFinite(n)||n<0)return false;value=n;}
   if(key==="debugMode"||key==="speedRunMode")value=Boolean(value);
+  if(key==="language" && !["ja","en"].includes(value))value="ja";
+  if(key==="seed")value=String(value ?? "");
   this.settings[key]=value;eventBus.emit("settings:update",{key,value});return true;
  }
  getTickSpeed(){const n=Number(this.settings.tickSpeed);return Number.isFinite(n)&&n>0?n:DEFAULT_SETTINGS.tickSpeed;}
