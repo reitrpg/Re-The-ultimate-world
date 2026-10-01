@@ -8,6 +8,7 @@ import SettingsManager from "../settings/Manager.js";
 import WorldManager from "../world/Manager.js";
 
 import eventBus from "./eventBus.js";
+import StatisticsManager from "../statistics/Manager.js";
 
 class Game {
 
@@ -89,6 +90,8 @@ class Game {
 
         this.lastUpdate =
             currentTime;
+
+        StatisticsManager.recordOnlineTime(deltaTime);
 
         WorldManager.update(
             deltaTime
