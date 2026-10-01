@@ -1,71 +1,65 @@
-import TabUI from "./TabUI.js";
-import EPUI from "./EPUI.js";
-import ResourceUI from "./ResourceUI.js";
-import WorldUI from "./WorldUI.js";
-import ResearchUI from "./ResearchUI.js";
-import UpgradeUI from "./UpgradeUI.js";
-import ConverterUI from "./ConverterUI.js";
-import RebirthUI from "./RebirthUI.js";
-import SettingsUI from "./SettingsUI.js";
-import DebugUI from "./DebugUI.js";
-import SaveUI from "./SaveUI.js";
-import NotificationUI from "./NotificationUI.js";
-import ErrorUI from "./ErrorUI.js";
+import eventBus from "../core/eventBus.js";
 
-const INITIALIZE_MODULES = [
-    TabUI,
-    EPUI,
-    ResourceUI,
-    WorldUI,
-    ResearchUI,
-    UpgradeUI,
-    ConverterUI,
-    RebirthUI,
-    SettingsUI,
-    DebugUI,
-    SaveUI,
-    NotificationUI,
-    ErrorUI
+const MODULES = [
+    ["TabUI", "./TabUI.js"],
+    ["EPUI", "./EPUI.js"],
+    ["ResourceUI", "./ResourceUI.js"],
+    ["WorldUI", "./WorldUI.js"],
+    ["ResearchUI", "./ResearchUI.js"],
+    ["UpgradeUI", "./UpgradeUI.js"],
+    ["ConverterUI", "./ConverterUI.js"],
+    ["RebirthUI", "./RebirthUI.js"],
+    ["SettingsUI", "./SettingsUI.js"],
+    ["DebugUI", "./DebugUI.js"],
+    ["SaveUI", "./SaveUI.js"],
+    ["NotificationUI", "./NotificationUI.js"],
+    ["ErrorUI", "./ErrorUI.js"],
+    ["StatisticsUI", "./StatisticsUI.js"]
 ];
 
 class UI {
     constructor() {
         this.initialized = false;
+        this.modules = new Map();
+        this.errors = [];
     }
 
     initialize() {
         if (this.initialized) return;
-
         this.initialized = true;
 
-        for (const module of INITIALIZE_MODULES) {
-            try {
-                module.initialize();
-            } catch (error) {
-                console.error(
-                    "World Creator UI initialization failed:",
-                    error
-                );
-            }
+        for (const [name, path] of MODULES) {
+            this.initializeModule(name, path);
         }
 
-        import("./StatisticsUI.js")
-            .then(module => {
-                try {
-                    module.default.initialize();
-                } catch (error) {
-                    console.error(
-                        "World Creator Statistics UI initialization failed:",
-                        error
-                    );
-                }
-            })
-            .catch(error => {
-                console.error(
-                    "World Creator Statistics UI module load failed:",
-                    error
-                );
-            });
+        eventBus.emit("ui:ready");
+    }
+
+    async initializeModule(name, path) {
+        try {
+            const module = await import(path);
+            const instance = module.default ?? module;
+
+            if (!instance || typeof instance.initialize !== "function") {
+                throw new Error("UI module has no initialize(): " + name);
+            }
+
+            instance.initialize();
+            this.modules.set(name, instance);
+            eventBus.emit("ui:module:ready", { name });
+        } catch (error) {
+            this.errors.push({ name, error });
+            console.error("World Creator UI module failed:", name, error);
+            eventBus.emit("ui:module:error", { name, error });
+        }
+    }
+
+    getModule(name) {
+        return this.modules.get(name) || null;
+    }
+
+    getErrors() {
+        return [...this.errors];
     }
 }
 
