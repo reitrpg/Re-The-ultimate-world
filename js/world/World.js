@@ -34,7 +34,7 @@ class World {
         this.exp = BigNumber.zero();
         this.rebirthMultiplier = BigNumber.one();
         this.baseProduction = BigNumber.one();
-        this.uniqueEffect = 1;
+        this.uniqueEffect = { type: "none", name: "なし", multiplier: 1, resourceId: null };
         this.resourceMultipliers = { plant: 1.4, metal: 0.75, magic: 1 };
         this.resourceFeatures = {
             plant: "植物の大地",
@@ -75,8 +75,51 @@ class World {
         return BigNumber.from(bonus);
     }
 
+    getUniqueEffectMultiplier() {
+        const value = Number(this.uniqueEffect?.multiplier);
+        return Number.isFinite(value) && value > 0 ? value : 1;
+    }
+
+    getUniqueEffectName() {
+        return this.uniqueEffect?.name || "なし";
+    }
+
+    getUniqueEffectType() {
+        return this.uniqueEffect?.type || "none";
+    }
+
+    getUniqueEffectResourceId() {
+        return this.uniqueEffect?.resourceId || null;
+    }
+
+    getLuckMultiplier() {
+        return this.getUniqueEffectType() === "luck"
+            ? this.getUniqueEffectMultiplier()
+            : 1;
+    }
+
+    getAllResourceMultiplier() {
+        return this.getUniqueEffectType() === "allResource"
+            ? this.getUniqueEffectMultiplier()
+            : 1;
+    }
+
+    getEPConversionMultiplier() {
+        return this.getUniqueEffectType() === "epConversion"
+            ? this.getUniqueEffectMultiplier()
+            : 1;
+    }
+
+    getResourceUniqueMultiplier(id) {
+        if (this.getUniqueEffectType() !== "resource" ||
+            this.getUniqueEffectResourceId() !== id) {
+            return 1;
+        }
+        return this.getUniqueEffectMultiplier();
+    }
+
     getTotalMultiplier() {
-        return BigNumber.one();
+        return BigNumber.from(this.getUniqueEffectMultiplier());
     }
 
     getResourceMultiplier(id) {
@@ -93,8 +136,13 @@ class World {
             this.getLevelProductionBonus()
         );
 
+        const uniqueMultiplier =
+            this.getAllResourceMultiplier() *
+            this.getResourceUniqueMultiplier(id);
+
         return levelAdjustedProduction
             .multiply(this.getResourceMultiplier(id))
+            .multiply(uniqueMultiplier)
             .multiply(this.rebirthMultiplier);
     }
 
@@ -199,7 +247,7 @@ class World {
             rebirthMultiplier: this.rebirthMultiplier.toJSON(),
             rebirthCount: this.rebirthCount,
             baseProduction: this.baseProduction.toJSON(),
-            uniqueEffect: this.uniqueEffect,
+            uniqueEffect: { ...this.uniqueEffect },
             resourceMultipliers: { ...this.resourceMultipliers },
             resourceFeatures: { ...this.resourceFeatures }
         };
@@ -224,10 +272,21 @@ class World {
             this.baseProduction = BigNumber.one();
         }
 
-        this.uniqueEffect =
-            Number.isFinite(Number(data.uniqueEffect))
-                ? Number(data.uniqueEffect)
-                : 1;
+        if (data.uniqueEffect && typeof data.uniqueEffect === "object") {
+            this.uniqueEffect = {
+                type: data.uniqueEffect.type || "none",
+                name: data.uniqueEffect.name || "なし",
+                multiplier: Math.max(1, Number(data.uniqueEffect.multiplier) || 1),
+                resourceId: data.uniqueEffect.resourceId || null
+            };
+        } else {
+            this.uniqueEffect = {
+                type: "none",
+                name: "なし",
+                multiplier: 1,
+                resourceId: null
+            };
+        }
 
         const savedMultipliers = {
             plant: 1,
