@@ -199,38 +199,6 @@ class StatisticsUI {
     }
 
     renderMultiplierPage(container, world) {
-        const rarity = this.createSection("世界・レアリティ");
-
-        if (!world) {
-            rarity.content.appendChild(this.createRow("現在の世界", "なし"));
-        } else {
-            rarity.content.appendChild(this.createRow("現在の世界", world.name));
-            rarity.content.appendChild(
-                this.createRow("レアリティ", this.getRarityName(world.rarity))
-            );
-            rarity.content.appendChild(
-                this.createRow("内部レアリティ値", String(world.rarity))
-            );
-            rarity.content.appendChild(
-                this.createRow(
-                    "レアリティ倍率",
-                    "×" + Formatter.format(world.getRarityMultiplier())
-                )
-            );
-
-            const probabilities = this.getLuckAdjustedProbabilities(world.getLuck());
-            probabilities.forEach((probability, index) => {
-                rarity.content.appendChild(
-                    this.createRow(
-                        this.getRarityName(index + 1),
-                        (probability * 100).toFixed(4) + "%"
-                    )
-                );
-            });
-        }
-
-        container.appendChild(rarity.section);
-
         const multipliers = this.createSection("倍率");
 
         const rebirth = world?.rebirthMultiplier || 1;
@@ -291,13 +259,6 @@ class StatisticsUI {
             )
         );
 
-        if (world) {
-            section.content.appendChild(
-                this.createRow("レアリティ", this.getRarityName(world.rarity))
-            );
-            section.content.appendChild(
-                this.createRow("レアリティ倍率", "×" + Formatter.format(world.getRarityMultiplier()))
-            );
         }
 
         container.appendChild(section.section);
