@@ -25,13 +25,8 @@ class EPManager {
 
     set(value) {
 
-        this.amount =
-
-            BigNumber.from(
-                value
-            );
-
-        StatisticsManager.recordEP(gain);
+        const nextAmount = BigNumber.from(value);
+        this.amount = nextAmount;
         eventBus.emit(
             "ep:update"
         );
@@ -46,6 +41,8 @@ class EPManager {
             this.amount.add(
                 gain
             );
+
+        StatisticsManager.recordEP(gain);
 
         eventBus.emit(
             "ep:update"
