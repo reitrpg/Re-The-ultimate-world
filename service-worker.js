@@ -31,6 +31,7 @@ const FILES_TO_CACHE = [
     "./js/settings/Manager.js",
     "./js/debug/Manager.js",
     "./js/ep/Manager.js",
+    "./js/statistics/Manager.js",
     "./js/converter/Converter.js",
     "./js/utils/Formatter.js",
     "./js/utils/OfflineProgress.js",
