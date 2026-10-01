@@ -4,6 +4,7 @@ import ResourceManager from "../resource/Manager.js";
 import ResearchManager from "../research/Manager.js";
 import UpgradeManager from "../upgrades/Manager.js";
 import eventBus from "../core/eventBus.js";
+import StatisticsManager from "../statistics/Manager.js";
 
 class OfflineProgress {
     constructor() {
@@ -64,6 +65,7 @@ class OfflineProgress {
         });
 
         world.gainExperience(experienceGain);
+        StatisticsManager.recordOfflineTime(seconds);
         this.saveTimestamp();
 
         eventBus.emit("offline:update", { seconds, amounts });
