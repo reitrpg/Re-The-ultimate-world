@@ -15,6 +15,15 @@ const FEATURE_DEFINITIONS = {
     }
 };
 
+const UNIQUE_EFFECT_DEFINITIONS = [
+    { type: "luck", name: "天運の星環" },
+    { type: "allResource", name: "万象の祝福" },
+    { type: "epConversion", name: "黄金律の導き" },
+    { type: "resource", resourceId: "plant", name: "生命樹の恩寵" },
+    { type: "resource", resourceId: "metal", name: "鋼界の加護" },
+    { type: "resource", resourceId: "magic", name: "魔源の叡智" }
+];
+
 class WorldGenerator {
     hash(seed) {
         let hash = 0;
@@ -115,8 +124,29 @@ class WorldGenerator {
         return probabilities.length;
     }
 
-    generateEffect(seed) {
-        return 1 + this.random(seed, 4);
+    getUniqueEffectStrength(rarity) {
+        const value = Math.max(1, Math.min(30, Math.floor(Number(rarity) || 1)));
+        const specified = 1 + value * 0.1;
+        return {
+            specified,
+            allResource: 1 + (specified - 1) * 0.95
+        };
+    }
+
+    generateUniqueEffect(seed, rarity) {
+        const effect = UNIQUE_EFFECT_DEFINITIONS[
+            Math.floor(this.random(seed, 7) * UNIQUE_EFFECT_DEFINITIONS.length)
+        ];
+        const strength = this.getUniqueEffectStrength(rarity);
+
+        return {
+            type: effect.type,
+            name: effect.name,
+            multiplier: effect.type === "allResource"
+                ? strength.allResource
+                : strength.specified,
+            resourceId: effect.resourceId || null
+        };
     }
 
     generateResourceFeatures(seed) {
@@ -143,7 +173,7 @@ class WorldGenerator {
         world.nameLanguage = language;
         world.luck = 1;
         world.rarity = this.generateRarity(worldSeed, world.getLuck());
-        world.uniqueEffect = this.generateEffect(worldSeed);
+        world.uniqueEffect = this.generateUniqueEffect(worldSeed, world.rarity);
 
         const features = this.generateResourceFeatures(worldSeed);
         world.resourceMultipliers = features.multipliers;
