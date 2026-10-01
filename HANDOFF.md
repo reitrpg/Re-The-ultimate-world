@@ -3,8 +3,8 @@
 ## 現在地
 - Repository: reitrpg/Re-The-ultimate-world
 - Pages: https://reitrpg.github.io/Re-The-ultimate-world/
-- App version: 0.0.47
-- Service Worker cache: world-creator-v42
+- App version: 0.0.48
+- Service Worker cache: world-creator-v43
 - 「読み込みが遅い」問題は解決済み。
 - 追加の起動・描画パフォーマンス改善も実施済み。
 
@@ -355,3 +355,5 @@ Commit:
 - v0.0.46: 統計・倍率の構文不具合を修正し、世界カードから幸運値表示を確実に削除。
 
 - v0.0.47: StatisticsUIの構文エラーでUI.js全体の読み込みが止まり、押下処理・世界カード・資源表示が初期化されていなかった問題を修正。世界カードから幸運値も削除。
+
+- v0.0.48: StatisticsUIをUI.jsの静的importから分離し、統計画面の問題が世界・資源・基本UIの初期化を巻き込まない構造へ変更。InputManagerはPointerEvent環境でもclick経路を併用。
