@@ -66,7 +66,13 @@ class WorldGenerator {
 
     getLuckAdjustedRarityProbabilities(luck = 0) {
         const probabilities = this.getBaseRarityProbabilities().slice();
-        let remainingLuck = this.getEffectiveLuck(luck);
+        const currentLuck = Math.max(1, Number(luck) || 1);
+
+        if (currentLuck < 2) {
+            return [1, 0, 0, 0, 0];
+        }
+
+        let remainingLuck = this.getEffectiveLuck(currentLuck);
 
         for (let index = 0; index < probabilities.length - 1; index += 1) {
             const cost = this.getRarityLuckCost(index + 1);
