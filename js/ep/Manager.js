@@ -6,6 +6,7 @@
 import BigNumber from "../number/BigNumber.js";
 
 import eventBus from "../core/eventBus.js";
+import StatisticsManager from "../statistics/Manager.js";
 
 class EPManager {
 
@@ -30,6 +31,7 @@ class EPManager {
                 value
             );
 
+        StatisticsManager.recordEP(gain);
         eventBus.emit(
             "ep:update"
         );
@@ -38,10 +40,11 @@ class EPManager {
 
     add(value) {
 
+        const gain = BigNumber.from(value);
         this.amount =
 
             this.amount.add(
-                value
+                gain
             );
 
         eventBus.emit(
