@@ -143,6 +143,7 @@ class WorldUI {
         if (!trimmed) return;
 
         world.name = trimmed;
+        world.nameCustom = true;
         eventBus.emit("world:update");
     }
 
