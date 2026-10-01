@@ -1,12 +1,14 @@
 import WorldManager from "../world/Manager.js";
 import ResearchManager from "../research/Manager.js";
 import UpgradeManager from "../upgrades/Manager.js";
+import StatisticsManager from "../statistics/Manager.js";
 import Formatter from "../utils/Formatter.js";
 import eventBus from "../core/eventBus.js";
 
 class StatisticsUI {
     constructor() {
         this.initialized = false;
+        this.page = "statistics";
     }
 
     initialize() {
@@ -23,17 +25,23 @@ class StatisticsUI {
             "research:update",
             "upgrade:update",
             "rebirth:update",
-            "save:clear"
+            "statistics:update",
+            "save:clear",
+            "settings:update"
         ].forEach(event => {
             eventBus.on(event, () => this.render());
         });
 
         eventBus.on("tab:change", tab => {
-            if (tab === "statistics") {
-                this.render();
-            }
+            if (tab === "statistics") this.render();
         });
 
+        this.render();
+    }
+
+    setPage(page) {
+        if (!["statistics", "multipliers", "abilities"].includes(page)) return;
+        this.page = page;
         this.render();
     }
 
@@ -53,7 +61,6 @@ class StatisticsUI {
         );
         const rank = ((value - 1) % 5) + 1;
         const numerals = ["Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ"];
-
         return tiers[tierIndex] + numerals[rank - 1];
     }
 
@@ -69,7 +76,6 @@ class StatisticsUI {
 
         row.appendChild(name);
         row.appendChild(amount);
-
         return row;
     }
 
@@ -89,59 +95,88 @@ class StatisticsUI {
         return { section, content };
     }
 
-    renderRaritySection(content, world) {
-        if (!world) {
-            content.appendChild(this.createRow("現在の世界", "なし"));
-            return;
-        }
+    formatDuration(seconds) {
+        let remaining = Math.max(0, Math.floor(Number(seconds) || 0));
+        const days = Math.floor(remaining / 86400);
+        remaining %= 86400;
+        const hours = Math.floor(remaining / 3600);
+        remaining %= 3600;
+        const minutes = Math.floor(remaining / 60);
+        const secs = remaining % 60;
 
-        content.appendChild(
-            this.createRow("現在の世界", world.name)
-        );
-        content.appendChild(
-            this.createRow(
-                "レアリティ",
-                this.getRarityName(world.rarity)
-            )
-        );
-        content.appendChild(
-            this.createRow(
-                "内部レアリティ値",
-                String(world.rarity)
-            )
-        );
-        content.appendChild(
-            this.createRow(
-                "レアリティ倍率",
-                "×" + Formatter.format(world.getRarityMultiplier())
-            )
-        );
-        content.appendChild(
-            this.createRow(
-                "幸運値",
-                Formatter.format(world.getLuck())
-            )
-        );
+        return [
+            days > 0 ? days + "日" : "",
+            hours > 0 ? hours + "時間" : "",
+            minutes > 0 ? minutes + "分" : "",
+            secs + "秒"
+        ].filter(Boolean).join(" ");
     }
 
-    renderLuckSection(content, world) {
-        const probabilities = world
-            ? this.getLuckAdjustedProbabilities(world.getLuck())
-            : this.getLuckAdjustedProbabilities(0);
+    renderNavigation(container) {
+        const navigation = document.createElement("div");
+        navigation.className = "statistics-subtabs";
 
-        probabilities.forEach((probability, index) => {
-            content.appendChild(
-                this.createRow(
-                    this.getRarityName(index + 1),
-                    (probability * 100).toFixed(4) + "%"
-                )
-            );
+        [
+            ["statistics", "統計"],
+            ["multipliers", "倍率"],
+            ["abilities", "能力値"]
+        ].forEach(([page, label]) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.dataset.statisticsPage = page;
+            button.textContent = label;
+            button.classList.toggle("active", this.page === page);
+            button.addEventListener("click", () => this.setPage(page));
+            navigation.appendChild(button);
         });
+
+        container.appendChild(navigation);
+    }
+
+    renderStatisticsPage(container) {
+        const section = this.createSection("ゲーム統計");
+
+        section.content.appendChild(
+            this.createRow(
+                "ゲーム時間(オンライン)",
+                this.formatDuration(StatisticsManager.getOnlineTime())
+            )
+        );
+        section.content.appendChild(
+            this.createRow(
+                "ゲーム時間(全て)",
+                this.formatDuration(StatisticsManager.getTotalGameTime())
+            )
+        );
+        section.content.appendChild(
+            this.createRow(
+                "転生回数",
+                String(StatisticsManager.getRebirthCount())
+            )
+        );
+        section.content.appendChild(
+            this.createRow(
+                "総取得素材",
+                Formatter.format(StatisticsManager.getTotalResources())
+            )
+        );
+        section.content.appendChild(
+            this.createRow(
+                "総取得EP",
+                Formatter.format(StatisticsManager.getTotalEP())
+            )
+        );
+
+        container.appendChild(section.section);
     }
 
     getLuckAdjustedProbabilities(luck) {
         const base = [0.5, 0.25, 0.15, 0.08, 0.02];
-        let remainingLuck = Math.log1p(Math.max(0, Number(luck) || 0));
+        const currentLuck = Math.max(1, Number(luck) || 1);
+
+        if (currentLuck < 2) return [1, 0, 0, 0, 0];
+
+        let remainingLuck = Math.log1p(currentLuck);
 
         for (let index = 0; index < base.length - 1; index += 1) {
             const cost = 10 * Math.pow(index + 1, 1.5);
@@ -163,104 +198,137 @@ class StatisticsUI {
         return base;
     }
 
-    renderMultiplierSection(content, world) {
-        const rebirth = world?.rebirthMultiplier || 1;
-        const worldMultiplier = world?.getTotalMultiplier?.() || 1;
+    renderMultiplierPage(container, world) {
+        const rarity = this.createSection("世界・レアリティ");
 
-        content.appendChild(
-            this.createRow(
-                "世界基礎倍率",
-                "×" + Formatter.format(worldMultiplier)
-            )
-        );
-        content.appendChild(
-            this.createRow(
-                "転生倍率",
-                "×" + Formatter.format(rebirth)
-            )
-        );
-        content.appendChild(
-            this.createRow(
-                "研究倍率",
-                "×" + Formatter.format(ResearchManager.getTotalMultiplier())
-            )
-        );
-        content.appendChild(
-            this.createRow(
-                "強化倍率",
-                "×" + Formatter.format(UpgradeManager.getTotalMultiplier())
-            )
-        );
-        content.appendChild(
-            this.createRow(
-                "研究＋強化倍率",
-                "×" + Formatter.format(
-                    ResearchManager.getTotalMultiplier() *
-                    UpgradeManager.getTotalMultiplier()
-                )
-            )
-        );
-    }
-
-    renderResourceSection(content, world) {
         if (!world) {
-            content.appendChild(this.createRow("対象世界", "なし"));
-            return;
+            rarity.content.appendChild(this.createRow("現在の世界", "なし"));
+        } else {
+            rarity.content.appendChild(this.createRow("現在の世界", world.name));
+            rarity.content.appendChild(
+                this.createRow("レアリティ", this.getRarityName(world.rarity))
+            );
+            rarity.content.appendChild(
+                this.createRow("内部レアリティ値", String(world.rarity))
+            );
+            rarity.content.appendChild(
+                this.createRow(
+                    "レアリティ倍率",
+                    "×" + Formatter.format(world.getRarityMultiplier())
+                )
+            );
+
+            const probabilities = this.getLuckAdjustedProbabilities(world.getLuck());
+            probabilities.forEach((probability, index) => {
+                rarity.content.appendChild(
+                    this.createRow(
+                        this.getRarityName(index + 1),
+                        (probability * 100).toFixed(4) + "%"
+                    )
+                );
+            });
         }
 
-        [
-            ["plant", "植物"],
-            ["metal", "金属"],
-            ["magic", "魔力"]
-        ].forEach(([id, label]) => {
-            content.appendChild(
-                this.createRow(
-                    label + "補正",
-                    "×" + world.getResourceMultiplier(id)
-                )
+        container.appendChild(rarity.section);
+
+        const multipliers = this.createSection("倍率");
+
+        const rebirth = world?.rebirthMultiplier || 1;
+        const worldMultiplier = world?.getTotalMultiplier?.() || 1;
+        const research = ResearchManager.getTotalMultiplier();
+        const upgrade = UpgradeManager.getTotalMultiplier();
+
+        multipliers.content.appendChild(
+            this.createRow("世界基礎倍率", "×" + Formatter.format(worldMultiplier))
+        );
+        multipliers.content.appendChild(
+            this.createRow("転生倍率", "×" + Formatter.format(rebirth))
+        );
+        multipliers.content.appendChild(
+            this.createRow("研究倍率", "×" + Formatter.format(research))
+        );
+        multipliers.content.appendChild(
+            this.createRow("強化倍率", "×" + Formatter.format(upgrade))
+        );
+        multipliers.content.appendChild(
+            this.createRow(
+                "研究＋強化倍率",
+                "×" + Formatter.format(research * upgrade)
+            )
+        );
+
+        if (world) {
+            [
+                ["plant", "植物"],
+                ["metal", "金属"],
+                ["magic", "魔力"]
+            ].forEach(([id, label]) => {
+                multipliers.content.appendChild(
+                    this.createRow(
+                        label + "補正",
+                        "×" + world.getResourceMultiplier(id)
+                    )
+                );
+                multipliers.content.appendChild(
+                    this.createRow(
+                        label + "生産量",
+                        Formatter.format(world.getResourceProduction(id)) + "/秒"
+                    )
+                );
+            });
+        }
+
+        container.appendChild(multipliers.section);
+    }
+
+    renderAbilitiesPage(container, world) {
+        const section = this.createSection("能力値");
+
+        section.content.appendChild(
+            this.createRow(
+                "幸運",
+                Formatter.format(world?.getLuck?.() ?? 1)
+            )
+        );
+
+        if (world) {
+            section.content.appendChild(
+                this.createRow("レアリティ", this.getRarityName(world.rarity))
             );
-            content.appendChild(
-                this.createRow(
-                    label + "生産量",
-                    Formatter.format(world.getResourceProduction(id)) + "/秒"
-                )
+            section.content.appendChild(
+                this.createRow("レアリティ倍率", "×" + Formatter.format(world.getRarityMultiplier()))
             );
-        });
+        }
+
+        container.appendChild(section.section);
     }
 
     render() {
         const container = document.getElementById("statistics-content");
-
         if (!container) return;
 
         container.innerHTML = "";
-
-        const world = WorldManager.getActive();
 
         const title = document.createElement("h2");
         title.textContent = "統計・倍率";
         container.appendChild(title);
 
-        const description = document.createElement("p");
-        description.textContent =
-            "現在の世界に適用されている幸運値・レアリティ・各種倍率を確認できます。";
-        container.appendChild(description);
+        this.renderNavigation(container);
 
-        const rarity = this.createSection("世界・レアリティ");
-        this.renderRaritySection(rarity.content, world);
-        container.appendChild(rarity.section);
+        const content = document.createElement("div");
+        content.className = "statistics-page-content";
 
-        const luck = this.createSection("幸運によるレアリティ確率");
-        this.renderLuckSection(luck.content, world);
-        container.appendChild(luck.section);
+        const world = WorldManager.getActive();
 
-        const multipliers = this.createSection("倍率");
-        this.renderMultiplierSection(multipliers.content, world);
-        container.appendChild(multipliers.section);
+        if (this.page === "statistics") {
+            this.renderStatisticsPage(content);
+        } else if (this.page === "multipliers") {
+            this.renderMultiplierPage(content, world);
+        } else {
+            this.renderAbilitiesPage(content, world);
+        }
 
-        const resources = this.createSection("資源生産");
-        this.renderResourceSection(resources.content, world);
-        container.appendChild(resources.section);
+        container.appendChild(content);
     }
 }
 
