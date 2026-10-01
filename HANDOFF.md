@@ -3,8 +3,8 @@
 ## 現在地
 - Repository: reitrpg/Re-The-ultimate-world
 - Pages: https://reitrpg.github.io/Re-The-ultimate-world/
-- App version: 0.0.43
-- Service Worker cache: world-creator-v38
+- App version: 0.0.44
+- Service Worker cache: world-creator-v39
 - 「読み込みが遅い」問題は解決済み。
 - 追加の起動・描画パフォーマンス改善も実施済み。
 
@@ -347,3 +347,5 @@ Commit:
 - セーブデータバージョンを5へ更新。
 - アプリバージョン: **0.0.42 → 0.0.43**
 - Service Worker cache: **v37 → v38**
+
+- v0.0.44: 統計・倍率から世界別情報であるレアリティ表示を削除。能力値も幸運のみを表示。
