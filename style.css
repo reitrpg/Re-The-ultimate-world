@@ -86,7 +86,8 @@ nav button.active {
 
 .tab-content[hidden],
 .world-category-panel[hidden],
-#debug-panel[hidden] {
+#debug-panel[hidden],
+[data-upgrade-category-panel][hidden] {
     display: none !important;
 }
 
@@ -99,6 +100,8 @@ nav button.active {
 #resource-list,
 #research-list,
 #upgrade-list,
+#upgrade-infinite-list,
+#upgrade-limited-list,
 #converter-list,
 #next-world {
     display: flex;
@@ -205,6 +208,34 @@ nav button.active {
     font-weight: 700;
 }
 
+/* Upgrade */
+#upgrade-panel {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.upgrade-subtabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.upgrade-category-button {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    border: 1px solid var(--border);
+    background: var(--surface);
+}
+
+.upgrade-category-button.active {
+    border-bottom: 2px solid var(--border-strong);
+    background: var(--surface-active);
+    font-weight: 700;
+}
+
 /* Rebirth */
 .world-rebirth {
     margin-top: 0.75rem;
@@ -251,10 +282,6 @@ nav button.active {
         padding: 10px;
     }
 
-    /*
-     * Do not apply width:100% to every button.
-     * Category tabs and other button groups rely on flex sizing.
-     */
     input,
     select {
         width: 100%;
@@ -274,6 +301,15 @@ nav button.active {
     }
 
     .world-category-button {
+        width: auto;
+        margin-bottom: 0;
+    }
+
+    .upgrade-subtabs {
+        width: 100%;
+    }
+
+    .upgrade-category-button {
         width: auto;
         margin-bottom: 0;
     }
