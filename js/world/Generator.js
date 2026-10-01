@@ -137,7 +137,7 @@ class WorldGenerator {
         world.name = this.generateName(worldSeed, language);
         world.nameCustom = false;
         world.nameLanguage = language;
-        world.luck = 0;
+        world.luck = 1;
         world.rarity = this.generateRarity(worldSeed, world.getLuck());
         world.uniqueEffect = this.generateEffect(worldSeed);
 
