@@ -24,12 +24,13 @@ class UI {
         this.errors = [];
     }
 
-    initialize() {
+    async initialize() {
         if (this.initialized) return;
+
         this.initialized = true;
 
         for (const [name, path] of MODULES) {
-            this.initializeModule(name, path);
+            await this.initializeModule(name, path);
         }
 
         eventBus.emit("ui:ready");
