@@ -178,6 +178,9 @@ class WorldUI {
         const rarity = document.createElement("p");
         rarity.textContent = "レアリティ: " + this.getRarityName(world.rarity);
 
+        const luck = document.createElement("p");
+        luck.textContent = "幸運値: " + Formatter.format(world.getLuck());
+
         const rarityMultiplier = document.createElement("p");
         rarityMultiplier.textContent =
             "レアリティ倍率: ×" +
@@ -202,6 +205,7 @@ class WorldUI {
             Formatter.format(world.getTotalMultiplier());
 
         stats.appendChild(rarity);
+        stats.appendChild(luck);
         stats.appendChild(rarityMultiplier);
         stats.appendChild(feature);
         stats.appendChild(level);
