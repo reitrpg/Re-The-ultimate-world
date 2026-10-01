@@ -26,6 +26,7 @@ class World {
     constructor(seed = Date.now().toString()) {
         this.seed = String(seed);
         this.name = `World-${this.seed.slice(-4)}`;
+        this.luck = 0;
         this.rarity = this.generateRarity();
         this.level = 1;
         this.exp = BigNumber.zero();
@@ -44,6 +45,11 @@ class World {
     generateRarity() {
         const value = Number(this.seed.slice(-2)) || 0;
         return Math.max(1, Math.floor(value / 10) + 1);
+    }
+
+    getLuck() {
+        const value = Number(this.luck);
+        return Number.isFinite(value) && value >= 0 ? value : 0;
     }
 
     getRarityMultiplier() {
@@ -183,6 +189,7 @@ class World {
             seed: this.seed,
             name: this.name,
             rarity: this.rarity,
+            luck: this.getLuck(),
             level: this.level,
             exp: this.exp.toJSON(),
             rebirthMultiplier: this.rebirthMultiplier.toJSON(),
@@ -200,6 +207,7 @@ class World {
         this.seed = String(data.seed ?? Date.now());
         this.name = data.name || `World-${this.seed.slice(-4)}`;
         this.rarity = Number(data.rarity) || 1;
+        this.luck = Math.max(0, Number(data.luck) || 0);
         this.level = Math.max(1, Number(data.level) || 1);
         this.exp = BigNumber.from(data.exp);
         this.rebirthMultiplier = BigNumber.from(data.rebirthMultiplier ?? 1);
