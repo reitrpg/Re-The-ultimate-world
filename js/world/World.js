@@ -26,7 +26,9 @@ class World {
     constructor(seed = Date.now().toString()) {
         this.seed = String(seed);
         this.name = `World-${this.seed.slice(-4)}`;
-        this.luck = 0;
+        this.nameCustom = false;
+        this.nameLanguage = "ja";
+        this.luck = 1;
         this.rarity = this.generateRarity();
         this.level = 1;
         this.exp = BigNumber.zero();
@@ -188,6 +190,8 @@ class World {
         return {
             seed: this.seed,
             name: this.name,
+            nameCustom: this.nameCustom === true,
+            nameLanguage: this.nameLanguage,
             rarity: this.rarity,
             luck: this.getLuck(),
             level: this.level,
@@ -206,8 +210,12 @@ class World {
 
         this.seed = String(data.seed ?? Date.now());
         this.name = data.name || `World-${this.seed.slice(-4)}`;
+        this.nameCustom = data.nameCustom === true;
+        this.nameLanguage = ["ja", "en"].includes(data.nameLanguage) ? data.nameLanguage : "ja";
         this.rarity = Number(data.rarity) || 1;
-        this.luck = Math.max(0, Number(data.luck) || 0);
+        this.luck = Math.max(1, Number(data.luck) || 1);
+        this.nameCustom = data.nameCustom === true;
+        this.nameLanguage = ["ja", "en"].includes(data.nameLanguage) ? data.nameLanguage : "ja";
         this.level = Math.max(1, Number(data.level) || 1);
         this.exp = BigNumber.from(data.exp);
         this.rebirthMultiplier = BigNumber.from(data.rebirthMultiplier ?? 1);
