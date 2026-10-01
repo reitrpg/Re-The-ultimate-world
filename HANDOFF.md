@@ -3,8 +3,8 @@
 ## 現在地
 - Repository: reitrpg/Re-The-ultimate-world
 - Pages: https://reitrpg.github.io/Re-The-ultimate-world/
-- App version: 0.0.48
-- Service Worker cache: world-creator-v43
+- App version: 0.0.53
+- Service Worker cache: world-creator-v48
 - 「読み込みが遅い」問題は解決済み。
 - 追加の起動・描画パフォーマンス改善も実施済み。
 
@@ -400,3 +400,13 @@ Commit:
 - UIモジュール個別失敗は引き続き隔離。
 - 動的ロード化によるbeforeunload時の遅延import依存を廃止し、起動時にロード済みのSaveManager/OfflineProgressを終了処理で再利用。
 - Service Worker v47。
+
+
+## v0.0.53 世界名生成ルール拡張（2026-10-01）
+- ランダム生成される世界名から「王国」「帝国」「森林」「海洋」など、世界そのものではない分類名を削除。
+- 日本語の自動生成名は「○○世界」または「○○の世界」の2形式に統一。
+- 日本語の名前候補を大幅に追加し、組み合わせのバリエーションを拡張。
+- 英語も「○○ World」または「World of ○○」の2形式に統一。
+- 名前生成用の乱数に新しいインデックスを使用し、既存のレアリティ・固有効果・資源特性のシード結果は変更しない。
+- アプリバージョン: **0.0.52 → 0.0.53**
+- Service Worker cache: **v47 → v48**
