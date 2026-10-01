@@ -11,6 +11,7 @@ import DebugUI from "./DebugUI.js";
 import SaveUI from "./SaveUI.js";
 import NotificationUI from "./NotificationUI.js";
 import ErrorUI from "./ErrorUI.js";
+import StatisticsUI from "./StatisticsUI.js";
 
 const INITIALIZE_MODULES = [
     TabUI,
@@ -25,7 +26,8 @@ const INITIALIZE_MODULES = [
     DebugUI,
     SaveUI,
     NotificationUI,
-    ErrorUI
+    ErrorUI,
+    StatisticsUI
 ];
 
 class UI {
