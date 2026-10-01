@@ -3,8 +3,8 @@
 ## 現在地
 - Repository: reitrpg/Re-The-ultimate-world
 - Pages: https://reitrpg.github.io/Re-The-ultimate-world/
-- App version: 0.0.40
-- Service Worker cache: world-creator-v35
+- App version: 0.0.42
+- Service Worker cache: world-creator-v37
 - 「読み込みが遅い」問題は解決済み。
 - 追加の起動・描画パフォーマンス改善も実施済み。
 
@@ -288,6 +288,15 @@ Commit:
 - アプリバージョン: **0.0.38 → 0.0.39**
 - Service Worker cache: **v33 → v34**
 
+
+## v0.0.42 統計・倍率ページ追加（2026-10-01）
+- 上部メニューに「統計・倍率」タブを追加。
+- 独立した大ページとして現在の世界の情報を確認できる構成に変更。
+- 世界・レアリティ、幸運値、幸運補正後のレアリティ確率、各種倍率、資源生産量を表示。
+- 幸運値は現在のWorld.luckを参照。
+- 幸運補正後確率はv0.0.41の仮実装と同じ計算式を表示側でも使用。
+- アプリバージョン: **0.0.41 → 0.0.42**
+- Service Worker cache: **v36 → v37**
 
 ## v0.0.41 幸運値によるレアリティ確率仮実装（2026-10-01）
 - 幸運値を World.luck として追加。現時点の初期値は0。
