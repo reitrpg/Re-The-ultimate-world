@@ -8,6 +8,7 @@ import Resource from "./Resource.js";
 import BigNumber from "../number/BigNumber.js";
 
 import eventBus from "../core/eventBus.js";
+import StatisticsManager from "../statistics/Manager.js";
 
 class ResourceManager {
 
@@ -95,11 +96,15 @@ class ResourceManager {
 
         }
 
+        const gain = BigNumber.from(amount);
+
         resource.amount =
 
             resource.amount.add(
-                amount
+                gain
             );
+
+        StatisticsManager.recordResource(id, gain);
 
         eventBus.emit(
 
