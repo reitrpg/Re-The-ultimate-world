@@ -1,7 +1,7 @@
 import ErrorHandler from "./errorHandler.js";
 
-const APP_VERSION = "0.0.51";
-const SERVICE_WORKER_VERSION = "46";
+const APP_VERSION = "0.0.52";
+const SERVICE_WORKER_VERSION = "47";
 
 async function loadModule(path) {
     try {
@@ -52,6 +52,8 @@ async function registerServiceWorker() {
     }
 }
 
+const runtime = {};
+
 async function initializeGame() {
     try {
         ErrorHandler.initialize();
@@ -64,6 +66,9 @@ async function initializeGame() {
         const InputManager = await loadModule("./InputManager.js");
         const InputActionController = await loadModule("./InputActionController.js");
         const UI = await loadModule("../ui/UI.js");
+
+        runtime.SaveManager = SaveManager;
+        runtime.OfflineProgress = OfflineProgress;
 
         if (!SaveManager || !Game || !ResourceManager || !InputManager || !InputActionController || !UI) {
             throw new Error("World Creator: core module initialization failed");
@@ -103,7 +108,7 @@ async function initializeGame() {
 
         InputManager.initialize();
         InputActionController.initialize();
-        UI.initialize();
+        await UI.initialize();
 
         SaveManager.startAutoSave();
         Game.start();
@@ -130,10 +135,12 @@ window.addEventListener("beforeunload", async () => {
     if (clearing) return;
 
     try {
-        const OfflineProgress = await import("../utils/OfflineProgress.js");
-        const SaveManager = await import("./save.js");
-        OfflineProgress.default.saveTimestamp();
-        SaveManager.default.save();
+        if (runtime.OfflineProgress) {
+            runtime.OfflineProgress.saveTimestamp();
+        }
+        if (runtime.SaveManager) {
+            runtime.SaveManager.save();
+        }
     } catch (error) {
         console.error("World Creator shutdown save failed:", error);
     }
