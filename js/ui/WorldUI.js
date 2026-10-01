@@ -109,6 +109,26 @@ class WorldUI {
         }
     }
 
+    getRarityName(rarity) {
+        const value = Math.max(1, Math.floor(Number(rarity) || 1));
+        const tiers = [
+            "コモン",
+            "アンコモン",
+            "レア",
+            "スーパーレア",
+            "エピック",
+            "レジェンダリー"
+        ];
+        const tierIndex = Math.min(
+            tiers.length - 1,
+            Math.floor((value - 1) / 5)
+        );
+        const rank = ((value - 1) % 5) + 1;
+        const numerals = ["Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ"];
+
+        return tiers[tierIndex] + numerals[rank - 1];
+    }
+
     renameWorld(index) {
         const world = WorldManager.get(index);
 
@@ -156,7 +176,7 @@ class WorldUI {
         stats.className = "world-stats";
 
         const rarity = document.createElement("p");
-        rarity.textContent = "レアリティ: " + world.rarity;
+        rarity.textContent = "レアリティ: " + this.getRarityName(world.rarity);
 
         const rarityMultiplier = document.createElement("p");
         rarityMultiplier.textContent =
