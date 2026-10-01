@@ -8,8 +8,8 @@ import InputManager from "./InputManager.js";
 import InputActionController from "./InputActionController.js";
 import ErrorHandler from "./errorHandler.js";
 
-const APP_VERSION = "0.0.40";
-const SERVICE_WORKER_VERSION = "35";
+const APP_VERSION = "0.0.41";
+const SERVICE_WORKER_VERSION = "36";
 
 function ensureInitialState() {
     if (!ResourceManager.exists("plant") || !ResourceManager.exists("metal") || !ResourceManager.exists("magic")) {
