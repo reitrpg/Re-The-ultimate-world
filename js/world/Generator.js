@@ -34,19 +34,23 @@ class WorldGenerator {
     generateName(seed, language = "ja") {
         const names = {
             ja: {
-                prefixes: ["古代","水晶","神聖","忘却","永遠","聖なる","神秘","無限","黄金","影"],
-                suffixes: ["森林","王国","海洋","世界","帝国","庭園","聖域","深淵","領域","樹"]
+                prefixes: ["古代","水晶","神聖","忘却","永遠","聖なる","神秘","無限","黄金","影","星空","月影","陽炎","氷晶","炎熱","雷鳴","蒼穹","紅蓮","白銀","黒曜","天空","深海","幻想","原初","終焉","生命","精霊","機械","夢幻","静寂","緑翠","灼熱","凍土","時空","星詠み","光明","黄昏","黎明","霧幻","秘境"],
+                connectors: ["世界","の世界"]
             },
             en: {
-                prefixes: ["Ancient","Crystal","Divine","Forgotten","Eternal","Sacred","Mystic","Infinite","Golden","Shadow"],
-                suffixes: ["Forest","Kingdom","Ocean","World","Empire","Garden","Sanctuary","Abyss","Realm","Tree"]
+                prefixes: ["Ancient","Crystal","Divine","Forgotten","Eternal","Sacred","Mystic","Infinite","Golden","Shadow","Starlit","Lunar","Solar","Frozen","Fiery","Storm","Azure","Crimson","Silver","Obsidian","Sky","Abyssal","Fantasy","Primordial","Apocalyptic","Living","Spirit","Mechanical","Dream","Silent","Verdant","Blazing","Frost","Temporal","Astral","Radiant","Twilight","Dawn","Misty","Arcane"],
+                connectors: ["World","World of"]
             }
         };
         const locale = names[language] || names.ja;
+        const prefix = locale.prefixes[Math.floor(this.random(seed, 1) * locale.prefixes.length)];
+        const connector = locale.connectors[Math.floor(this.random(seed, 6) * locale.connectors.length)];
+
         return language === "ja"
-            ? locale.prefixes[Math.floor(this.random(seed, 1) * locale.prefixes.length)] +
-              locale.suffixes[Math.floor(this.random(seed, 2) * locale.suffixes.length)]
-            : `${locale.prefixes[Math.floor(this.random(seed, 1) * locale.prefixes.length)]} ${locale.suffixes[Math.floor(this.random(seed, 2) * locale.suffixes.length)]}`;
+            ? prefix + connector
+            : connector === "World"
+                ? prefix + " " + connector
+                : connector + " " + prefix;
     }
 
     getBaseRarityProbabilities() {
