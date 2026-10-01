@@ -291,3 +291,48 @@ nav button.active {
         margin-right: 0;
     }
 }
+
+
+/* Statistics subpages */
+.statistics-subtabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.statistics-subtabs button {
+    flex: 1 1 0;
+    width: auto;
+    border: 1px solid var(--border);
+    background: var(--surface);
+}
+
+.statistics-subtabs button.active {
+    border-bottom: 2px solid var(--border-strong);
+    background: var(--surface-active);
+    font-weight: 700;
+}
+
+.statistics-section {
+    padding: 12px;
+    border: 1px solid var(--border);
+}
+
+.statistics-section-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.statistics-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.statistics-row:last-child {
+    border-bottom: 0;
+}
