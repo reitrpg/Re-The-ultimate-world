@@ -25,8 +25,7 @@ const INITIALIZE_MODULES = [
     DebugUI,
     SaveUI,
     NotificationUI,
-    ErrorUI,
-    StatisticsUI
+    ErrorUI
 ];
 
 class UI {
