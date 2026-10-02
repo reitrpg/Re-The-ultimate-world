@@ -3,8 +3,8 @@
 ## 現在地
 - Repository: reitrpg/Re-The-ultimate-world
 - Pages: https://reitrpg.github.io/Re-The-ultimate-world/
-- App version: 0.0.57
-- Service Worker cache: world-creator-v52
+- App version: 0.0.59
+- Service Worker cache: world-creator-v54
 - 「読み込みが遅い」問題は解決済み。
 - 追加の起動・描画パフォーマンス改善も実施済み。
 
@@ -470,3 +470,15 @@ Commit:
 - 統計の折りたたみ矢印はCSS回転を廃止し、閉じた状態「⌄」／開いた状態「⌃」を直接切り替える。
 - アプリバージョン: **0.0.56 → 0.0.57**
 - Service Worker cache: **v51 → v52**
+
+
+## v0.0.59 押下処理の物理入力方式をPointer Eventsへ統一（2026-10-02）
+- v0.0.58までのclick中心方式でも二重発火が解消しなかったため、物理入力方式そのものを変更。
+- タッチ・マウス・ペンを共通化するPointer Eventsを物理入力の単一経路として採用。
+- `pointerdown` で対象を記録し、互換mouse/clickイベントの生成を抑止。
+- `pointerup` で記録した対象へ1回だけ `input:pressed` を発火。
+- `pointercancel` では入力を破棄。
+- キーボードはkeydownで1回だけ処理し、標準click生成を抑止。
+- これにより「pointerup + click」「pointer + click」の併用による二重発火を構造的に排除。
+- アプリバージョン: **0.0.58 → 0.0.59**
+- Service Worker cache: **v53 → v54**
