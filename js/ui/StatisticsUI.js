@@ -76,6 +76,46 @@ class StatisticsUI {
         return { section, content };
     }
 
+    createMultiplierGroup(title, renderContent, open = false) {
+        const group = document.createElement("section");
+        group.className = "statistics-multiplier-group";
+        group.dataset.open = String(open);
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "statistics-multiplier-toggle";
+        button.setAttribute("aria-expanded", String(open));
+
+        const label = document.createElement("span");
+        label.textContent = title;
+
+        const arrow = document.createElement("span");
+        arrow.className = "statistics-multiplier-arrow";
+        arrow.textContent = "⌄";
+        arrow.setAttribute("aria-hidden", "true");
+
+        button.appendChild(label);
+        button.appendChild(arrow);
+
+        const content = document.createElement("div");
+        content.className = "statistics-multiplier-content";
+        content.hidden = !open;
+
+        renderContent(content);
+
+        button.addEventListener("click", () => {
+            const nextOpen = content.hidden;
+            content.hidden = !nextOpen;
+            group.dataset.open = String(nextOpen);
+            button.setAttribute("aria-expanded", String(nextOpen));
+        });
+
+        group.appendChild(button);
+        group.appendChild(content);
+
+        return group;
+    }
+
     formatDuration(seconds) {
         let remaining = Math.max(0, Math.floor(Number(seconds) || 0));
         const days = Math.floor(remaining / 86400);
@@ -186,56 +226,98 @@ class StatisticsUI {
         const worldMultiplier = world?.getTotalMultiplier?.() || 1;
         const research = ResearchManager.getTotalMultiplier();
         const upgrade = UpgradeManager.getTotalMultiplier();
+        const uniqueType = world?.getUniqueEffectType?.() || "none";
+        const uniqueName = world?.getUniqueEffectName?.() || "なし";
+        const uniqueMultiplier = world?.getUniqueEffectMultiplier?.() ?? 1;
 
         multipliers.content.appendChild(
-            this.createRow("世界基礎倍率", "×" + Formatter.format(worldMultiplier))
-        );
-        multipliers.content.appendChild(
-            this.createRow("転生倍率", "×" + Formatter.format(rebirth))
-        );
-        multipliers.content.appendChild(
-            this.createRow("研究倍率", "×" + Formatter.format(research))
-        );
-        multipliers.content.appendChild(
-            this.createRow("強化倍率", "×" + Formatter.format(upgrade))
-        );
-        multipliers.content.appendChild(
-            this.createRow(
-                "研究＋強化倍率",
-                "×" + Formatter.format(research * upgrade)
+            this.createMultiplierGroup(
+                "素材別",
+                content => {
+                    content.appendChild(
+                        this.createRow("世界基礎倍率", "×" + Formatter.format(worldMultiplier))
+                    );
+                    content.appendChild(
+                        this.createRow("転生倍率", "×" + Formatter.format(rebirth))
+                    );
+
+                    if (world && uniqueType !== "ep_conversion" && uniqueType !== "luck") {
+                        content.appendChild(
+                            this.createRow("固有効果", uniqueName)
+                        );
+                        content.appendChild(
+                            this.createRow(
+                                "固有効果倍率",
+                                "×" + Formatter.format(uniqueMultiplier)
+                            )
+                        );
+                    }
+
+                    [
+                        ["plant", "植物"],
+                        ["metal", "金属"],
+                        ["magic", "魔力"]
+                    ].forEach(([id, label]) => {
+                        content.appendChild(
+                            this.createRow(
+                                label + "補正",
+                                "×" + Formatter.format(world?.getResourceMultiplier?.(id) ?? 1)
+                            )
+                        );
+                        content.appendChild(
+                            this.createRow(
+                                label + "生産量",
+                                Formatter.format(world?.getResourceProduction?.(id) ?? 0) + "/秒"
+                            )
+                        );
+                    });
+                },
+                true
             )
         );
 
-        if (world) {
-            multipliers.content.appendChild(
-                this.createRow("固有効果", world.getUniqueEffectName?.() || "なし")
-            );
-            multipliers.content.appendChild(
-                this.createRow(
-                    "固有効果倍率",
-                    "×" + Formatter.format(world.getUniqueEffectMultiplier?.() ?? 1)
-                )
-            );
+        multipliers.content.appendChild(
+            this.createMultiplierGroup(
+                "EP",
+                content => {
+                    if (world && uniqueType === "ep_conversion") {
+                        content.appendChild(
+                            this.createRow("固有効果", uniqueName)
+                        );
+                        content.appendChild(
+                            this.createRow(
+                                "EP変換倍率",
+                                "×" + Formatter.format(uniqueMultiplier)
+                            )
+                        );
+                    } else {
+                        content.appendChild(
+                            this.createRow("EP変換倍率", "×1")
+                        );
+                    }
+                }
+            )
+        );
 
-            [
-                ["plant", "植物"],
-                ["metal", "金属"],
-                ["magic", "魔力"]
-            ].forEach(([id, label]) => {
-                multipliers.content.appendChild(
-                    this.createRow(
-                        label + "補正",
-                        "×" + world.getResourceMultiplier(id)
-                    )
-                );
-                multipliers.content.appendChild(
-                    this.createRow(
-                        label + "生産量",
-                        Formatter.format(world.getResourceProduction(id)) + "/秒"
-                    )
-                );
-            });
-        }
+        multipliers.content.appendChild(
+            this.createMultiplierGroup(
+                "研究",
+                content => {
+                    content.appendChild(
+                        this.createRow("研究倍率", "×" + Formatter.format(research))
+                    );
+                    content.appendChild(
+                        this.createRow("強化倍率", "×" + Formatter.format(upgrade))
+                    );
+                    content.appendChild(
+                        this.createRow(
+                            "研究＋強化倍率",
+                            "×" + Formatter.format(research * upgrade)
+                        )
+                    );
+                }
+            )
+        );
 
         container.appendChild(multipliers.section);
     }
