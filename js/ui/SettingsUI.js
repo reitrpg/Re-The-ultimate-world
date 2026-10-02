@@ -57,30 +57,43 @@ class SettingsUI {
         if (seed) seed.addEventListener("change", e => SettingsManager.set("seed", e.target.value));
 
         const seedOutput = this.getElement("settings-seed-output");
-        if (seedOutput) seedOutput.addEventListener("click", async () => {
-            const world = WorldManager.getActive();
-            if (!world) return;
-
-            const value = world.seed;
-            const input = this.getElement("settings-seed");
-            if (input) input.value = value;
-            SettingsManager.set("seed", value);
-
-            try {
-                await navigator.clipboard?.writeText(value);
-            } catch (error) {
-                console.warn("Seed clipboard output failed:", error);
-            }
-
-            eventBus.emit("notification:show", {
-                type: "info",
-                message: "現在の世界のシード値を出力しました。"
-            });
-        });
+        if (seedOutput) {
+            seedOutput.dataset.action = "settings:seed-output";
+        }
     }
 
     registerEvents() {
         eventBus.on("settings:update", () => this.render());
+
+        eventBus.on("input:pressed", payload => {
+            const target = payload?.target;
+            if (!target?.closest?.("#settings-seed-output")) return;
+
+            this.outputSeed();
+        });
+    }
+
+    async outputSeed() {
+        const world = WorldManager.getActive();
+        if (!world) return;
+
+        const value = world.seed;
+        const input = this.getElement("settings-seed");
+
+        if (input) input.value = value;
+
+        SettingsManager.set("seed", value);
+
+        try {
+            await navigator.clipboard?.writeText(value);
+        } catch (error) {
+            console.warn("Seed clipboard output failed:", error);
+        }
+
+        eventBus.emit("notification:show", {
+            type: "info",
+            message: "現在の世界のシード値を出力しました。"
+        });
     }
 
     render() {
