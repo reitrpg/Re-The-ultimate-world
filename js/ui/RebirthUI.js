@@ -11,7 +11,16 @@ class RebirthUI {
         eventBus.on("rebirth:update",()=>this.render());
         eventBus.on("world:update",()=>this.render());
         const button=document.getElementById("rebirth-button");
-        if(button)button.addEventListener("click",()=>RebirthManager.rebirth());
+        if(button) {
+            button.dataset.action = "rebirth:request";
+        }
+
+        eventBus.on("input:pressed", payload => {
+            const target = payload?.target;
+            if (target?.closest?.("#rebirth-button")) {
+                RebirthManager.rebirth();
+            }
+        });
         this.render();
     }
     render(){
