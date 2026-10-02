@@ -606,3 +606,16 @@ action:<具体的action>
 
 - `input:pressed` をUI全体へ直接配布する旧経路は撤去。
 - 次の調査対象は、実機でまだ二重発火する場合の「Pointer自体の二重生成」またはManager内部での状態変更・イベント二重発火。
+
+
+## v0.0.64 押下後の状態復帰対策・UI再描画経路修正（2026-10-03）
+- 実機で押下不具合が継続したため、二重発火ではなく「入力処理後に高頻度の再描画でDOMが置換されている」経路を調査。
+- WorldManager.update() がゲームTickごとに world:update を発火し、WorldUI が最大100ms間隔で世界カード・世界作成ボタンを全再生成していた。
+- resource:update も毎Tick発火し、ConverterUI が最大200ms間隔で変換ボタンを全再生成していた。
+- 修正: WorldManager.update() は world:tick を発火し、world:update を構造変更時だけに限定。
+- 修正: WorldUI は resource:update で全世界カードを再生成しない。
+- 修正: RebirthUI は world:tick で表示値のみ更新。
+- 修正: ConverterUI は resource:update でDOMを再生成せず、既存ボタンのdisabled状態だけ更新。
+- ゲーム進行TickとインタラクティブDOMの構造再生成を分離。
+- アプリバージョン: **0.0.63 → 0.0.64**
+- Service Worker cache: **v58 → v59**
