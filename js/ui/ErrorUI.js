@@ -48,9 +48,7 @@ class ErrorUI {
 
         clearButton.dataset.action = "error:clear";
 
-        eventBus.on("input:pressed", payload => {
-            if (payload?.action !== "error:clear") return;
-
+        eventBus.on("action:error:clear", () => {
             ErrorHandler.clear();
             this.render();
         });
