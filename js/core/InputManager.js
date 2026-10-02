@@ -3,23 +3,27 @@ import eventBus from "./eventBus.js";
 class InputManager {
     constructor() {
         this.initialized = false;
-        this.lastPointerTarget = null;
-        this.lastPointerTime = 0;
     }
 
     initialize() {
         if (this.initialized) return;
         this.initialized = true;
 
-        document.addEventListener("pointerup", event => {
-            this.handlePointer(event);
+        // 物理入力はclickを正規経路にする。
+        // pointerup + clickの併用は、タッチ環境で同一操作を二重処理する原因になる。
+        document.addEventListener("click", event => {
+            this.handleClick(event);
         }, true);
 
+        // ネイティブbuttonはブラウザがEnter/Spaceからclickを発火するため、
+        // 独自キーボード発火を行わない。
+        // role="button"だけはブラウザ依存のためEnter/Spaceを補完する。
         document.addEventListener("keydown", event => {
             if (event.key !== "Enter" && event.key !== " ") return;
 
             const target = this.resolveTarget(event);
             if (!target || target.disabled) return;
+            if (!target.matches("[role='button']")) return;
 
             event.preventDefault();
             this.dispatch(target, event, "keyboard");
@@ -53,24 +57,12 @@ class InputManager {
             : null;
     }
 
-    handlePointer(event) {
+    handleClick(event) {
         const target = this.resolveTarget(event);
 
         if (!target || target.disabled) return;
 
-        const now = Date.now();
-
-        if (
-            target === this.lastPointerTarget &&
-            now - this.lastPointerTime < 300
-        ) {
-            return;
-        }
-
-        this.lastPointerTarget = target;
-        this.lastPointerTime = now;
-
-        this.dispatch(target, event, "pointer");
+        this.dispatch(target, event, "click");
     }
 
     dispatch(target, originalEvent, inputType) {
