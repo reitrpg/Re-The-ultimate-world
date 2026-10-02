@@ -84,29 +84,22 @@ class DebugUI {
             if (element) element.dataset.action = action;
         });
 
-        eventBus.on("input:pressed", payload => {
-            const action = payload?.action;
+        eventBus.on("action:debug:add-ep", () => {
+            DebugManager.addEP(1000);
+        });
 
-            if (action === "debug:add-ep") {
-                DebugManager.addEP(1000);
-                return;
-            }
+        eventBus.on("action:debug:add-material", () => {
+            DebugManager.addResource("material", 1000);
+        });
 
-            if (action === "debug:add-material") {
-                DebugManager.addResource("material", 1000);
-                return;
-            }
+        eventBus.on("action:debug:set-world-level", () => {
+            const input = this.getElement("debug-world-level");
+            if (input) DebugManager.setWorldLevel(input.value);
+        });
 
-            if (action === "debug:set-world-level") {
-                const input = this.getElement("debug-world-level");
-                if (input) DebugManager.setWorldLevel(input.value);
-                return;
-            }
-
-            if (action === "debug:reset") {
-                if (window.confirm("すべてのデータを削除しますか？")) {
-                    DebugManager.resetAll();
-                }
+        eventBus.on("action:debug:reset", () => {
+            if (window.confirm("すべてのデータを削除しますか？")) {
+                DebugManager.resetAll();
             }
         });
     }
