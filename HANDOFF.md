@@ -3,8 +3,8 @@
 ## 現在地
 - Repository: reitrpg/Re-The-ultimate-world
 - Pages: https://reitrpg.github.io/Re-The-ultimate-world/
-- App version: 0.0.59
-- Service Worker cache: world-creator-v54
+- App version: 0.0.61
+- Service Worker cache: world-creator-v56
 - 「読み込みが遅い」問題は解決済み。
 - 追加の起動・描画パフォーマンス改善も実施済み。
 
@@ -498,3 +498,21 @@ Commit:
 - 79d6ffef68e1449973f7ac60780fe8e327e03551 — main.js v0.0.60 / SW v55登録
 - ee6b7217d1f49064598cf64f28c702e6edccfd93 — index.html v0.0.60
 - 2334b13f2afb69bd08626dfac3a07f2e288e6f1d — Service Worker v55
+
+
+## v0.0.61 倍率折りたたみを共通入力経路へ統合（2026-10-02）
+- v0.0.60で分離していた「素材別 / EP / 研究」の折りたたみ入力処理を廃止。
+- 折りたたみボタンを通常UIと同じ `data-action → InputManager → input:pressed → StatisticsUI` 経路へ戻した。
+- StatisticsUI独自のPointer/Keyboardイベント監視を削除。
+- InputManager側の統計折りたたみ専用除外処理も削除。
+- 折りたたみ自体の表示仕様（hidden、⌄/⌃、素材別のみ初期展開）は維持。
+- 「小ページの見せ方違い」であれば既存の安定したUI入力仕様を再利用する方針へ統一。
+- アプリバージョン: **0.0.60 → 0.0.61**
+- Service Worker cache: **v55 → v56**
+
+対応変更:
+- `js/core/InputManager.js` — 統計折りたたみ専用分岐を削除
+- `js/ui/StatisticsUI.js` — 折りたたみを `statistics:toggle` アクション化
+- `js/core/main.js` — v0.0.61 / SW v56
+- `index.html` — v0.0.61
+- `service-worker.js` — world-creator-v56
