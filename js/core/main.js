@@ -1,7 +1,7 @@
 import ErrorHandler from "./errorHandler.js";
 
-const APP_VERSION = "0.0.59";
-const SERVICE_WORKER_VERSION = "54";
+const APP_VERSION = "0.0.60";
+const SERVICE_WORKER_VERSION = "55";
 
 async function loadModule(path) {
     try {
