@@ -22,10 +22,17 @@ class WorldUI {
 
         eventBus.on("input:pressed", payload => {
             const target = payload?.target;
-            const button = target?.closest?.("[data-world-category]");
+            if (!target) return;
 
+            const button = target.closest?.("[data-world-category]");
             if (button) {
                 this.setCategory(button.dataset.worldCategory);
+                return;
+            }
+
+            const renameButton = target.closest?.("[data-action='world:rename']");
+            if (renameButton) {
+                this.renameWorld(Number(renameButton.dataset.worldIndex));
             }
         });
 
@@ -164,11 +171,8 @@ class WorldUI {
         renameButton.className = "world-rename-button";
         renameButton.textContent = "✎";
         renameButton.setAttribute("aria-label", "世界名を変更");
-
-        renameButton.addEventListener("click", event => {
-            event.stopPropagation();
-            this.renameWorld(index);
-        });
+        renameButton.dataset.action = "world:rename";
+        renameButton.dataset.worldIndex = String(index);
 
         nameRow.appendChild(name);
         nameRow.appendChild(renameButton);
