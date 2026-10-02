@@ -10,19 +10,16 @@ class InputManager {
         if (this.initialized) return;
         this.initialized = true;
 
-        // 物理入力はPointer Eventsだけを使用する。
-        // pointerdownで互換mouse/clickイベントを抑止し、
-        // pointerupで1回だけ論理入力を発火する。
         document.addEventListener("pointerdown", event => {
             if (event.button !== 0) return;
 
             const target = this.resolveTarget(event);
             if (!target || target.disabled) return;
 
-            this.activePointers.set(event.pointerId, target);
+            // 統計・倍率の折りたたみは専用入力経路で処理する。
+            if (this.isStatisticsToggle(target)) return;
 
-            // Pointer Eventsを使う場合、pointerdownをキャンセルして
-            // 互換mouse/clickイベントの生成を防ぐ。
+            this.activePointers.set(event.pointerId, target);
             event.preventDefault();
         }, true);
 
@@ -44,14 +41,14 @@ class InputManager {
             this.activePointers.delete(event.pointerId);
         }, true);
 
-        // ネイティブbuttonを含め、キーボード入力も独自に1回だけ処理する。
-        // preventDefault()でブラウザ標準のclick生成を止める。
         document.addEventListener("keydown", event => {
             if (event.repeat) return;
             if (event.key !== "Enter" && event.key !== " ") return;
 
             const target = this.resolveTarget(event);
             if (!target || target.disabled) return;
+
+            if (this.isStatisticsToggle(target)) return;
 
             event.preventDefault();
             event.stopImmediatePropagation();
@@ -62,6 +59,12 @@ class InputManager {
         document.documentElement.style.setProperty(
             "touch-action",
             "manipulation"
+        );
+    }
+
+    isStatisticsToggle(target) {
+        return Boolean(
+            target?.closest?.("[data-statistics-toggle]")
         );
     }
 
