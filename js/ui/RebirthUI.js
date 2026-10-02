@@ -10,6 +10,7 @@ class RebirthUI {
         this.initialized=true;
         eventBus.on("rebirth:update",()=>this.render());
         eventBus.on("world:update",()=>this.render());
+        eventBus.on("world:tick",()=>this.render());
         const button=document.getElementById("rebirth-button");
         if(button) {
             button.dataset.action = "rebirth:request";
