@@ -3,8 +3,8 @@
 ## 現在地
 - Repository: reitrpg/Re-The-ultimate-world
 - Pages: https://reitrpg.github.io/Re-The-ultimate-world/
-- App version: 0.0.53
-- Service Worker cache: world-creator-v48
+- App version: 0.0.55
+- Service Worker cache: world-creator-v50
 - 「読み込みが遅い」問題は解決済み。
 - 追加の起動・描画パフォーマンス改善も実施済み。
 
@@ -429,3 +429,24 @@ Commit:
 - 9851cb6ed4888ffad5ac134f81cd9fa07ec22100 — Generator 固有効果生成
 - ada117d5aa297906d845e6605452dd8013b32622 — main.js v0.0.54 / SW v49登録
 - 516788aabdbc58da2b7594f58f6a1f52f9839685 — StatisticsUI 固有効果表示
+
+## v0.0.55 倍率ページのカテゴリ分離
+- 「統計・倍率」の「倍率」ページを、以下の3カテゴリに分離。
+  - 素材別
+  - EP
+  - 研究
+- 各カテゴリは見出しを押すと開閉できる折りたたみ式UIへ変更。
+- 開閉状態を下向き矢印「⌄」で表示し、開いているカテゴリは矢印が反転する。
+- 「素材別」には世界基礎倍率、転生倍率、固有効果倍率、植物・金属・魔力の補正と生産量を配置。
+- 「EP」にはEP変換倍率を配置。EP変換系の固有効果がある場合は固有効果名も表示。
+- 「研究」には研究倍率、強化倍率、研究＋強化倍率を配置。
+- 幸運系固有効果は「能力値」の幸運と役割が分かれるため、素材別倍率には重複表示しない。
+- アプリバージョン: **0.0.54 → 0.0.55**
+- Service Worker cache: **v49 → v50**
+
+対応コミット:
+- 8a2adbd511586c79fdb4f8f4a46ecd730150282d — StatisticsUIを素材別・EP・研究の折りたたみ構成へ変更
+- 61582b7964f09c9920330e4b1a19397ef35e63e0 — 折りたたみUIのCSS追加
+- 3e8c428f60d57bf0a688649d7fcddb4456fb7363 — main.js v0.0.55 / SW v50登録
+- 22f90a17e040c981ae8d531d57717046fab4b606 — index.html v0.0.55
+- 4f3d0f520c82a1dcf73791c85d47ded63ec8363f — Service Worker v50
