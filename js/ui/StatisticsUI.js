@@ -36,6 +36,36 @@ class StatisticsUI {
             if (tab === "statistics") this.render();
         });
 
+        eventBus.on("input:pressed", payload => {
+            const target = payload?.target;
+            if (!target) return;
+
+            const pageButton = target.closest?.("[data-action='statistics:set-page']");
+            if (pageButton) {
+                this.setPage(pageButton.dataset.statisticsPage);
+                return;
+            }
+
+            const toggle = target.closest?.("[data-action='statistics:toggle']");
+            if (toggle) {
+                const group = toggle.closest?.(".statistics-multiplier-group");
+                if (!group) return;
+
+                const content = group.querySelector(".statistics-multiplier-content");
+                if (!content) return;
+
+                const nextOpen = content.hidden;
+                content.hidden = !nextOpen;
+                group.dataset.open = String(nextOpen);
+                toggle.setAttribute("aria-expanded", String(nextOpen));
+
+                const arrow = toggle.querySelector(".statistics-multiplier-arrow");
+                if (arrow) {
+                    arrow.textContent = nextOpen ? "⌃" : "⌄";
+                }
+            }
+        });
+
         this.render();
     }
 
@@ -84,6 +114,7 @@ class StatisticsUI {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "statistics-multiplier-toggle";
+        button.dataset.action = "statistics:toggle";
         button.setAttribute("aria-expanded", String(open));
 
         const label = document.createElement("span");
@@ -91,7 +122,7 @@ class StatisticsUI {
 
         const arrow = document.createElement("span");
         arrow.className = "statistics-multiplier-arrow";
-        arrow.textContent = "⌄";
+        arrow.textContent = open ? "⌃" : "⌄";
         arrow.setAttribute("aria-hidden", "true");
 
         button.appendChild(label);
@@ -102,13 +133,6 @@ class StatisticsUI {
         content.hidden = !open;
 
         renderContent(content);
-
-        button.addEventListener("click", () => {
-            const nextOpen = content.hidden;
-            content.hidden = !nextOpen;
-            group.dataset.open = String(nextOpen);
-            button.setAttribute("aria-expanded", String(nextOpen));
-        });
 
         group.appendChild(button);
         group.appendChild(content);
@@ -145,9 +169,9 @@ class StatisticsUI {
             const button = document.createElement("button");
             button.type = "button";
             button.dataset.statisticsPage = page;
+            button.dataset.action = "statistics:set-page";
             button.textContent = label;
             button.classList.toggle("active", this.page === page);
-            button.addEventListener("click", () => this.setPage(page));
             navigation.appendChild(button);
         });
 
