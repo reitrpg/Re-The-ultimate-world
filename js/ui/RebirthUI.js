@@ -15,11 +15,8 @@ class RebirthUI {
             button.dataset.action = "rebirth:request";
         }
 
-        eventBus.on("input:pressed", payload => {
-            const target = payload?.target;
-            if (target?.closest?.("#rebirth-button")) {
-                RebirthManager.rebirth();
-            }
+        eventBus.on("action:rebirth:request", () => {
+            RebirthManager.rebirth();
         });
         this.render();
     }
