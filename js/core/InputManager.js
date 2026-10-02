@@ -16,9 +16,6 @@ class InputManager {
             const target = this.resolveTarget(event);
             if (!target || target.disabled) return;
 
-            // 統計・倍率の折りたたみは専用入力経路で処理する。
-            if (this.isStatisticsToggle(target)) return;
-
             this.activePointers.set(event.pointerId, target);
             event.preventDefault();
         }, true);
@@ -48,8 +45,6 @@ class InputManager {
             const target = this.resolveTarget(event);
             if (!target || target.disabled) return;
 
-            if (this.isStatisticsToggle(target)) return;
-
             event.preventDefault();
             event.stopImmediatePropagation();
 
@@ -59,12 +54,6 @@ class InputManager {
         document.documentElement.style.setProperty(
             "touch-action",
             "manipulation"
-        );
-    }
-
-    isStatisticsToggle(target) {
-        return Boolean(
-            target?.closest?.("[data-statistics-toggle]")
         );
     }
 
