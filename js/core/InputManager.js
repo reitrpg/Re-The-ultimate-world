@@ -3,32 +3,59 @@ import eventBus from "./eventBus.js";
 class InputManager {
     constructor() {
         this.initialized = false;
-        this.lastDispatchTarget = null;
-        this.lastDispatchTime = 0;
-        this.duplicateGuardMs = 300;
+        this.activePointers = new Map();
     }
 
     initialize() {
         if (this.initialized) return;
         this.initialized = true;
 
-        // 物理入力はclickを正規経路にする。
-        // pointerup + clickの併用は、タッチ環境で同一操作を二重処理する原因になる。
-        document.addEventListener("click", event => {
-            this.handleClick(event);
+        // 物理入力はPointer Eventsだけを使用する。
+        // pointerdownで互換mouse/clickイベントを抑止し、
+        // pointerupで1回だけ論理入力を発火する。
+        document.addEventListener("pointerdown", event => {
+            if (event.button !== 0) return;
+
+            const target = this.resolveTarget(event);
+            if (!target || target.disabled) return;
+
+            this.activePointers.set(event.pointerId, target);
+
+            // Pointer Eventsを使う場合、pointerdownをキャンセルして
+            // 互換mouse/clickイベントの生成を防ぐ。
+            event.preventDefault();
         }, true);
 
-        // ネイティブbuttonはブラウザがEnter/Spaceからclickを発火するため、
-        // 独自キーボード発火を行わない。
-        // role="button"だけはブラウザ依存のためEnter/Spaceを補完する。
+        document.addEventListener("pointerup", event => {
+            if (event.button !== 0) return;
+
+            const target = this.activePointers.get(event.pointerId);
+            this.activePointers.delete(event.pointerId);
+
+            if (!target || target.disabled) return;
+
+            event.preventDefault();
+            event.stopImmediatePropagation();
+
+            this.dispatch(target, event, "pointer");
+        }, true);
+
+        document.addEventListener("pointercancel", event => {
+            this.activePointers.delete(event.pointerId);
+        }, true);
+
+        // ネイティブbuttonを含め、キーボード入力も独自に1回だけ処理する。
+        // preventDefault()でブラウザ標準のclick生成を止める。
         document.addEventListener("keydown", event => {
+            if (event.repeat) return;
             if (event.key !== "Enter" && event.key !== " ") return;
 
             const target = this.resolveTarget(event);
             if (!target || target.disabled) return;
-            if (!target.matches("[role='button']")) return;
 
             event.preventDefault();
+            event.stopImmediatePropagation();
+
             this.dispatch(target, event, "keyboard");
         }, true);
 
@@ -58,33 +85,6 @@ class InputManager {
         return target && typeof target.closest === "function"
             ? target.closest(selectors)
             : null;
-    }
-
-    handleClick(event) {
-        const target = this.resolveTarget(event);
-
-        if (!target || target.disabled) return;
-
-        const now = Date.now();
-
-        if (
-            target === this.lastDispatchTarget &&
-            now - this.lastDispatchTime < this.duplicateGuardMs
-        ) {
-            event.preventDefault();
-            event.stopImmediatePropagation();
-            return;
-        }
-
-        this.lastDispatchTarget = target;
-        this.lastDispatchTime = now;
-
-        // ボタンのネイティブclick経路をここで止め、
-        // InputManager → input:pressedだけを実処理経路にする。
-        event.preventDefault();
-        event.stopImmediatePropagation();
-
-        this.dispatch(target, event, "click");
     }
 
     dispatch(target, originalEvent, inputType) {
