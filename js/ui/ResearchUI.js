@@ -15,6 +15,17 @@ class ResearchUI {
         this.initialized = true;
         eventBus.on("research:update", () => this.render());
         eventBus.on("ep:update", () => this.render());
+
+        eventBus.on("input:pressed", payload => {
+            const target = payload?.target;
+            if (!target) return;
+
+            const button = target.closest?.("[data-action='research:buy']");
+            if (!button) return;
+
+            ResearchManager.buy(button.dataset.researchId);
+        });
+
         this.render();
     }
 
@@ -32,10 +43,8 @@ class ResearchUI {
         const button = document.createElement("button");
         button.type = "button";
         button.textContent = "研究";
-        button.addEventListener("click", () => {
-            ResearchManager.buy(research.id);
-            this.render();
-        });
+        button.dataset.action = "research:buy";
+        button.dataset.researchId = research.id;
         wrapper.appendChild(title);
         wrapper.appendChild(level);
         wrapper.appendChild(cost);
