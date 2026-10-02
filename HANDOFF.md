@@ -3,8 +3,8 @@
 ## 現在地
 - Repository: reitrpg/Re-The-ultimate-world
 - Pages: https://reitrpg.github.io/Re-The-ultimate-world/
-- App version: 0.0.56
-- Service Worker cache: world-creator-v51
+- App version: 0.0.57
+- Service Worker cache: world-creator-v52
 - 「読み込みが遅い」問題は解決済み。
 - 追加の起動・描画パフォーマンス改善も実施済み。
 
@@ -459,3 +459,14 @@ Commit:
 - `role="button"` のみEnter/SpaceをInputManagerで補完。
 - アプリバージョン: **0.0.55 → 0.0.56**
 - Service Worker cache: **v50 → v51**
+
+
+## v0.0.57 押下処理経路の一本化（2026-10-02）
+- 押下処理をInputManagerの `click → input:pressed` 経路へ一本化。
+- Research / Converter / Upgrade / Rebirth / Settings / Statistics / Worldの主要クリック操作から個別DOM `click` リスナーを削除。
+- 動的ボタンには `data-action` を付与し、各UIが `input:pressed` を受け取って処理する構造へ統一。
+- 同一対象へのclickが300ms以内に連続到着した場合、InputManager側で同一論理操作として二重発火を抑制。
+- ネイティブbuttonのEnter/Spaceはブラウザ標準clickを使用し、独自clickとの二重処理を避ける。
+- 統計の折りたたみ矢印はCSS回転を廃止し、閉じた状態「⌄」／開いた状態「⌃」を直接切り替える。
+- アプリバージョン: **0.0.56 → 0.0.57**
+- Service Worker cache: **v51 → v52**
