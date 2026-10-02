@@ -23,13 +23,23 @@ class UpgradeUI {
 
         eventBus.on("input:pressed", payload => {
             const target = payload?.target;
+            if (!target) return;
+
             const categoryButton =
-                target?.closest?.("[data-upgrade-category]");
+                target.closest?.("[data-upgrade-category]");
 
             if (categoryButton) {
                 this.setCategory(
                     categoryButton.dataset.upgradeCategory
                 );
+                return;
+            }
+
+            const buyButton =
+                target.closest?.("[data-action='upgrade:buy']");
+
+            if (buyButton) {
+                UpgradeManager.buy(buyButton.dataset.upgradeId);
             }
         });
 
@@ -114,11 +124,8 @@ class UpgradeUI {
             upgrade.isMaxed() ? "上限" : "強化";
         button.disabled =
             upgrade.isMaxed() || !upgrade.canBuy();
-
-        button.addEventListener("click", event => {
-            event.stopPropagation();
-            UpgradeManager.buy(upgrade.id);
-        });
+        button.dataset.action = "upgrade:buy";
+        button.dataset.upgradeId = upgrade.id;
 
         item.appendChild(title);
         item.appendChild(level);
