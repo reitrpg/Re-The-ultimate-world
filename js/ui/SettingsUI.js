@@ -65,10 +65,7 @@ class SettingsUI {
     registerEvents() {
         eventBus.on("settings:update", () => this.render());
 
-        eventBus.on("input:pressed", payload => {
-            const target = payload?.target;
-            if (!target?.closest?.("#settings-seed-output")) return;
-
+        eventBus.on("action:settings:seed-output", () => {
             this.outputSeed();
         });
     }
