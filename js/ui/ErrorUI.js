@@ -4,6 +4,7 @@
  */
 
 import ErrorHandler from "../core/errorHandler.js";
+import eventBus from "../core/eventBus.js";
 
 class ErrorUI {
 
@@ -45,19 +46,14 @@ class ErrorUI {
 
         }
 
-        clearButton.addEventListener(
+        clearButton.dataset.action = "error:clear";
 
-            "click",
+        eventBus.on("input:pressed", payload => {
+            if (payload?.action !== "error:clear") return;
 
-            () => {
-
-                ErrorHandler.clear();
-
-                this.render();
-
-            }
-
-        );
+            ErrorHandler.clear();
+            this.render();
+        });
 
     }
 
