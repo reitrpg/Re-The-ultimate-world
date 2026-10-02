@@ -36,17 +36,19 @@ class StatisticsUI {
             if (tab === "statistics") this.render();
         });
 
-        eventBus.on("input:pressed", payload => {
-            const target = payload?.target;
-            if (!target) return;
+        eventBus.on("action:statistics:set-page", payload => {
+            const pageButton =
+                payload?.target?.closest?.("[data-action='statistics:set-page']");
 
-            const pageButton = target.closest?.("[data-action='statistics:set-page']");
             if (pageButton) {
                 this.setPage(pageButton.dataset.statisticsPage);
-                return;
             }
+        });
 
-            const multiplierToggle = target.closest?.("[data-action='statistics:toggle']");
+        eventBus.on("action:statistics:toggle", payload => {
+            const multiplierToggle =
+                payload?.target?.closest?.("[data-action='statistics:toggle']");
+
             if (multiplierToggle) {
                 this.toggleMultiplierGroup(multiplierToggle);
             }
