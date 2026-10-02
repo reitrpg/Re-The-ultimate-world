@@ -20,11 +20,8 @@ class TabUI {
 
         this.initialized = true;
 
-        eventBus.on("input:pressed", payload => {
-            const target = payload?.target;
-            if (!target) return;
-
-            const tab = target.closest?.("[data-tab], .tab-button");
+        eventBus.on("action:tab:change", payload => {
+            const tab = payload?.target?.closest?.("[data-tab], .tab-button");
             if (!tab) return;
 
             const id = this.getTabId(tab);
