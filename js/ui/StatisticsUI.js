@@ -9,6 +9,7 @@ class StatisticsUI {
     constructor() {
         this.initialized = false;
         this.page = "statistics";
+        this.pendingTogglePointer = null;
     }
 
     initialize() {
@@ -43,30 +44,84 @@ class StatisticsUI {
             const pageButton = target.closest?.("[data-action='statistics:set-page']");
             if (pageButton) {
                 this.setPage(pageButton.dataset.statisticsPage);
-                return;
-            }
-
-            const toggle = target.closest?.("[data-action='statistics:toggle']");
-            if (toggle) {
-                const group = toggle.closest?.(".statistics-multiplier-group");
-                if (!group) return;
-
-                const content = group.querySelector(".statistics-multiplier-content");
-                if (!content) return;
-
-                const nextOpen = content.hidden;
-                content.hidden = !nextOpen;
-                group.dataset.open = String(nextOpen);
-                toggle.setAttribute("aria-expanded", String(nextOpen));
-
-                const arrow = toggle.querySelector(".statistics-multiplier-arrow");
-                if (arrow) {
-                    arrow.textContent = nextOpen ? "⌃" : "⌄";
-                }
             }
         });
 
+        // 倍率の折りたたみだけは汎用input:pressedから分離する。
+        // このUI自身がPointer/Keyboard入力を1回だけ処理する。
+        document.addEventListener("pointerdown", event => {
+            if (event.button !== 0) return;
+            const toggle = this.resolveMultiplierToggle(event);
+            if (!toggle) return;
+            event.preventDefault();
+            this.pendingTogglePointer = event.pointerId;
+        }, true);
+
+        document.addEventListener("pointerup", event => {
+            if (event.button !== 0) return;
+            if (this.pendingTogglePointer !== event.pointerId) return;
+
+            this.pendingTogglePointer = null;
+            const toggle = this.resolveMultiplierToggle(event);
+            if (!toggle) return;
+
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            this.toggleMultiplierGroup(toggle);
+        }, true);
+
+        document.addEventListener("pointercancel", event => {
+            if (this.pendingTogglePointer === event.pointerId) {
+                this.pendingTogglePointer = null;
+            }
+        }, true);
+
+        document.addEventListener("keydown", event => {
+            if (event.repeat) return;
+            if (event.key !== "Enter" && event.key !== " ") return;
+
+            const toggle = this.resolveMultiplierToggle(event);
+            if (!toggle) return;
+
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            this.toggleMultiplierGroup(toggle);
+        }, true);
+
         this.render();
+    }
+
+    resolveMultiplierToggle(event) {
+        const path = typeof event.composedPath === "function"
+            ? event.composedPath()
+            : [];
+
+        for (const node of path) {
+            if (node?.closest) {
+                const toggle = node.closest("[data-statistics-toggle]");
+                if (toggle) return toggle;
+            }
+        }
+
+        return event.target?.closest?.("[data-statistics-toggle]") || null;
+    }
+
+    toggleMultiplierGroup(toggle) {
+        const group = toggle.closest?.(".statistics-multiplier-group");
+        if (!group) return;
+
+        const content = group.querySelector(".statistics-multiplier-content");
+        if (!content) return;
+
+        const nextOpen = content.hidden;
+        content.hidden = !nextOpen;
+        group.dataset.open = String(nextOpen);
+        toggle.setAttribute("aria-expanded", String(nextOpen));
+
+        const arrow = toggle.querySelector(".statistics-multiplier-arrow");
+        if (arrow) {
+            arrow.textContent = nextOpen ? "⌃" : "⌄";
+        }
     }
 
     setPage(page) {
@@ -114,7 +169,7 @@ class StatisticsUI {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "statistics-multiplier-toggle";
-        button.dataset.action = "statistics:toggle";
+        button.dataset.statisticsToggle = "true";
         button.setAttribute("aria-expanded", String(open));
 
         const label = document.createElement("span");
