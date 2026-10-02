@@ -401,11 +401,6 @@ nav button.active {
     display: inline-block;
     font-size: 20px;
     line-height: 1;
-    transition: transform 0.15s ease;
-}
-
-.statistics-multiplier-group[data-open="true"] .statistics-multiplier-arrow {
-    transform: rotate(180deg);
 }
 
 .statistics-multiplier-content {
