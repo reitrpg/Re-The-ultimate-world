@@ -3,8 +3,8 @@
 ## 現在地
 - Repository: reitrpg/Re-The-ultimate-world
 - Pages: https://reitrpg.github.io/Re-The-ultimate-world/
-- App version: 0.0.55
-- Service Worker cache: world-creator-v50
+- App version: 0.0.56
+- Service Worker cache: world-creator-v51
 - 「読み込みが遅い」問題は解決済み。
 - 追加の起動・描画パフォーマンス改善も実施済み。
 
@@ -450,3 +450,12 @@ Commit:
 - 3e8c428f60d57bf0a688649d7fcddb4456fb7363 — main.js v0.0.55 / SW v50登録
 - 22f90a17e040c981ae8d531d57717046fab4b606 — index.html v0.0.55
 - 4f3d0f520c82a1dcf73791c85d47ded63ec8363f — Service Worker v50
+
+
+## v0.0.56 押下処理の二重発火対策（2026-10-02）
+- InputManagerの物理入力経路を `pointerup` から `click` に一本化。
+- タッチ環境で `pointerup` とブラウザの互換clickが別経路として扱われ、同一の押下処理が二重に発火する問題を防止。
+- ネイティブbuttonはブラウザ標準のEnter/Space→clickを利用し、InputManager側のキーボード二重発火も防止。
+- `role="button"` のみEnter/SpaceをInputManagerで補完。
+- アプリバージョン: **0.0.55 → 0.0.56**
+- Service Worker cache: **v50 → v51**
