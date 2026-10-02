@@ -482,3 +482,19 @@ Commit:
 - これにより「pointerup + click」「pointer + click」の併用による二重発火を構造的に排除。
 - アプリバージョン: **0.0.58 → 0.0.59**
 - Service Worker cache: **v53 → v54**
+
+
+## v0.0.60 倍率折りたたみの入力経路分離（2026-10-02）
+- 「倍率」の「素材別 / EP / 研究」の折りたたみだけ、汎用 input:pressed 経路から分離。
+- StatisticsUI の折りたたみボタンに data-statistics-toggle を付与し、Pointer/Keyboard入力をStatisticsUI自身で1回だけ処理。
+- InputManager は統計折りたたみ対象を汎用入力として発火しないよう除外。
+- これにより、通常UIと倍率折りたたみで入力経路を分離し、二重発火の原因が倍率UI固有処理にあるかを切り分けられる構造に変更。
+- アプリバージョン: **0.0.59 → 0.0.60**
+- Service Worker cache: **v54 → v55**
+
+対応コミット:
+- cf7fa39b99d86291d5b92b17225d1744c8282f5f — InputManager 統計折りたたみ除外
+- 51ed4a37fb1950627deb3a954bd7567de40bc60d — StatisticsUI 専用入力経路
+- 79d6ffef68e1449973f7ac60780fe8e327e03551 — main.js v0.0.60 / SW v55登録
+- ee6b7217d1f49064598cf64f28c702e6edccfd93 — index.html v0.0.60
+- 2334b13f2afb69bd08626dfac3a07f2e288e6f1d — Service Worker v55
