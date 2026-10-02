@@ -1,4 +1,4 @@
-const CACHE_NAME = "world-creator-v56";
+const CACHE_NAME = "world-creator-v57";
 
 const FILES_TO_CACHE = [
     "./",
@@ -141,9 +141,12 @@ self.addEventListener("fetch", event => {
 
     if (url.origin !== self.location.origin) return;
 
-    const strategy = request.mode === "navigate"
-        ? networkFirst
-        : cacheFirst;
+    const isJavaScript = url.pathname.endsWith(".js");
+
+    const strategy =
+        request.mode === "navigate" || isJavaScript
+            ? networkFirst
+            : cacheFirst;
 
     event.respondWith(
         strategy(request).catch(() =>
