@@ -21,22 +21,20 @@ class UpgradeUI {
         this.initialized = true;
         this.registerEvents();
 
-        eventBus.on("input:pressed", payload => {
-            const target = payload?.target;
-            if (!target) return;
-
+        eventBus.on("action:upgrade:category", payload => {
             const categoryButton =
-                target.closest?.("[data-upgrade-category]");
+                payload?.target?.closest?.("[data-upgrade-category]");
 
             if (categoryButton) {
                 this.setCategory(
                     categoryButton.dataset.upgradeCategory
                 );
-                return;
             }
+        });
 
+        eventBus.on("action:upgrade:buy", payload => {
             const buyButton =
-                target.closest?.("[data-action='upgrade:buy']");
+                payload?.target?.closest?.("[data-action='upgrade:buy']");
 
             if (buyButton) {
                 UpgradeManager.buy(buyButton.dataset.upgradeId);
