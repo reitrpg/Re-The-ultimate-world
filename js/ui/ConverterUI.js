@@ -16,17 +16,15 @@ class ConverterUI {
         this.initialized = true;
         this.registerEvents();
 
-        eventBus.on("input:pressed", payload => {
-            const target = payload?.target;
-            if (!target) return;
-
-            const convert = target.closest?.("[data-action='converter:convert']");
+        eventBus.on("action:converter:convert", payload => {
+            const convert = payload?.target?.closest?.("[data-action='converter:convert']");
             if (convert) {
                 Converter.convert(convert.dataset.recipeId);
-                return;
             }
+        });
 
-            const convertAll = target.closest?.("[data-action='converter:convert-all']");
+        eventBus.on("action:converter:convert-all", payload => {
+            const convertAll = payload?.target?.closest?.("[data-action='converter:convert-all']");
             if (convertAll) {
                 Converter.convertAll(convertAll.dataset.recipeId);
             }
