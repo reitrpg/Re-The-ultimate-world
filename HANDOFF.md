@@ -560,3 +560,49 @@ Commit:
   4. EVENT_SEND が1回でEVENT_RECEIVEが想定以上 → listener構成
   5. DISPATCHが1回でゲーム処理が2回 → action側
   6. NATIVE_CLICK_BLOCKED が発生 → 互換clickが発生していたことを確認可能
+
+
+## v0.0.63 UI基盤・Action経路再構成（2026-10-03）
+- 「入力層だけを修正しても二重発火が解消しない」ため、UI基盤から入力→Action経路を再監査。
+- 従来は `input:pressed` を全UIモジュールへブロードキャストし、各UIが自身に関係するactionかどうかを判定していた。
+- v0.0.63で `InputActionController` をsemantic actionの中央ルーターへ変更。
+- `input:pressed` の購読者をActionControllerへ集約。
+- ActionControllerが `action:<action>` へ1回だけルーティング。
+- semantic sequence番号をActionControllerでも検査し、同一sequenceの再処理を遮断。
+- UI側は以下のようにaction単位で購読する構造へ変更。
+  - WorldUI: `world:category`, `world:rename`
+  - TabUI: `tab:change`
+  - ResearchUI: `research:buy`
+  - UpgradeUI: `upgrade:category`, `upgrade:buy`
+  - ConverterUI: `converter:convert`, `converter:convert-all`
+  - RebirthUI: `rebirth:request`
+  - SettingsUI: `settings:seed-output`
+  - SaveUI: save/load/export/import/delete
+  - DebugUI: debug actions
+  - ErrorUI: `error:clear`
+  - StatisticsUI: page変更・倍率折りたたみ
+- data-actionを持たない既存のタブ/カテゴリボタンについても、ActionControllerが `data-tab` / `data-world-category` / `data-upgrade-category` からsemantic actionを解決。
+- UI全体に対する `input:pressed` ブロードキャスト依存を撤去。
+- これにより、1回の入力が複数UIへ渡ってそれぞれがaction判定する構造を解消。
+- EventBus自体はイベントごとのSet管理を維持。
+- InputManagerのv0.0.62診断機能を維持。
+- Service Worker: **v58**
+- アプリバージョン: **0.0.63**
+
+### v0.0.63 基盤調査時点の入力経路
+```
+Pointer / Keyboard
+    ↓
+InputManager
+    ↓
+input:pressed
+    ↓
+InputActionController（唯一の入力購読者）
+    ↓
+action:<具体的action>
+    ↓
+対象UI / ゲーム処理
+```
+
+- `input:pressed` をUI全体へ直接配布する旧経路は撤去。
+- 次の調査対象は、実機でまだ二重発火する場合の「Pointer自体の二重生成」またはManager内部での状態変更・イベント二重発火。
