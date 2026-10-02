@@ -16,11 +16,8 @@ class ResearchUI {
         eventBus.on("research:update", () => this.render());
         eventBus.on("ep:update", () => this.render());
 
-        eventBus.on("input:pressed", payload => {
-            const target = payload?.target;
-            if (!target) return;
-
-            const button = target.closest?.("[data-action='research:buy']");
+        eventBus.on("action:research:buy", payload => {
+            const button = payload?.target?.closest?.("[data-action='research:buy']");
             if (!button) return;
 
             ResearchManager.buy(button.dataset.researchId);
