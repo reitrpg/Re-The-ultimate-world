@@ -71,11 +71,18 @@ class InputManager {
             target === this.lastDispatchTarget &&
             now - this.lastDispatchTime < this.duplicateGuardMs
         ) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
             return;
         }
 
         this.lastDispatchTarget = target;
         this.lastDispatchTime = now;
+
+        // ボタンのネイティブclick経路をここで止め、
+        // InputManager → input:pressedだけを実処理経路にする。
+        event.preventDefault();
+        event.stopImmediatePropagation();
 
         this.dispatch(target, event, "click");
     }
@@ -91,10 +98,6 @@ class InputManager {
         };
 
         eventBus.emit("input:pressed", payload);
-
-        if (payload.action) {
-            eventBus.emit(payload.action, payload);
-        }
 
         return true;
     }
