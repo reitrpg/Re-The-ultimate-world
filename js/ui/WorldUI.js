@@ -60,7 +60,6 @@ class WorldUI {
             "world:unlock",
             "world:create:success",
             "world:create:failed",
-            "resource:update",
             "research:update",
             "upgrade:update",
             "rebirth:update",
