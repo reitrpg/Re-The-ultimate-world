@@ -20,19 +20,15 @@ class WorldUI {
         this.initialized = true;
         this.registerEvents();
 
-        eventBus.on("input:pressed", payload => {
-            const target = payload?.target;
-            if (!target) return;
+        eventBus.on("action:world:category", payload => {
+            const button = payload?.target?.closest?.("[data-world-category]");
+            if (button) this.setCategory(button.dataset.worldCategory);
+        });
 
-            const button = target.closest?.("[data-world-category]");
+        eventBus.on("action:world:rename", payload => {
+            const button = payload?.target?.closest?.("[data-action='world:rename']");
             if (button) {
-                this.setCategory(button.dataset.worldCategory);
-                return;
-            }
-
-            const renameButton = target.closest?.("[data-action='world:rename']");
-            if (renameButton) {
-                this.renameWorld(Number(renameButton.dataset.worldIndex));
+                this.renameWorld(Number(button.dataset.worldIndex));
             }
         });
 
