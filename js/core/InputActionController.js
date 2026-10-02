@@ -6,6 +6,7 @@ import SettingsManager from "../settings/Manager.js";
 class InputActionController {
     constructor() {
         this.initialized = false;
+        this.lastSequence = 0;
     }
 
     initialize() {
@@ -13,7 +14,36 @@ class InputActionController {
         this.initialized = true;
 
         eventBus.on("input:pressed", payload => {
-            const action = payload?.action;
+            const sequence = Number(payload?.sequence || 0);
+
+            if (sequence > 0 && sequence <= this.lastSequence) {
+                window.__WC_INPUT_DIAGNOSTICS__?.record(
+                    "ACTION_DUPLICATE_BLOCKED",
+                    {
+                        sequence,
+                        action: payload?.action || null
+                    }
+                );
+                return;
+            }
+
+            if (sequence > 0) {
+                this.lastSequence = sequence;
+            }
+
+            const action = this.resolveAction(payload);
+
+            if (!action) return;
+
+            window.__WC_INPUT_DIAGNOSTICS__?.record(
+                "ACTION_ROUTE",
+                {
+                    sequence,
+                    action
+                }
+            );
+
+            eventBus.emit("action:" + action, payload);
 
             if (action === "world:create:request") {
                 this.handleWorldCreate(payload);
@@ -24,6 +54,28 @@ class InputActionController {
                 this.handleWorldSelect(payload);
             }
         });
+    }
+
+    resolveAction(payload = {}) {
+        const target = payload.target;
+
+        if (payload.action) {
+            return payload.action;
+        }
+
+        if (target?.dataset?.tab) {
+            return "tab:change";
+        }
+
+        if (target?.dataset?.worldCategory) {
+            return "world:category";
+        }
+
+        if (target?.dataset?.upgradeCategory) {
+            return "upgrade:category";
+        }
+
+        return null;
     }
 
     handleWorldCreate(payload = {}) {
