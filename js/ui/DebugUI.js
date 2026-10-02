@@ -72,126 +72,43 @@ class DebugUI {
     }
 
     registerButtons() {
+        const actions = [
+            ["debug-add-ep", "debug:add-ep"],
+            ["debug-add-material", "debug:add-material"],
+            ["debug-set-world-level", "debug:set-world-level"],
+            ["debug-reset", "debug:reset"]
+        ];
 
-        const addEP =
+        actions.forEach(([id, action]) => {
+            const element = this.getElement(id);
+            if (element) element.dataset.action = action;
+        });
 
-            this.getElement(
-                "debug-add-ep"
-            );
+        eventBus.on("input:pressed", payload => {
+            const action = payload?.action;
 
-        if (addEP) {
+            if (action === "debug:add-ep") {
+                DebugManager.addEP(1000);
+                return;
+            }
 
-            addEP.addEventListener(
+            if (action === "debug:add-material") {
+                DebugManager.addResource("material", 1000);
+                return;
+            }
 
-                "click",
+            if (action === "debug:set-world-level") {
+                const input = this.getElement("debug-world-level");
+                if (input) DebugManager.setWorldLevel(input.value);
+                return;
+            }
 
-                () => {
-
-                    DebugManager.addEP(
-                        1000
-                    );
-
-                }
-
-            );
-
-        }
-
-        const addMaterial =
-
-            this.getElement(
-                "debug-add-material"
-            );
-
-        if (addMaterial) {
-
-            addMaterial.addEventListener(
-
-                "click",
-
-                () => {
-
-                    DebugManager.addResource(
-                        "material",
-                        1000
-                    );
-
-                }
-
-            );
-
-        }
-
-        const setWorldLevel =
-
-            this.getElement(
-                "debug-set-world-level"
-            );
-
-        if (setWorldLevel) {
-
-            setWorldLevel.addEventListener(
-
-                "click",
-
-                () => {
-
-                    const input =
-
-                        this.getElement(
-                            "debug-world-level"
-                        );
-
-                    if (!input) {
-
-                        return;
-
-                    }
-
-                    DebugManager.setWorldLevel(
-                        input.value
-                    );
-
-                }
-
-            );
-
-        }
-
-        const resetButton =
-
-            this.getElement(
-                "debug-reset"
-            );
-
-        if (resetButton) {
-
-            resetButton.addEventListener(
-
-                "click",
-
-                () => {
-
-                    const confirmed =
-
-                        window.confirm(
-                            "すべてのデータを削除しますか？"
-                        );
-
-                    if (!confirmed) {
-
-                        return;
-
-                    }
-
+            if (action === "debug:reset") {
+                if (window.confirm("すべてのデータを削除しますか？")) {
                     DebugManager.resetAll();
-
                 }
-
-            );
-
-        }
-
+            }
+        });
     }
 
 }
