@@ -372,3 +372,51 @@ nav button.active {
 .statistics-row:last-child {
     border-bottom: 0;
 }
+
+
+/* Statistics multiplier groups */
+.statistics-multiplier-group {
+    margin-top: 10px;
+    border: 1px solid var(--border);
+}
+
+.statistics-multiplier-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 42px;
+    padding: 8px 12px;
+    border: 0;
+    background: var(--surface);
+    font-weight: 700;
+    text-align: left;
+}
+
+.statistics-multiplier-toggle:hover {
+    background: var(--surface-active);
+}
+
+.statistics-multiplier-arrow {
+    display: inline-block;
+    font-size: 20px;
+    line-height: 1;
+    transition: transform 0.15s ease;
+}
+
+.statistics-multiplier-group[data-open="true"] .statistics-multiplier-arrow {
+    transform: rotate(180deg);
+}
+
+.statistics-multiplier-content {
+    padding: 8px 12px;
+    border-top: 1px solid var(--border);
+}
+
+.statistics-multiplier-content[hidden] {
+    display: none !important;
+}
+
+.statistics-multiplier-content .statistics-row:last-child {
+    border-bottom: 0;
+}
