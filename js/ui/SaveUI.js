@@ -4,6 +4,7 @@
  */
 
 import SaveManager from "../core/save.js";
+import eventBus from "../core/eventBus.js";
 
 class SaveUI {
 
@@ -28,193 +29,61 @@ class SaveUI {
     }
 
     registerEvents() {
+        const actions = [
+            ["save-button", "save:manual"],
+            ["load-button", "load:manual"],
+            ["export-button", "save:export"],
+            ["import-button", "save:import"],
+            ["delete-save-button", "save:delete"]
+        ];
 
-        const saveButton =
+        actions.forEach(([id, action]) => {
+            const element = document.getElementById(id);
+            if (element) element.dataset.action = action;
+        });
 
-            document.getElementById(
-                "save-button"
-            );
+        eventBus.on("input:pressed", payload => {
+            const action = payload?.action;
 
-        if (saveButton) {
+            if (action === "save:manual") {
+                SaveManager.save();
+                return;
+            }
 
-            saveButton.addEventListener(
-
-                "click",
-
-                () => {
-
-                    SaveManager.save();
-
-                }
-
-            );
-
-        }
-
-        const loadButton =
-
-            document.getElementById(
-                "load-button"
-            );
-
-        if (loadButton) {
-
-            loadButton.addEventListener(
-
-                "click",
-
-                () => {
-
-                    const confirmed =
-
-                        window.confirm(
-
-                            "現在の状態を上書きして読み込みますか？"
-
-                        );
-
-                    if (!confirmed) {
-
-                        return;
-
-                    }
-
+            if (action === "load:manual") {
+                if (window.confirm("現在の状態を上書きして読み込みますか？")) {
                     location.reload();
-
                 }
+                return;
+            }
 
-            );
+            if (action === "save:export") {
+                const data = localStorage.getItem("world_creator_save");
+                if (data) navigator.clipboard?.writeText(data);
+                return;
+            }
 
-        }
+            if (action === "save:import") {
+                const data = window.prompt("セーブデータを入力してください");
+                if (!data) return;
 
-        const exportButton =
-
-            document.getElementById(
-                "export-button"
-            );
-
-        if (exportButton) {
-
-            exportButton.addEventListener(
-
-                "click",
-
-                () => {
-
-                    const data =
-
-                        localStorage.getItem(
-                            "world_creator_save"
-                        );
-
-                    if (!data) {
-
-                        return;
-
-                    }
-
-                    navigator.clipboard.writeText(
-                        data
-                    );
-
+                try {
+                    JSON.parse(data);
+                    localStorage.setItem("world_creator_save", data);
+                    location.reload();
+                } catch {
+                    window.alert("無効なデータです");
                 }
+                return;
+            }
 
-            );
-
-        }
-
-        const importButton =
-
-            document.getElementById(
-                "import-button"
-            );
-
-        if (importButton) {
-
-            importButton.addEventListener(
-
-                "click",
-
-                () => {
-
-                    const data =
-
-                        prompt(
-                            "セーブデータを入力してください"
-                        );
-
-                    if (!data) {
-
-                        return;
-
-                    }
-
-                    try {
-
-                        JSON.parse(data);
-
-                        localStorage.setItem(
-
-                            "world_creator_save",
-
-                            data
-
-                        );
-
-                        location.reload();
-
-                    } catch {
-
-                        alert(
-                            "無効なデータです"
-                        );
-
-                    }
-
-                }
-
-            );
-
-        }
-
-        const deleteButton =
-
-            document.getElementById(
-                "delete-save-button"
-            );
-
-        if (deleteButton) {
-
-            deleteButton.addEventListener(
-
-                "click",
-
-                () => {
-
-                    const confirmed =
-
-                        window.confirm(
-
-                            "セーブデータを削除しますか？"
-
-                        );
-
-                    if (!confirmed) {
-
-                        return;
-
-                    }
-
+            if (action === "save:delete") {
+                if (window.confirm("セーブデータを削除しますか？")) {
                     SaveManager.clear();
-
                     location.reload();
-
                 }
-
-            );
-
-        }
-
+            }
+        });
     }
 
 }
