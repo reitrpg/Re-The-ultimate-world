@@ -12,7 +12,7 @@ class WorldManager{
  getActive(){return this.worlds[this.activeWorldIndex];}
  getActiveIndex(){return this.activeWorldIndex;}
  setActive(index){const n=Number(index);if(!Number.isInteger(n)||n<0||n>=this.worlds.length)return false;this.activeWorldIndex=n;eventBus.emit("world:update");return true;}
- update(deltaTime){const w=this.getActive();if(!w)return;w.update(deltaTime);eventBus.emit("world:update");}
+ update(deltaTime){const w=this.getActive();if(!w)return;const experienceGain=w.update(deltaTime);eventBus.emit("world:tick",{world:w,deltaTime,experienceGain});}
  refreshGeneratedNames(language){
   for(const world of this.worlds){
    if(world.nameCustom === true) continue;
