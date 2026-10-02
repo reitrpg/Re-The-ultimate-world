@@ -516,3 +516,47 @@ Commit:
 - `js/core/main.js` — v0.0.61 / SW v56
 - `index.html` — v0.0.61
 - `service-worker.js` — world-creator-v56
+
+
+## v0.0.62 入力基盤再調査・単一アクティベーション化（2026-10-02）
+- 押下処理の二重発火を入力層から再調査。
+- 現行 EventBus は listener を Set で管理しており、同一 callback の重複登録は構造上防止されていることを確認。
+- UI側の現行コードから直接 click / pointerdown / pointerup リスナーを除去済みであることを確認。
+- InputManagerを以下の構造へ変更。
+  - Pointer Events を物理入力の主経路として維持。
+  - `isPrimary === false` のポインターを無視し、複数タッチによる重複入力を除外。
+  - pointerdown → pointerup の1シーケンスを `pointerId` 単位で管理。
+  - pointerdown 時に対象へ pointer capture を設定。
+  - pointerdown の既定動作をキャンセルし、互換マウス入力を抑制。
+  - click を最終防壁として capture 段階で遮断し、Pointer入力から生成されるネイティブclickがUI処理へ到達しないよう統一。
+  - Enter / Space は InputManager が直接 semantic input として処理し、標準click生成を防止。
+  - 入力対象外のテキスト入力をキーボード処理で奪わない構造を維持。
+- 入力診断領域 `window.__WC_INPUT_DIAGNOSTICS__` を追加。
+  - POINTER_DOWN
+  - POINTER_UP
+  - POINTER_CANCEL
+  - KEY_DOWN
+  - DISPATCH
+  - DISPATCH_COMPLETE
+  - NATIVE_CLICK_BLOCKED
+  - EVENT_SEND
+  - EVENT_RECEIVE
+  を最大200件保持。
+- 各semantic inputに連番を付与し、物理入力からEventBusまで同一操作を追跡可能にした。
+- EventBusの `input:pressed` について送信回数・listener数・各listener受信を診断記録。
+- Service Workerをv57へ更新。
+- JavaScriptファイルはnetwork-firstへ変更し、古いJSキャッシュと最新JSの混在を防止。
+- アプリバージョン: **0.0.61 → 0.0.62**
+- Service Worker cache: **v56 → v57**
+
+### v0.0.62 調査結果
+- `eventBus.js` は `Set` によるlistener管理。
+- 現行UIコードに直接 `click` / `pointerdown` / `pointerup` の個別DOM入力処理は確認されていない。
+- 現時点では「UIモジュールの単純な二重listener登録」より、物理Pointer入力と互換click、または複数primary pointer、古いJSキャッシュ混在を優先して対策。
+- 次回、実機で1回押下した際の `window.__WC_INPUT_DIAGNOSTICS__.records` を確認すれば、二重発火位置を以下の段階で特定できる。
+  1. POINTER_DOWN が2回 → 物理入力層
+  2. POINTER_UP が2回 → Pointer入力層
+  3. DISPATCH が2回 → InputManager
+  4. EVENT_SEND が1回でEVENT_RECEIVEが想定以上 → listener構成
+  5. DISPATCHが1回でゲーム処理が2回 → action側
+  6. NATIVE_CLICK_BLOCKED が発生 → 互換clickが発生していたことを確認可能
