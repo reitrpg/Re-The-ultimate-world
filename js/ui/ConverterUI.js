@@ -35,7 +35,7 @@ class ConverterUI {
 
     registerEvents() {
         eventBus.on("converter:update", () => this.scheduleRender());
-        eventBus.on("resource:update", () => this.scheduleRender());
+        eventBus.on("resource:update", () => this.refreshAvailability());
     }
 
     scheduleRender() {
@@ -63,12 +63,14 @@ class ConverterUI {
         convertButton.textContent = "変換";
         convertButton.dataset.action = "converter:convert";
         convertButton.dataset.recipeId = recipe.id;
+        convertButton.disabled = !Converter.canConvert(recipe.id);
 
         const convertAllButton = document.createElement("button");
         convertAllButton.type = "button";
         convertAllButton.textContent = "全変換";
         convertAllButton.dataset.action = "converter:convert-all";
         convertAllButton.dataset.recipeId = recipe.id;
+        convertAllButton.disabled = !Converter.canConvert(recipe.id);
 
         item.innerHTML =
             "<h3>" + recipe.name + "</h3>" +
@@ -82,6 +84,13 @@ class ConverterUI {
         item.appendChild(convertAllButton);
 
         return item;
+    }
+
+    refreshAvailability() {
+        document.querySelectorAll("[data-action='converter:convert'], [data-action='converter:convert-all']").forEach(button => {
+            const recipeId = button.dataset.recipeId;
+            if (recipeId) button.disabled = !Converter.canConvert(recipeId);
+        });
     }
 
     render() {
