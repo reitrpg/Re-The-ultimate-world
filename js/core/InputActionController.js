@@ -12,13 +12,18 @@ class InputActionController {
         if (this.initialized) return;
         this.initialized = true;
 
-        eventBus.on("world:create:request", payload =>
-            this.handleWorldCreate(payload)
-        );
+        eventBus.on("input:pressed", payload => {
+            const action = payload?.action;
 
-        eventBus.on("world:select", payload =>
-            this.handleWorldSelect(payload)
-        );
+            if (action === "world:create:request") {
+                this.handleWorldCreate(payload);
+                return;
+            }
+
+            if (action === "world:select") {
+                this.handleWorldSelect(payload);
+            }
+        });
     }
 
     handleWorldCreate(payload = {}) {
