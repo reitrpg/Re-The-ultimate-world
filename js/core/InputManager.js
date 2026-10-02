@@ -3,6 +3,9 @@ import eventBus from "./eventBus.js";
 class InputManager {
     constructor() {
         this.initialized = false;
+        this.lastDispatchTarget = null;
+        this.lastDispatchTime = 0;
+        this.duplicateGuardMs = 300;
     }
 
     initialize() {
@@ -61,6 +64,18 @@ class InputManager {
         const target = this.resolveTarget(event);
 
         if (!target || target.disabled) return;
+
+        const now = Date.now();
+
+        if (
+            target === this.lastDispatchTarget &&
+            now - this.lastDispatchTime < this.duplicateGuardMs
+        ) {
+            return;
+        }
+
+        this.lastDispatchTarget = target;
+        this.lastDispatchTime = now;
 
         this.dispatch(target, event, "click");
     }
