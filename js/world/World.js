@@ -3,6 +3,7 @@ import ResourceManager from "../resource/Manager.js";
 import ResearchManager from "../research/Manager.js";
 import UpgradeManager from "../upgrades/Manager.js";
 import eventBus from "../core/eventBus.js";
+import AchievementManager from "../achievements/Manager.js";
 
 const RESOURCE_IDS = ["plant", "metal", "magic"];
 
@@ -213,9 +214,9 @@ class World {
 
         const globalMultiplier = BigNumber.from(
             ResearchManager.getTotalMultiplier()
-        ).multiply(
-            UpgradeManager.getTotalMultiplier()
-        );
+        )
+            .multiply(UpgradeManager.getTotalMultiplier())
+            .multiply(AchievementManager.getTotalMultiplier());
 
         let experienceGain = BigNumber.zero();
 
