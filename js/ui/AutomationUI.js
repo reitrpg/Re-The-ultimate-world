@@ -19,29 +19,68 @@ class AutomationUI {
         this.render();
     }
 
-    createToggle(label, enabled, action, id) {
-        const wrapper = document.createElement("label");
-        wrapper.className = "automation-item";
+    createAutomationRow({
+        value,
+        label,
+        enabled,
+        onValueChange,
+        onToggle
+    }) {
+        const row = document.createElement("div");
+        row.className = "automation-item";
 
-        const text = document.createElement("span");
-        text.textContent = label;
-
-        const input = document.createElement("input");
-        input.type = "checkbox";
-        input.checked = enabled;
-        input.dataset.automationAction = action;
-        input.dataset.automationId = id;
-        input.addEventListener("change", () => {
-            if (action === "upgrade") {
-                AutomationManager.setUpgradeAutomation(id, input.checked);
-            } else if (action === "converter") {
-                AutomationManager.setConverterAutomation(id, input.checked);
-            }
+        const valueInput = document.createElement("input");
+        valueInput.type = "number";
+        valueInput.min = "0";
+        valueInput.max = "100";
+        valueInput.step = "1";
+        valueInput.value = String(Math.round(value * 100));
+        valueInput.inputMode = "numeric";
+        valueInput.setAttribute("aria-label", label + "使用率");
+        valueInput.addEventListener("change", () => {
+            let next = Number(valueInput.value);
+            if (!Number.isFinite(next)) next = 0;
+            next = Math.min(100, Math.max(0, Math.round(next)));
+            valueInput.value = String(next);
+            onValueChange(next / 100);
         });
 
-        wrapper.appendChild(text);
-        wrapper.appendChild(input);
-        return wrapper;
+        const type = document.createElement("span");
+        type.className = "automation-type";
+        type.textContent = label;
+
+        const toggleLabel = document.createElement("label");
+        toggleLabel.className = "automation-toggle";
+
+        const toggle = document.createElement("input");
+        toggle.type = "checkbox";
+        toggle.checked = enabled;
+        toggle.setAttribute("aria-label", label + "自動化");
+        toggle.addEventListener("change", () => {
+            onToggle(toggle.checked);
+        });
+
+        const toggleText = document.createElement("span");
+        toggleText.textContent = toggle.checked ? "ON" : "OFF";
+
+        toggle.addEventListener("change", () => {
+            toggleText.textContent = toggle.checked ? "ON" : "OFF";
+        });
+
+        toggleLabel.appendChild(toggle);
+        toggleLabel.appendChild(toggleText);
+
+        row.appendChild(valueInput);
+        row.appendChild(type);
+        row.appendChild(toggleLabel);
+
+        return row;
+    }
+
+    createHeading(text) {
+        const heading = document.createElement("h3");
+        heading.textContent = text;
+        return heading;
     }
 
     render() {
@@ -63,73 +102,54 @@ class AutomationUI {
 
         container.innerHTML = "";
 
-        const spendHeading = document.createElement("h3");
-        spendHeading.textContent = "無限アップグレード EP使用上限";
-        container.appendChild(spendHeading);
+        container.appendChild(this.createHeading("自動化種類"));
 
-        const spendLabel = document.createElement("label");
-        spendLabel.textContent = "現在EPの " + Math.round(AutomationManager.getUpgradeSpendRate() * 100) + "%以下";
-        const spendInput = document.createElement("input");
-        spendInput.type = "range";
-        spendInput.min = "0";
-        spendInput.max = "100";
-        spendInput.step = "1";
-        spendInput.value = String(Math.round(AutomationManager.getUpgradeSpendRate() * 100));
-        spendInput.addEventListener("input", () => {
-            AutomationManager.setUpgradeSpendRate(Number(spendInput.value) / 100);
-            spendLabel.firstChild.textContent = "現在EPの " + spendInput.value + "%以下";
-        });
-        spendLabel.appendChild(spendInput);
-        container.appendChild(spendLabel);
+        const upgrades = UpgradeManager
+            .getByType("infinite")
+            .filter(upgrade => upgrade.isUnlocked());
 
-        const upgradeHeading = document.createElement("h3");
-        upgradeHeading.textContent = "無限アップグレード";
-        container.appendChild(upgradeHeading);
-
-        UpgradeManager.getByType("infinite").filter(upgrade => upgrade.isUnlocked()).forEach(upgrade => {
+        upgrades.forEach(upgrade => {
             container.appendChild(
-                this.createToggle(
-                    upgrade.name,
-                    AutomationManager.isUpgradeAutomationEnabled(upgrade.id),
-                    "upgrade",
-                    upgrade.id
-                )
+                this.createAutomationRow({
+                    value: AutomationManager.getUpgradeSpendRate(upgrade.id),
+                    label: upgrade.name,
+                    enabled: AutomationManager.isUpgradeAutomationEnabled(upgrade.id),
+                    onValueChange: value => {
+                        AutomationManager.setUpgradeSpendRate(upgrade.id, value);
+                    },
+                    onToggle: enabled => {
+                        AutomationManager.setUpgradeAutomation(id = upgrade.id, enabled);
+                    }
+                })
             );
         });
 
-        const converterHeading = document.createElement("h3");
-        converterHeading.textContent = "EP変換";
-        container.appendChild(converterHeading);
-
         Converter.getRecipes().forEach(recipe => {
-            const rateLabel = document.createElement("label");
-            rateLabel.textContent = recipe.resourceId === "plant"
-                ? "植物使用率 "
-                : recipe.resourceId === "metal"
-                    ? "金属使用率 "
-                    : "魔力使用率 ";
-            const rateInput = document.createElement("input");
-            rateInput.type = "range";
-            rateInput.min = "0";
-            rateInput.max = "100";
-            rateInput.step = "1";
-            rateInput.value = String(Math.round(AutomationManager.getConverterRate(recipe.resourceId) * 100));
-            rateInput.addEventListener("input", () => {
-                AutomationManager.setConverterRate(
-                    recipe.resourceId,
-                    Number(rateInput.value) / 100
-                );
-            });
-            container.appendChild(rateLabel);
-            container.appendChild(rateInput);
+            const label =
+                recipe.resourceId === "plant"
+                    ? "植物→EP"
+                    : recipe.resourceId === "metal"
+                        ? "金属→EP"
+                        : "魔力→EP";
 
             container.appendChild(
-                this.createToggle(
-                    recipe.name,
-                    AutomationManager.isConverterAutomationEnabled(recipe.id),
-                    "converter",
-                    recipe.id
-                )
+                this.createAutomationRow({
+                    value: AutomationManager.getConverterRate(recipe.resourceId),
+                    label,
+                    enabled: AutomationManager.isConverterAutomationEnabled(recipe.id),
+                    onValueChange: value => {
+                        AutomationManager.setConverterRate(
+                            recipe.resourceId,
+                            value
+                        );
+                    },
+                    onToggle: enabled => {
+                        AutomationManager.setConverterAutomation(
+                            recipe.id,
+                            enabled
+                        );
+                    }
+                })
             );
         });
     }
