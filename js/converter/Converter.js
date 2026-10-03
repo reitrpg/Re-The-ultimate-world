@@ -145,6 +145,40 @@ class Converter {
 
     }
 
+    convertByRate(id, rate) {
+        const recipe = this.getRecipe(id);
+        if (!recipe) return 0;
+
+        const resource = ResourceManager.get(recipe.resourceId);
+        if (!resource) return 0;
+
+        const usable = resource.amount.multiply(rate);
+        const count = Math.min(
+            1000,
+            Math.max(
+                0,
+                Math.floor(
+                    usable.divide(recipe.resourceCost).toNumber()
+                )
+            )
+        );
+
+        if (count <= 0) return 0;
+
+        const resourceCost = recipe.resourceCost.multiply(count);
+        const epReward = recipe.epReward
+            .multiply(count)
+            .multiply(AchievementManager.getTotalMultiplier());
+
+        if (!ResourceManager.consume(recipe.resourceId, resourceCost)) {
+            return 0;
+        }
+
+        EPManager.add(epReward);
+        eventBus.emit("converter:update", recipe);
+        return count;
+    }
+
     convertAll(id) {
         const recipe = this.getRecipe(id);
         if (!recipe) return 0;
