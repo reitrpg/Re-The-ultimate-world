@@ -21,6 +21,7 @@ class Upgrade {
         this.multiplier = multiplier;
         this.baseCost = BigNumber.from(cost);
         this.type = type === "limited" ? "limited" : "infinite";
+        this.unlocked = true;
         this.maxLevel = Number.isFinite(Number(maxLevel))
             ? Math.max(0, Math.floor(Number(maxLevel)))
             : null;
@@ -31,6 +32,10 @@ class Upgrade {
     }
 
     canBuy() {
+        if (!this.unlocked) {
+            return false;
+        }
+
         if (this.isMaxed()) {
             return false;
         }
@@ -39,13 +44,21 @@ class Upgrade {
     }
 
     buy() {
-        if (!this.canBuy()) {
+        if (!this.unlocked || !this.canBuy()) {
             return false;
         }
 
         EPManager.consume(this.getCost());
         this.level += 1;
         return true;
+    }
+
+    isUnlocked() {
+        return this.unlocked === true;
+    }
+
+    unlock() {
+        this.unlocked = true;
     }
 
     isMaxed() {
@@ -72,7 +85,8 @@ class Upgrade {
             multiplier: this.multiplier,
             baseCost: this.baseCost.toJSON(),
             type: this.type,
-            maxLevel: this.maxLevel
+            maxLevel: this.maxLevel,
+            unlocked: this.unlocked
         };
     }
 
@@ -89,6 +103,12 @@ class Upgrade {
 
         if (data.type === "limited" || data.type === "infinite") {
             this.type = data.type;
+        }
+
+        if (Object.prototype.hasOwnProperty.call(data, "unlocked")) {
+            this.unlocked = data.unlocked === true;
+        } else if (this.level > 0) {
+            this.unlocked = true;
         }
 
         this.maxLevel = Number.isFinite(Number(data.maxLevel))
