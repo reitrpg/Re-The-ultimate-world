@@ -415,3 +415,56 @@ nav button.active {
 .statistics-multiplier-content .statistics-row:last-child {
     border-bottom: 0;
 }
+
+/* Automation */
+#automation-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.automation-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--border);
+}
+
+.automation-rate {
+    flex: 0 0 64px;
+    width: 64px !important;
+    margin: 0 !important;
+}
+
+.automation-type {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.automation-toggle-button {
+    flex: 0 0 64px;
+    width: 64px !important;
+    min-width: 64px;
+    margin: 0 !important;
+    padding: 8px 4px;
+}
+
+@media (max-width: 768px) {
+    .automation-item {
+        gap: 6px;
+    }
+
+    .automation-rate {
+        flex-basis: 58px;
+        width: 58px !important;
+    }
+
+    .automation-toggle-button {
+        flex-basis: 58px;
+        width: 58px !important;
+        min-width: 58px;
+    }
+}
