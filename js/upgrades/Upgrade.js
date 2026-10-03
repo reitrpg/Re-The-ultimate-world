@@ -13,12 +13,14 @@ class Upgrade {
         multiplier = 1,
         cost = 0,
         type = "infinite",
-        maxLevel = null
+        maxLevel = null,
+        effectText = ""
     ) {
         this.id = id;
         this.name = name;
         this.level = 0;
         this.multiplier = multiplier;
+        this.effectText = String(effectText || "");
         this.baseCost = BigNumber.from(cost);
         this.type = type === "limited" ? "limited" : "infinite";
         this.unlocked = true;
@@ -32,14 +34,8 @@ class Upgrade {
     }
 
     canBuy() {
-        if (!this.unlocked) {
-            return false;
-        }
-
-        if (this.isMaxed()) {
-            return false;
-        }
-
+        if (!this.unlocked) return false;
+        if (this.isMaxed()) return false;
         return EPManager.has(this.getCost());
     }
 
@@ -48,7 +44,10 @@ class Upgrade {
             return false;
         }
 
-        EPManager.consume(this.getCost());
+        if (!EPManager.consume(this.getCost())) {
+            return false;
+        }
+
         this.level += 1;
         return true;
     }
@@ -66,15 +65,16 @@ class Upgrade {
     }
 
     getRemainingCount() {
-        if (this.maxLevel === null) {
-            return null;
-        }
-
+        if (this.maxLevel === null) return null;
         return Math.max(0, this.maxLevel - this.level);
     }
 
     getMultiplier() {
         return Math.pow(this.multiplier, this.level);
+    }
+
+    getEffectText() {
+        return this.effectText;
     }
 
     toJSON() {
@@ -83,6 +83,7 @@ class Upgrade {
             name: this.name,
             level: this.level,
             multiplier: this.multiplier,
+            effectText: this.effectText,
             baseCost: this.baseCost.toJSON(),
             type: this.type,
             maxLevel: this.maxLevel,
@@ -91,14 +92,13 @@ class Upgrade {
     }
 
     load(data) {
-        if (!data) {
-            return;
-        }
+        if (!data) return;
 
         this.id = data.id;
         this.name = data.name;
         this.level = Math.max(0, Math.floor(Number(data.level) || 0));
         this.multiplier = Number(data.multiplier) || 1;
+        this.effectText = String(data.effectText || "");
         this.baseCost = BigNumber.from(data.baseCost);
 
         if (data.type === "limited" || data.type === "infinite") {
