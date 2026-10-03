@@ -6,6 +6,7 @@ import eventBus from "../core/eventBus.js";
 class AutomationManager {
     constructor() {
         this.upgradeAutomation = new Map();
+        this.upgradeSpendRates = new Map();
         this.converterAutomation = new Map();
         this.upgradeSpendRate = 0.10;
         this.converterRates = new Map();
@@ -19,6 +20,7 @@ class AutomationManager {
 
         UpgradeManager.getByType("infinite").forEach(upgrade => {
             this.upgradeAutomation.set(upgrade.id, false);
+            this.upgradeSpendRates.set(upgrade.id, this.upgradeSpendRate);
         });
 
         Converter.getRecipes().forEach(recipe => {
@@ -38,6 +40,9 @@ class AutomationManager {
             if (!this.upgradeAutomation.has(upgrade.id)) {
                 this.upgradeAutomation.set(upgrade.id, false);
             }
+            if (!this.upgradeSpendRates.has(upgrade.id)) {
+                this.upgradeSpendRates.set(upgrade.id, this.upgradeSpendRate);
+            }
         });
     }
 
@@ -49,15 +54,23 @@ class AutomationManager {
         });
     }
 
-    setUpgradeSpendRate(rate) {
+    setUpgradeSpendRate(id, rate) {
+        if (!UpgradeManager.get(id) || UpgradeManager.get(id).type !== "infinite") {
+            return false;
+        }
+
         const value = Math.min(1, Math.max(0, Number(rate)));
         if (!Number.isFinite(value)) return false;
-        this.upgradeSpendRate = value;
+
+        this.upgradeSpendRates.set(id, value);
         eventBus.emit("automation:update");
         return true;
     }
 
-    getUpgradeSpendRate() {
+    getUpgradeSpendRate(id) {
+        if (id) {
+            return this.upgradeSpendRates.get(id) ?? this.upgradeSpendRate;
+        }
         return this.upgradeSpendRate;
     }
 
@@ -103,37 +116,47 @@ class AutomationManager {
     update() {
         for (const [id, enabled] of this.upgradeAutomation) {
             if (!enabled) continue;
+
             const upgrade = UpgradeManager.get(id);
             if (!upgrade || !upgrade.isUnlocked()) continue;
 
             const currentEP = EPManager.get();
-            const allowedCost = currentEP.multiply(this.upgradeSpendRate);
+            const spendRate = this.getUpgradeSpendRate(id);
+            const allowedCost = currentEP.multiply(spendRate);
+
             if (upgrade.getCost().greater(allowedCost)) continue;
+
             UpgradeManager.buy(id);
         }
 
         for (const [id, enabled] of this.converterAutomation) {
             if (!enabled) continue;
+
             const recipe = Converter.getRecipe(id);
             if (!recipe) continue;
+
             const rate = this.getConverterRate(recipe.resourceId);
             if (rate <= 0) continue;
+
             Converter.convertByRate(id, rate);
         }
     }
 
     reset() {
         this.upgradeAutomation.clear();
+        this.upgradeSpendRates.clear();
         this.converterAutomation.clear();
         this.converterRates.clear();
         this.upgradeSpendRate = 0.10;
 
         UpgradeManager.getByType("infinite").forEach(upgrade => {
             this.upgradeAutomation.set(upgrade.id, false);
+            this.upgradeSpendRates.set(upgrade.id, this.upgradeSpendRate);
         });
 
         Converter.getRecipes().forEach(recipe => {
             this.converterAutomation.set(recipe.id, false);
+            this.converterRates.set(recipe.resourceId, 0);
         });
 
         eventBus.emit("automation:update");
@@ -142,8 +165,9 @@ class AutomationManager {
     toJSON() {
         return {
             upgradeAutomation: Object.fromEntries(this.upgradeAutomation),
-            converterAutomation: Object.fromEntries(this.converterAutomation),
+            upgradeSpendRates: Object.fromEntries(this.upgradeSpendRates),
             upgradeSpendRate: this.upgradeSpendRate,
+            converterAutomation: Object.fromEntries(this.converterAutomation),
             converterRates: Object.fromEntries(this.converterRates)
         };
     }
@@ -162,15 +186,40 @@ class AutomationManager {
             });
         }
 
-        if (Number.isFinite(Number(data.upgradeSpendRate))) {
-            this.upgradeSpendRate = Math.min(1, Math.max(0, Number(data.upgradeSpendRate)));
+        const legacyRate = Number(data.upgradeSpendRate);
+        if (Number.isFinite(legacyRate)) {
+            this.upgradeSpendRate = Math.min(1, Math.max(0, legacyRate));
+        }
+
+        const savedSpendRates = data.upgradeSpendRates;
+        if (savedSpendRates && typeof savedSpendRates === "object") {
+            Object.entries(savedSpendRates).forEach(([id, rate]) => {
+                if (UpgradeManager.get(id)?.type === "infinite") {
+                    const value = Number(rate);
+                    if (Number.isFinite(value)) {
+                        this.upgradeSpendRates.set(
+                            id,
+                            Math.min(1, Math.max(0, value))
+                        );
+                    }
+                }
+            });
+        } else {
+            this.upgradeSpendRates.forEach((_, id) => {
+                this.upgradeSpendRates.set(id, this.upgradeSpendRate);
+            });
         }
 
         const savedRates = data.converterRates;
         if (savedRates && typeof savedRates === "object") {
             Object.entries(savedRates).forEach(([id, rate]) => {
-                if (["plant", "metal", "magic"].includes(id)) {
-                    this.converterRates.set(id, Math.min(1, Math.max(0, Number(rate))));
+                if (!["plant", "metal", "magic"].includes(id)) return;
+                const value = Number(rate);
+                if (Number.isFinite(value)) {
+                    this.converterRates.set(
+                        id,
+                        Math.min(1, Math.max(0, value))
+                    );
                 }
             });
         }
