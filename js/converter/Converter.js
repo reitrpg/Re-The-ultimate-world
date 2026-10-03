@@ -145,23 +145,34 @@ class Converter {
     }
 
     convertAll(id) {
+        const recipe = this.getRecipe(id);
+        if (!recipe) return 0;
 
-        let count = 0;
+        const resource = ResourceManager.get(recipe.resourceId);
+        if (!resource || !this.canConvert(id)) return 0;
 
-        while (
+        const rawCount = resource.amount
+            .divide(recipe.resourceCost)
+            .toNumber();
 
-            this.canConvert(id)
+        const count = Math.min(
+            1000,
+            Math.max(0, Math.floor(rawCount))
+        );
 
-        ) {
+        if (count <= 0) return 0;
 
-            this.convert(id);
+        const resourceCost = recipe.resourceCost.multiply(count);
+        const epReward = recipe.epReward.multiply(count);
 
-            count++;
-
+        if (!ResourceManager.consume(recipe.resourceId, resourceCost)) {
+            return 0;
         }
 
-        return count;
+        EPManager.add(epReward);
+        eventBus.emit("converter:update", recipe);
 
+        return count;
     }
 
 }
