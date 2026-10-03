@@ -88,48 +88,36 @@ class UpgradeUI {
         const title = document.createElement("h3");
         title.textContent = upgrade.name;
 
-        const level = document.createElement("p");
-        level.textContent = "Lv : " + upgrade.level;
-
-        const multiplier = document.createElement("p");
-        multiplier.textContent =
-            "倍率 : ×" + Formatter.format(upgrade.getMultiplier());
-
-        const count = document.createElement("p");
-
-        if (upgrade.maxLevel === null) {
-            count.textContent = "強化回数 : 無限";
-        } else {
-            count.textContent =
-                "残り強化回数 : " +
-                upgrade.getRemainingCount();
-        }
-
         const cost = document.createElement("p");
+        cost.textContent = upgrade.isMaxed()
+            ? "コスト : ―"
+            : "コスト : " + Formatter.format(upgrade.getCost()) + " EP";
 
-        if (upgrade.isMaxed()) {
-            cost.textContent = "強化上限に到達";
+        const level = document.createElement("p");
+        if (upgrade.maxLevel === null) {
+            level.textContent = "Lv " + upgrade.level;
         } else {
-            cost.textContent =
-                "コスト : " +
-                Formatter.format(upgrade.getCost()) +
-                " EP";
+            level.textContent =
+                "Lv " + upgrade.level + "/" + upgrade.maxLevel;
         }
+
+        const effect = document.createElement("p");
+        effect.textContent =
+            "効果 : ×" + Formatter.format(upgrade.getMultiplier());
 
         const button = document.createElement("button");
         button.type = "button";
         button.textContent =
-            upgrade.isMaxed() ? "上限" : "強化";
+            upgrade.isMaxed() ? "上限" : "購入";
         button.disabled =
             upgrade.isMaxed() || !upgrade.canBuy();
         button.dataset.action = "upgrade:buy";
         button.dataset.upgradeId = upgrade.id;
 
         item.appendChild(title);
-        item.appendChild(level);
-        item.appendChild(multiplier);
-        item.appendChild(count);
         item.appendChild(cost);
+        item.appendChild(level);
+        item.appendChild(effect);
         item.appendChild(button);
 
         return item;
