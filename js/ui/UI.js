@@ -15,6 +15,7 @@ const MODULES = [
     ["NotificationUI", "./NotificationUI.js"],
     ["ErrorUI", "./ErrorUI.js"],
     ["StatisticsUI", "./StatisticsUI.js"],
+    ["AchievementUI", "./AchievementUI.js"],
     ["AutomationUI", "./AutomationUI.js"]
 ];
 
