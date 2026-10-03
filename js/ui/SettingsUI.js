@@ -27,8 +27,9 @@ class SettingsUI {
 
         const t = this.getElement("settings-tick-speed");
         if (t) t.addEventListener("change", e => {
-            if (SettingsManager.set("tickSpeed", e.target.value)) Game.restart();
-            else this.render();
+            if (!SettingsManager.set("tickSpeed", e.target.value)) {
+                this.render();
+            }
         });
 
         const a = this.getElement("settings-autosave");
