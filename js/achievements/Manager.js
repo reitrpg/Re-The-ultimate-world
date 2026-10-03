@@ -1,5 +1,6 @@
 import Achievement from "./Achievement.js";
 import StatisticsManager from "../statistics/Manager.js";
+import UpgradeManager from "../upgrades/Manager.js";
 
 import BigNumber from "../number/BigNumber.js";
 import eventBus from "../core/eventBus.js";
@@ -40,7 +41,7 @@ class AchievementManager {
             "転生を1回行う",
             { type: "rebirthCount", value: 1 },
             [
-                { type: "unlock", target: "automation", id: "upgrade" }
+                { type: "unlock", target: "upgrade", id: "creator_will" }
             ]
         );
 
@@ -136,7 +137,7 @@ class AchievementManager {
                 );
 
             case "worldLevel":
-                return WorldManager.getAll().some(
+                return worldManager?.getAll?.().some(
                     world => Number(world.level) >= value
                 );
 
@@ -155,6 +156,7 @@ class AchievementManager {
             if (achievement.achieve()) {
                 changed = true;
 
+                this.applyUnlockEffects(achievement);
                 eventBus.emit("achievement:achieved", achievement);
             }
         }
@@ -164,6 +166,15 @@ class AchievementManager {
         }
 
         return changed;
+    }
+
+    applyUnlockEffects(achievement) {
+        for (const effect of achievement.unlockEffects) {
+            if (effect?.type !== "unlock") continue;
+            if (effect.target === "upgrade") {
+                UpgradeManager.unlock(effect.id);
+            }
+        }
     }
 
     reset() {
