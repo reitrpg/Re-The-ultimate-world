@@ -89,7 +89,9 @@ class UpgradeUI {
         title.textContent = upgrade.name;
 
         const cost = document.createElement("p");
-        cost.textContent = upgrade.isMaxed()
+        cost.textContent = !upgrade.isUnlocked()
+            ? "解禁条件を満たしていません"
+            : upgrade.isMaxed()
             ? "コスト : ―"
             : "コスト : " + Formatter.format(upgrade.getCost()) + " EP";
 
@@ -107,10 +109,15 @@ class UpgradeUI {
 
         const button = document.createElement("button");
         button.type = "button";
-        button.textContent =
-            upgrade.isMaxed() ? "上限" : "購入";
+        button.textContent = !upgrade.isUnlocked()
+            ? "未解禁"
+            : upgrade.isMaxed()
+                ? "上限"
+                : "購入";
         button.disabled =
-            upgrade.isMaxed() || !upgrade.canBuy();
+            !upgrade.isUnlocked() ||
+            upgrade.isMaxed() ||
+            !upgrade.canBuy();
         button.dataset.action = "upgrade:buy";
         button.dataset.upgradeId = upgrade.id;
 
