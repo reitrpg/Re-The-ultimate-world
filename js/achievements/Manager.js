@@ -1,8 +1,6 @@
 import Achievement from "./Achievement.js";
 import StatisticsManager from "../statistics/Manager.js";
-import WorldManager from "../world/Manager.js";
-import UpgradeManager from "../upgrades/Manager.js";
-import ResearchManager from "../research/Manager.js";
+
 import BigNumber from "../number/BigNumber.js";
 import eventBus from "../core/eventBus.js";
 
@@ -103,21 +101,24 @@ class AchievementManager {
         );
     }
 
-    checkCondition(achievement) {
+    checkCondition(achievement, context = {}) {
         const condition = achievement.condition || {};
         const value = Number(condition.value) || 0;
+        const worldManager = context.worldManager;
+        const upgradeManager = context.upgradeManager;
+        const researchManager = context.researchManager;
 
         switch (condition.type) {
             case "worldCount":
-                return WorldManager.getCount() >= value;
+                return worldManager?.getCount?.() >= value;
 
             case "upgradeLevel":
-                return UpgradeManager.getAll().some(
+                return upgradeManager?.getAll?.().some(
                     upgrade => upgrade.level >= value
                 );
 
             case "researchLevel":
-                return ResearchManager.getAll().some(
+                return researchManager?.getAll?.().some(
                     research => research.level >= value
                 );
 
@@ -144,12 +145,12 @@ class AchievementManager {
         }
     }
 
-    update() {
+    update(context = {}) {
         let changed = false;
 
         for (const achievement of this.getAll()) {
             if (achievement.isAchieved()) continue;
-            if (!this.checkCondition(achievement)) continue;
+            if (!this.checkCondition(achievement, context)) continue;
 
             if (achievement.achieve()) {
                 changed = true;
