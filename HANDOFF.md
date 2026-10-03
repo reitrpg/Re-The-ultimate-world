@@ -3,8 +3,8 @@
 ## 現在地
 - Repository: reitrpg/Re-The-ultimate-world
 - Pages: https://reitrpg.github.io/Re-The-ultimate-world/
-- App version: 0.0.61
-- Service Worker cache: world-creator-v56
+- App version: 0.0.69
+- Service Worker cache: world-creator-v64
 - 「読み込みが遅い」問題は解決済み。
 - 追加の起動・描画パフォーマンス改善も実施済み。
 
@@ -558,101 +558,12 @@ Commit:
   2. POINTER_UP が2回 → Pointer入力層
   3. DISPATCH が2回 → InputManager
   4. EVENT_SEND が1回でEVENT_RECEIVEが想定以上 → listener構成
-  5. DISPATCHが1回でゲーム処理が2回 → action側
-  6. NATIVE_CLICK_BLOCKED が発生 → 互換clickが発生していたことを確認可能
 
-
-## v0.0.63 UI基盤・Action経路再構成（2026-10-03）
-- 「入力層だけを修正しても二重発火が解消しない」ため、UI基盤から入力→Action経路を再監査。
-- 従来は `input:pressed` を全UIモジュールへブロードキャストし、各UIが自身に関係するactionかどうかを判定していた。
-- v0.0.63で `InputActionController` をsemantic actionの中央ルーターへ変更。
-- `input:pressed` の購読者をActionControllerへ集約。
-- ActionControllerが `action:<action>` へ1回だけルーティング。
-- semantic sequence番号をActionControllerでも検査し、同一sequenceの再処理を遮断。
-- UI側は以下のようにaction単位で購読する構造へ変更。
-  - WorldUI: `world:category`, `world:rename`
-  - TabUI: `tab:change`
-  - ResearchUI: `research:buy`
-  - UpgradeUI: `upgrade:category`, `upgrade:buy`
-  - ConverterUI: `converter:convert`, `converter:convert-all`
-  - RebirthUI: `rebirth:request`
-  - SettingsUI: `settings:seed-output`
-  - SaveUI: save/load/export/import/delete
-  - DebugUI: debug actions
-  - ErrorUI: `error:clear`
-  - StatisticsUI: page変更・倍率折りたたみ
-- data-actionを持たない既存のタブ/カテゴリボタンについても、ActionControllerが `data-tab` / `data-world-category` / `data-upgrade-category` からsemantic actionを解決。
-- UI全体に対する `input:pressed` ブロードキャスト依存を撤去。
-- これにより、1回の入力が複数UIへ渡ってそれぞれがaction判定する構造を解消。
-- EventBus自体はイベントごとのSet管理を維持。
-- InputManagerのv0.0.62診断機能を維持。
-- Service Worker: **v58**
-- アプリバージョン: **0.0.63**
-
-### v0.0.63 基盤調査時点の入力経路
-```
-Pointer / Keyboard
-    ↓
-InputManager
-    ↓
-input:pressed
-    ↓
-InputActionController（唯一の入力購読者）
-    ↓
-action:<具体的action>
-    ↓
-対象UI / ゲーム処理
-```
-
-- `input:pressed` をUI全体へ直接配布する旧経路は撤去。
-- 次の調査対象は、実機でまだ二重発火する場合の「Pointer自体の二重生成」またはManager内部での状態変更・イベント二重発火。
-
-
-## v0.0.64 押下後の状態復帰対策・UI再描画経路修正（2026-10-03）
-- 実機で押下不具合が継続したため、二重発火ではなく「入力処理後に高頻度の再描画でDOMが置換されている」経路を調査。
-- WorldManager.update() がゲームTickごとに world:update を発火し、WorldUI が最大100ms間隔で世界カード・世界作成ボタンを全再生成していた。
-- resource:update も毎Tick発火し、ConverterUI が最大200ms間隔で変換ボタンを全再生成していた。
-- 修正: WorldManager.update() は world:tick を発火し、world:update を構造変更時だけに限定。
-- 修正: WorldUI は resource:update で全世界カードを再生成しない。
-- 修正: RebirthUI は world:tick で表示値のみ更新。
-- 修正: ConverterUI は resource:update でDOMを再生成せず、既存ボタンのdisabled状態だけ更新。
-- ゲーム進行TickとインタラクティブDOMの構造再生成を分離。
-- アプリバージョン: **0.0.63 → 0.0.64**
-- Service Worker cache: **v58 → v59**
-
-
-## v0.0.65 — 高頻度DOM再生成の追加停止
-- v0.0.64後も入力後の状態復帰が残ったため、高頻度更新イベントからインタラクティブDOMの再生成経路を追加で除去。
-- `js/ui/ResourceUI.js`: `resource:update` で `innerHTML` 再生成せず、既存表示の値だけ更新。
-- `js/ui/StatisticsUI.js`: 毎Tick発生する `statistics:update` と `resource:update` を全体再描画トリガーから除外。統計画面はタブ切替・主要状態変更時に再描画。
-- これにより、ゲームTick中にボタンを含むDOMが別ノードへ差し替えられる経路をさらに削減。
-- アプリ版: v0.0.65 / Service Worker: v60
-
-## v0.0.66 世界固有情報の表示整理
-- 「統計・倍率」の「素材別」を「植物」「金属」「魔力」の3カテゴリへ分割。
-- 世界カードへ「固有効果」の名称表示を追加。
-- 「統計・倍率」から世界カード側で管理する固有情報のうち、固有効果名・生産量・転生倍率の表示を削除。
-- 「統計・倍率」から「世界基礎倍率」の表示を削除し、世界固有効果の名称・倍率を統計側へ重複表示しない構成へ整理。
-- EPはEP変換倍率のみ、研究は研究・強化・研究＋強化倍率を表示。
-- アプリバージョン: **0.0.65 → 0.0.66**
-- Service Worker cache: **v60 → v61**
-
-
-## v0.0.67 素材倍率表示の整理
-- 「統計・倍率」の素材別倍率表示を削除。
-- 固有効果の倍率のみ「固有効果倍率」として倍率ページへ移動・表示。
-- 固有効果名は引き続き世界カードに表示。
-- アプリバージョン: **0.0.66 → 0.0.67**
-- Service Worker cache: **v61 → v62**
-
-
-## v0.0.68 素材系倍率表示の再編
-- 「統計・倍率」の「素材系」折りたたみを復元。
-- 素材系を「植物」「金属」「魔力」の3カテゴリに分割。
-- 各カテゴリ内に「固有効果倍率」を表示。
-- 素材倍率そのものは表示しない。
-- 全資源対象の固有効果は植物・金属・魔力すべてに反映。
-- 指定資源対象の固有効果は対象素材のみに反映。
-- EP・研究の折りたたみ構成は維持。
-- アプリバージョン: **0.0.67 → 0.0.68**
-- Service Worker cache: **v62 → v63**
+## v0.0.69 素材系固有効果倍率の表示分離
+- 「統計・倍率」の「素材系」では、素材そのものの倍率を参照せず、世界の固有効果だけを参照する構造へ変更。
+- 植物・金属・魔力の各カテゴリは、全資源対象の固有効果なら同じ固有効果倍率、指定資源対象の固有効果なら対象素材だけに固有効果倍率を表示。
+- `getResourceMultiplier()` や `resourceMultipliers` は統計表示の倍率計算から使用しない。
+- Worldに「素材へ適用される固有効果倍率」専用APIを追加し、表示側で素材倍率と固有効果倍率を混同しない構造に整理。
+- EP・研究の表示構成は変更なし。
+- アプリバージョン: **0.0.68 → 0.0.69**
+- Service Worker cache: **v63 → v64**
