@@ -20,9 +20,10 @@
 </header>
 <nav aria-label="ゲームメニュー">
 <button type="button" data-tab="world" aria-selected="true">世界</button>
-<button type="button" data-tab="automation" aria-selected="false">Automation</button>
+<button type="button" data-tab="automation" aria-selected="false">自動化</button>
 <button type="button" data-tab="rebirth" aria-selected="false">転生</button>
 <button type="button" data-tab="statistics" aria-selected="false">統計・倍率</button>
+<button type="button" data-tab="achievements" aria-selected="false">実績</button>
 <button type="button" data-tab="settings" aria-selected="false">設定</button>
 </nav>
 <main>
@@ -55,7 +56,7 @@
 </div>
 </section>
 <section id="automation-tab" class="tab-content" data-tab-panel="automation" hidden>
-<h2>Automation</h2>
+<h2>自動化</h2>
 <div id="automation-content"></div>
 </section>
 <section id="rebirth-tab" class="tab-content" data-tab-panel="rebirth" hidden>
@@ -67,6 +68,10 @@
 <p>必要倍率: ×2.5</p>
 <p>世界経験値: <span id="rebirth-world-exp">0</span></p>
 <button id="rebirth-button" type="button" disabled>転生</button>
+</section>
+<section id="achievements-tab" class="tab-content" data-tab-panel="achievements" hidden>
+<h2>実績</h2>
+<div id="achievement-content"></div>
 </section>
 <section id="statistics-tab" class="tab-content" data-tab-panel="statistics" hidden>
 <div id="statistics-content"></div>
@@ -107,7 +112,7 @@
 </section>
 </main>
 <div id="notification-container" aria-live="polite"></div>
-<footer id="app-version">World Creator v0.0.71</footer>
-<script type="module" src="./js/core/main.js?v=0.0.71"></script>
+<footer id="app-version">World Creator v0.0.72</footer>
+<script type="module" src="./js/core/main.js?v=0.0.72"></script>
 </body>
 </html>
