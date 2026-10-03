@@ -250,79 +250,46 @@ class StatisticsUI {
     renderMultiplierPage(container, world) {
         const multipliers = this.createSection("倍率");
 
-        const rebirth = world?.rebirthMultiplier || 1;
-        const worldMultiplier = world?.getTotalMultiplier?.() || 1;
+        const materialMultipliers = [
+            ["plant", "植物"],
+            ["metal", "金属"],
+            ["magic", "魔力"]
+        ];
+
+        materialMultipliers.forEach(([id, label], index) => {
+            multipliers.content.appendChild(
+                this.createMultiplierGroup(
+                    label,
+                    content => {
+                        content.appendChild(
+                            this.createRow(
+                                "素材倍率",
+                                "×" + Formatter.format(
+                                    world?.getResourceMultiplier?.(id) ?? 1
+                                )
+                            )
+                        );
+                    },
+                    index === 0
+                )
+            );
+        });
+
         const research = ResearchManager.getTotalMultiplier();
         const upgrade = UpgradeManager.getTotalMultiplier();
-        const uniqueType = world?.getUniqueEffectType?.() || "none";
-        const uniqueName = world?.getUniqueEffectName?.() || "なし";
-        const uniqueMultiplier = world?.getUniqueEffectMultiplier?.() ?? 1;
-
-        multipliers.content.appendChild(
-            this.createMultiplierGroup(
-                "素材別",
-                content => {
-                    content.appendChild(
-                        this.createRow("世界基礎倍率", "×" + Formatter.format(worldMultiplier))
-                    );
-                    content.appendChild(
-                        this.createRow("転生倍率", "×" + Formatter.format(rebirth))
-                    );
-
-                    if (world && uniqueType !== "ep_conversion" && uniqueType !== "luck") {
-                        content.appendChild(
-                            this.createRow("固有効果", uniqueName)
-                        );
-                        content.appendChild(
-                            this.createRow(
-                                "固有効果倍率",
-                                "×" + Formatter.format(uniqueMultiplier)
-                            )
-                        );
-                    }
-
-                    [
-                        ["plant", "植物"],
-                        ["metal", "金属"],
-                        ["magic", "魔力"]
-                    ].forEach(([id, label]) => {
-                        content.appendChild(
-                            this.createRow(
-                                label + "補正",
-                                "×" + Formatter.format(world?.getResourceMultiplier?.(id) ?? 1)
-                            )
-                        );
-                        content.appendChild(
-                            this.createRow(
-                                label + "生産量",
-                                Formatter.format(world?.getResourceProduction?.(id) ?? 0) + "/秒"
-                            )
-                        );
-                    });
-                },
-                true
-            )
-        );
 
         multipliers.content.appendChild(
             this.createMultiplierGroup(
                 "EP",
                 content => {
-                    if (world && uniqueType === "ep_conversion") {
-                        content.appendChild(
-                            this.createRow("固有効果", uniqueName)
-                        );
-                        content.appendChild(
-                            this.createRow(
-                                "EP変換倍率",
-                                "×" + Formatter.format(uniqueMultiplier)
+                    content.appendChild(
+                        this.createRow(
+                            "EP変換倍率",
+                            "×" + Formatter.format(
+                                world?.getEPConversionMultiplier?.() ?? 1
                             )
-                        );
-                    } else {
-                        content.appendChild(
-                            this.createRow("EP変換倍率", "×1")
-                        );
-                    }
+                        )
+                    );
                 }
             )
         );
