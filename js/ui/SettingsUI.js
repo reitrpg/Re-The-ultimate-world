@@ -1,7 +1,6 @@
 import eventBus from "../core/eventBus.js";
 import SettingsManager from "../settings/Manager.js";
 import WorldManager from "../world/Manager.js";
-import Game from "../core/game.js";
 import SaveManager from "../core/save.js";
 
 class SettingsUI {
