@@ -50,6 +50,25 @@ class AutomationUI {
 
         container.innerHTML = "";
 
+        const spendHeading = document.createElement("h3");
+        spendHeading.textContent = "無限アップグレード EP使用上限";
+        container.appendChild(spendHeading);
+
+        const spendLabel = document.createElement("label");
+        spendLabel.textContent = "現在EPの " + Math.round(AutomationManager.getUpgradeSpendRate() * 100) + "%以下";
+        const spendInput = document.createElement("input");
+        spendInput.type = "range";
+        spendInput.min = "0";
+        spendInput.max = "100";
+        spendInput.step = "1";
+        spendInput.value = String(Math.round(AutomationManager.getUpgradeSpendRate() * 100));
+        spendInput.addEventListener("input", () => {
+            AutomationManager.setUpgradeSpendRate(Number(spendInput.value) / 100);
+            spendLabel.firstChild.textContent = "現在EPの " + spendInput.value + "%以下";
+        });
+        spendLabel.appendChild(spendInput);
+        container.appendChild(spendLabel);
+
         const upgradeHeading = document.createElement("h3");
         upgradeHeading.textContent = "無限アップグレード";
         container.appendChild(upgradeHeading);
@@ -70,6 +89,27 @@ class AutomationUI {
         container.appendChild(converterHeading);
 
         Converter.getRecipes().forEach(recipe => {
+            const rateLabel = document.createElement("label");
+            rateLabel.textContent = recipe.resourceId === "plant"
+                ? "植物使用率 "
+                : recipe.resourceId === "metal"
+                    ? "金属使用率 "
+                    : "魔力使用率 ";
+            const rateInput = document.createElement("input");
+            rateInput.type = "range";
+            rateInput.min = "0";
+            rateInput.max = "100";
+            rateInput.step = "1";
+            rateInput.value = String(Math.round(AutomationManager.getConverterRate(recipe.resourceId) * 100));
+            rateInput.addEventListener("input", () => {
+                AutomationManager.setConverterRate(
+                    recipe.resourceId,
+                    Number(rateInput.value) / 100
+                );
+            });
+            container.appendChild(rateLabel);
+            container.appendChild(rateInput);
+
             container.appendChild(
                 this.createToggle(
                     recipe.name,
