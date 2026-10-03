@@ -250,34 +250,25 @@ class StatisticsUI {
     renderMultiplierPage(container, world) {
         const multipliers = this.createSection("倍率");
 
-        const materialMultipliers = [
-            ["plant", "植物"],
-            ["metal", "金属"],
-            ["magic", "魔力"]
-        ];
-
-        materialMultipliers.forEach(([id, label], index) => {
+        const uniqueEffect = world?.getUniqueEffect?.();
+        if (uniqueEffect) {
             multipliers.content.appendChild(
                 this.createMultiplierGroup(
-                    label,
+                    "固有効果倍率",
                     content => {
                         content.appendChild(
                             this.createRow(
-                                "素材倍率",
-                                "×" + Formatter.format(
-                                    world?.getResourceMultiplier?.(id) ?? 1
-                                )
+                                uniqueEffect.name || "固有効果",
+                                "×" + Formatter.format(uniqueEffect.multiplier ?? 1)
                             )
                         );
                     },
-                    index === 0
+                    true
                 )
             );
-        });
+        }
 
-        const research = ResearchManager.getTotalMultiplier();
-        const upgrade = UpgradeManager.getTotalMultiplier();
-
+        const epMultiplier = world?.getEPConversionMultiplier?.() ?? 1;
         multipliers.content.appendChild(
             this.createMultiplierGroup(
                 "EP",
@@ -285,14 +276,15 @@ class StatisticsUI {
                     content.appendChild(
                         this.createRow(
                             "EP変換倍率",
-                            "×" + Formatter.format(
-                                world?.getEPConversionMultiplier?.() ?? 1
-                            )
+                            "×" + Formatter.format(epMultiplier)
                         )
                     );
                 }
             )
         );
+
+        const research = ResearchManager.getTotalMultiplier();
+        const upgrade = UpgradeManager.getTotalMultiplier();
 
         multipliers.content.appendChild(
             this.createMultiplierGroup(
