@@ -91,14 +91,15 @@ class AchievementManager {
     }
 
     isUnlocked(target, id) {
-        const achievement = this.get(target);
-        if (!achievement?.isAchieved()) return false;
-
-        return achievement.unlockEffects.some(
-            effect =>
-                effect?.type === "unlock" &&
-                effect?.target === target &&
-                effect?.id === id
+        return this.getAll().some(
+            achievement =>
+                achievement.isAchieved() &&
+                achievement.unlockEffects.some(
+                    effect =>
+                        effect?.type === "unlock" &&
+                        effect?.target === target &&
+                        effect?.id === id
+                )
         );
     }
 
@@ -194,7 +195,12 @@ class AchievementManager {
 
         data.forEach(achievementData => {
             const achievement = this.get(achievementData.id);
-            if (achievement) achievement.load(achievementData);
+            if (achievement) {
+                achievement.load(achievementData);
+                if (achievement.isAchieved()) {
+                    this.applyUnlockEffects(achievement);
+                }
+            }
         });
 
         eventBus.emit("achievement:update");
