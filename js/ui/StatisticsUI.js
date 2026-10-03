@@ -250,23 +250,39 @@ class StatisticsUI {
     renderMultiplierPage(container, world) {
         const multipliers = this.createSection("倍率");
 
-        const uniqueEffect = world?.getUniqueEffect?.();
-        if (uniqueEffect) {
-            multipliers.content.appendChild(
-                this.createMultiplierGroup(
-                    "固有効果倍率",
-                    content => {
-                        content.appendChild(
-                            this.createRow(
-                                uniqueEffect.name || "固有効果",
-                                "×" + Formatter.format(uniqueEffect.multiplier ?? 1)
-                            )
-                        );
-                    },
-                    true
-                )
-            );
-        }
+        const resourceSection = this.createMultiplierGroup(
+            "素材系",
+            content => {
+                const resourceDefinitions = [
+                    ["plant", "植物"],
+                    ["metal", "金属"],
+                    ["magic", "魔力"]
+                ];
+
+                resourceDefinitions.forEach(([resourceId, label]) => {
+                    const resourceMultiplier =
+                        (world?.getAllResourceMultiplier?.() ?? 1) *
+                        (world?.getResourceUniqueMultiplier?.(resourceId) ?? 1);
+
+                    content.appendChild(
+                        this.createMultiplierGroup(
+                            label,
+                            resourceContent => {
+                                resourceContent.appendChild(
+                                    this.createRow(
+                                        "固有効果倍率",
+                                        "×" + Formatter.format(resourceMultiplier)
+                                    )
+                                );
+                            }
+                        )
+                    );
+                });
+            },
+            false
+        );
+
+        multipliers.content.appendChild(resourceSection);
 
         const epMultiplier = world?.getEPConversionMultiplier?.() ?? 1;
         multipliers.content.appendChild(
