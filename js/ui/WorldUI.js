@@ -186,6 +186,9 @@ class WorldUI {
         const feature = document.createElement("p");
         feature.textContent = "特徴: " + world.getResourceFeatureName("plant");
 
+        const uniqueEffect = document.createElement("p");
+        uniqueEffect.textContent = "固有効果: " + world.getUniqueEffectName();
+
         const level = document.createElement("p");
         level.textContent = "Lv: " + world.level;
 
@@ -204,6 +207,7 @@ class WorldUI {
         stats.appendChild(rarity);
         stats.appendChild(rarityMultiplier);
         stats.appendChild(feature);
+        stats.appendChild(uniqueEffect);
         stats.appendChild(level);
         stats.appendChild(exp);
         stats.appendChild(base);
