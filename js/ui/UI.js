@@ -33,15 +33,23 @@ class UI {
 
         BootProfiler.mark("UI.initialize start");
 
-        for (const [name, path] of MODULES) {
-            const start = performance.now();
+        const loadedModules = await Promise.all(
+            MODULES.map(async ([name, path]) => {
+                const start = performance.now();
+                await this.initializeModule(name, path);
 
-            await this.initializeModule(name, path);
+                return {
+                    name,
+                    elapsed: performance.now() - start
+                };
+            })
+        );
 
+        loadedModules.forEach(({ name, elapsed }) => {
             BootProfiler.mark(
-                "UI module: " + name + " (" + (performance.now() - start).toFixed(2) + " ms)"
+                "UI module: " + name + " (" + elapsed.toFixed(2) + " ms)"
             );
-        }
+        });
 
         eventBus.emit("ui:ready");
         BootProfiler.mark("UI.initialize end");
