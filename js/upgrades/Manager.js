@@ -84,6 +84,18 @@ class UpgradeManager {
         );
     }
 
+    unlock(id) {
+        const upgrade = this.get(id);
+        if (!upgrade) return false;
+        upgrade.unlock();
+        eventBus.emit("upgrade:update");
+        return true;
+    }
+
+    isUnlocked(id) {
+        return this.get(id)?.isUnlocked?.() === true;
+    }
+
     buy(id) {
         const upgrade = this.get(id);
 
@@ -104,6 +116,7 @@ class UpgradeManager {
         let multiplier = 1;
 
         this.getAll().forEach(upgrade => {
+            if (!upgrade.isUnlocked()) return;
             multiplier *= upgrade.getMultiplier();
         });
 
