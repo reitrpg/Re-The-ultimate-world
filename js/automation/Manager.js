@@ -84,8 +84,15 @@ class AutomationManager {
     reset() {
         this.upgradeAutomation.clear();
         this.converterAutomation.clear();
-        this.initialized = false;
-        this.initialize();
+
+        UpgradeManager.getByType("infinite").forEach(upgrade => {
+            this.upgradeAutomation.set(upgrade.id, false);
+        });
+
+        Converter.getRecipes().forEach(recipe => {
+            this.converterAutomation.set(recipe.id, false);
+        });
+
         eventBus.emit("automation:update");
     }
 
