@@ -9,6 +9,8 @@ import DebugManager from "../debug/Manager.js";
 
 import SettingsManager from "../settings/Manager.js";
 
+import BootProfiler from "../core/BootProfiler.js";
+
 class DebugUI {
 
     constructor() {
@@ -27,6 +29,10 @@ class DebugUI {
 
         this.initialized = true;
 
+        BootProfiler.setDebugMode(
+            SettingsManager.isDebugMode()
+        );
+
         this.updateVisibility();
 
         this.registerButtons();
@@ -36,6 +42,10 @@ class DebugUI {
             "settings:update",
 
             () => {
+
+                BootProfiler.setDebugMode(
+                    SettingsManager.isDebugMode()
+                );
 
                 this.updateVisibility();
 
