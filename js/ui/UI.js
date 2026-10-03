@@ -6,7 +6,6 @@ const MODULES = [
     ["EPUI", "./EPUI.js"],
     ["ResourceUI", "./ResourceUI.js"],
     ["WorldUI", "./WorldUI.js"],
-    ["AchievementUI", "./AchievementUI.js"],
     ["UpgradeUI", "./UpgradeUI.js"],
     ["ConverterUI", "./ConverterUI.js"],
     ["RebirthUI", "./RebirthUI.js"],
