@@ -1,4 +1,5 @@
 import ErrorHandler from "./errorHandler.js";
+import BootProfiler from "./BootProfiler.js";
 
 const APP_VERSION = "0.0.69";
 const SERVICE_WORKER_VERSION = "64";
@@ -6,6 +7,7 @@ const SERVICE_WORKER_VERSION = "64";
 async function loadModule(path) {
     try {
         const module = await import(path);
+        BootProfiler.mark("Module: " + path);
         return module.default ?? module;
     } catch (error) {
         console.error("World Creator module load failed:", path, error);
@@ -56,8 +58,11 @@ const runtime = {};
 
 async function initializeGame() {
     try {
+        BootProfiler.mark("DOMContentLoaded / initializeGame");
+
         ErrorHandler.initialize();
         setBootVersion();
+        BootProfiler.mark("ErrorHandler + version");
 
         const SaveManager = await loadModule("./save.js");
         const Game = await loadModule("./game.js");
@@ -69,6 +74,7 @@ async function initializeGame() {
 
         runtime.SaveManager = SaveManager;
         runtime.OfflineProgress = OfflineProgress;
+        BootProfiler.mark("Core modules loaded");
 
         if (!SaveManager || !Game || !ResourceManager || !InputManager || !InputActionController || !UI) {
             throw new Error("World Creator: core module initialization failed");
@@ -84,6 +90,7 @@ async function initializeGame() {
         }
 
         SaveManager.load();
+        BootProfiler.mark("SaveManager.load");
 
         if (
             !ResourceManager.exists("plant") ||
@@ -106,14 +113,22 @@ async function initializeGame() {
             OfflineProgress.calculate();
         }
 
+        BootProfiler.mark("Offline progress + resource initialization");
+
         InputManager.initialize();
         InputActionController.initialize();
+        BootProfiler.mark("Input initialization");
+
         await UI.initialize();
+        BootProfiler.mark("UI.initialize");
 
         SaveManager.startAutoSave();
         Game.start();
+        BootProfiler.mark("Game.start");
 
         document.documentElement.dataset.appReady = "true";
+        BootProfiler.finish();
+
         registerServiceWorker();
     } catch (error) {
         ErrorHandler.record(error);
@@ -124,6 +139,9 @@ async function initializeGame() {
             version.textContent = "World Creator v" + APP_VERSION + " / 起動エラー";
             version.dataset.booted = "error";
         }
+
+        BootProfiler.mark("起動エラー");
+        BootProfiler.finish();
     }
 }
 
