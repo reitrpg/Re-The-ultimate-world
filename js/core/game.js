@@ -9,6 +9,8 @@ import WorldManager from "../world/Manager.js";
 
 import eventBus from "./eventBus.js";
 import StatisticsManager from "../statistics/Manager.js";
+import AchievementManager from "../achievements/Manager.js";
+import AutomationManager from "../automation/Manager.js";
 
 class Game {
 
@@ -19,6 +21,14 @@ class Game {
         this.lastUpdate = 0;
 
         this.running = false;
+
+        eventBus.on("settings:update", payload => {
+            if (payload?.key === "tickSpeed" && this.running) {
+                this.restart();
+            }
+        });
+
+        AutomationManager.initialize();
 
     }
 
@@ -50,10 +60,9 @@ class Game {
 
     stop() {
 
-        if (!this.interval) {
-
+        if (this.interval === null) {
+            this.running = false;
             return;
-
         }
 
         clearInterval(
