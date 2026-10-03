@@ -50,6 +50,16 @@ class UpgradeManager {
             null,
             false
         );
+
+        this.create(
+            "automation_unlock",
+            "自動化解禁",
+            1,
+            10000,
+            "limited",
+            1,
+            true
+        );
     }
 
     create(
