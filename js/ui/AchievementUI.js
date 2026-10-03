@@ -62,6 +62,12 @@ class AchievementUI {
             item.appendChild(description);
             item.appendChild(status);
 
+            if (achievement.unlockEffects.length > 0) {
+                const unlock = document.createElement("p");
+                unlock.textContent = "解禁効果あり";
+                item.appendChild(unlock);
+            }
+
             container.appendChild(item);
         });
     }
