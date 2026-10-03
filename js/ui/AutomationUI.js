@@ -118,7 +118,7 @@ class AutomationUI {
                         AutomationManager.setUpgradeSpendRate(upgrade.id, value);
                     },
                     onToggle: enabled => {
-                        AutomationManager.setUpgradeAutomation(id = upgrade.id, enabled);
+                        AutomationManager.setUpgradeAutomation(upgrade.id, enabled);
                     }
                 })
             );
