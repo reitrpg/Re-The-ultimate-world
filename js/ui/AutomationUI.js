@@ -48,6 +48,19 @@ class AutomationUI {
         const container = document.getElementById("automation-content");
         if (!container) return;
 
+        const tabButton = document.querySelector("[data-tab='automation']");
+        const unlocked = UpgradeManager.get("automation_unlock")?.level >= 1;
+
+        if (tabButton) {
+            tabButton.hidden = !unlocked;
+            tabButton.setAttribute("aria-hidden", String(!unlocked));
+        }
+
+        if (!unlocked) {
+            container.innerHTML = "<p>有限強化「自動化解禁」を購入すると使用できます。</p>";
+            return;
+        }
+
         container.innerHTML = "";
 
         const spendHeading = document.createElement("h3");
