@@ -21,11 +21,9 @@ class StatisticsUI {
             "world:unlock",
             "world:create:success",
             "world:unlock:update",
-            "resource:update",
             "research:update",
             "upgrade:update",
             "rebirth:update",
-            "statistics:update",
             "save:clear",
             "settings:update"
         ].forEach(event => {
