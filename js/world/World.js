@@ -118,6 +118,20 @@ class World {
         return this.getUniqueEffectMultiplier();
     }
 
+    getResourceUniqueEffectMultiplier(id) {
+        const type = this.getUniqueEffectType();
+
+        if (type === "allResource") {
+            return this.getUniqueEffectMultiplier();
+        }
+
+        if (type === "resource" && this.getUniqueEffectResourceId() === id) {
+            return this.getUniqueEffectMultiplier();
+        }
+
+        return 1;
+    }
+
     getTotalMultiplier() {
         return BigNumber.from(this.getUniqueEffectMultiplier());
     }
