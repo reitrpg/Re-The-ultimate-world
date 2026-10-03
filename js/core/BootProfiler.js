@@ -6,6 +6,10 @@ class BootProfiler {
         this.outputId = "boot-profiler";
     }
 
+    setDebugMode(enabled) {
+        this.enabled = Boolean(enabled);
+    }
+
     mark(label) {
         if (!this.enabled) return;
         this.steps.push({
