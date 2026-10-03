@@ -424,12 +424,15 @@ nav button.active {
 }
 
 .automation-item {
-    display: flex;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
     align-items: center;
     gap: 8px;
     width: 100%;
     padding: 8px;
     border: 1px solid var(--border);
+    overflow: hidden;
 }
 
 .automation-rate {
@@ -442,6 +445,7 @@ nav button.active {
     flex: 1 1 auto;
     min-width: 0;
     overflow-wrap: anywhere;
+    white-space: normal;
 }
 
 .automation-toggle-button {
