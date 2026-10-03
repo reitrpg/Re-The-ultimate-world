@@ -261,8 +261,7 @@ class StatisticsUI {
 
                 resourceDefinitions.forEach(([resourceId, label]) => {
                     const resourceMultiplier =
-                        (world?.getAllResourceMultiplier?.() ?? 1) *
-                        (world?.getResourceUniqueMultiplier?.(resourceId) ?? 1);
+                        world?.getResourceUniqueEffectMultiplier?.(resourceId) ?? 1;
 
                     content.appendChild(
                         this.createMultiplierGroup(
