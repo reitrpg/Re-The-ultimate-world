@@ -147,9 +147,11 @@ self.addEventListener("fetch", event => {
     const isJavaScript = url.pathname.endsWith(".js");
 
     const strategy =
-        request.mode === "navigate" || isJavaScript
+        request.mode === "navigate"
             ? networkFirst
-            : cacheFirst;
+            : isJavaScript
+                ? cacheFirst
+                : cacheFirst;
 
     event.respondWith(
         strategy(request).catch(() =>
