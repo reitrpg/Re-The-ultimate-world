@@ -46,7 +46,9 @@ class UpgradeManager {
             "創造神の意思",
             1.50,
             5000,
-            "infinite"
+            "infinite",
+            null,
+            false
         );
     }
 
@@ -56,7 +58,8 @@ class UpgradeManager {
         multiplier,
         cost,
         type = "infinite",
-        maxLevel = null
+        maxLevel = null,
+        unlocked = true
     ) {
         const upgrade = new Upgrade(
             id,
@@ -67,6 +70,7 @@ class UpgradeManager {
             maxLevel
         );
 
+        upgrade.unlocked = unlocked === true;
         this.upgrades.set(id, upgrade);
     }
 
