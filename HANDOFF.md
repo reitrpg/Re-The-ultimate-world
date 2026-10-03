@@ -619,3 +619,11 @@ action:<具体的action>
 - ゲーム進行TickとインタラクティブDOMの構造再生成を分離。
 - アプリバージョン: **0.0.63 → 0.0.64**
 - Service Worker cache: **v58 → v59**
+
+
+## v0.0.65 — 高頻度DOM再生成の追加停止
+- v0.0.64後も入力後の状態復帰が残ったため、高頻度更新イベントからインタラクティブDOMの再生成経路を追加で除去。
+- `js/ui/ResourceUI.js`: `resource:update` で `innerHTML` 再生成せず、既存表示の値だけ更新。
+- `js/ui/StatisticsUI.js`: 毎Tick発生する `statistics:update` と `resource:update` を全体再描画トリガーから除外。統計画面はタブ切替・主要状態変更時に再描画。
+- これにより、ゲームTick中にボタンを含むDOMが別ノードへ差し替えられる経路をさらに削減。
+- アプリ版: v0.0.65 / Service Worker: v60
