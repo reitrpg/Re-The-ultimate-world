@@ -36,6 +36,7 @@ class AutomationUI {
         valueInput.step = "1";
         valueInput.value = String(Math.round(value * 100));
         valueInput.inputMode = "numeric";
+        valueInput.className = "automation-rate";
         valueInput.setAttribute("aria-label", label + "使用率");
         valueInput.addEventListener("change", () => {
             let next = Number(valueInput.value);
@@ -49,30 +50,20 @@ class AutomationUI {
         type.className = "automation-type";
         type.textContent = label;
 
-        const toggleLabel = document.createElement("label");
-        toggleLabel.className = "automation-toggle";
-
-        const toggle = document.createElement("input");
-        toggle.type = "checkbox";
-        toggle.checked = enabled;
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "automation-toggle-button";
+        toggle.textContent = enabled ? "ON" : "OFF";
+        toggle.setAttribute("aria-pressed", String(enabled));
         toggle.setAttribute("aria-label", label + "自動化");
-        toggle.addEventListener("change", () => {
-            onToggle(toggle.checked);
+        toggle.addEventListener("click", () => {
+            const next = toggle.getAttribute("aria-pressed") !== "true";
+            onToggle(next);
         });
-
-        const toggleText = document.createElement("span");
-        toggleText.textContent = toggle.checked ? "ON" : "OFF";
-
-        toggle.addEventListener("change", () => {
-            toggleText.textContent = toggle.checked ? "ON" : "OFF";
-        });
-
-        toggleLabel.appendChild(toggle);
-        toggleLabel.appendChild(toggleText);
 
         row.appendChild(valueInput);
         row.appendChild(type);
-        row.appendChild(toggleLabel);
+        row.appendChild(toggle);
 
         return row;
     }
@@ -101,7 +92,6 @@ class AutomationUI {
         }
 
         container.innerHTML = "";
-
         container.appendChild(this.createHeading("自動化種類"));
 
         const upgrades = UpgradeManager
@@ -138,16 +128,10 @@ class AutomationUI {
                     label,
                     enabled: AutomationManager.isConverterAutomationEnabled(recipe.id),
                     onValueChange: value => {
-                        AutomationManager.setConverterRate(
-                            recipe.resourceId,
-                            value
-                        );
+                        AutomationManager.setConverterRate(recipe.resourceId, value);
                     },
                     onToggle: enabled => {
-                        AutomationManager.setConverterAutomation(
-                            recipe.id,
-                            enabled
-                        );
+                        AutomationManager.setConverterAutomation(recipe.id, enabled);
                     }
                 })
             );
