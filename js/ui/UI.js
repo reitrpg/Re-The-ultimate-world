@@ -6,7 +6,7 @@ const MODULES = [
     ["EPUI", "./EPUI.js"],
     ["ResourceUI", "./ResourceUI.js"],
     ["WorldUI", "./WorldUI.js"],
-    ["ResearchUI", "./ResearchUI.js"],
+    ["AchievementUI", "./AchievementUI.js"],
     ["UpgradeUI", "./UpgradeUI.js"],
     ["ConverterUI", "./ConverterUI.js"],
     ["RebirthUI", "./RebirthUI.js"],
@@ -15,7 +15,8 @@ const MODULES = [
     ["SaveUI", "./SaveUI.js"],
     ["NotificationUI", "./NotificationUI.js"],
     ["ErrorUI", "./ErrorUI.js"],
-    ["StatisticsUI", "./StatisticsUI.js"]
+    ["StatisticsUI", "./StatisticsUI.js"],
+    ["AutomationUI", "./AutomationUI.js"]
 ];
 
 class UI {
