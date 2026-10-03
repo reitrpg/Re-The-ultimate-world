@@ -10,6 +10,8 @@ import WorldManager from "../world/Manager.js";
 import eventBus from "./eventBus.js";
 import StatisticsManager from "../statistics/Manager.js";
 import AchievementManager from "../achievements/Manager.js";
+import UpgradeManager from "../upgrades/Manager.js";
+import ResearchManager from "../research/Manager.js";
 import AutomationManager from "../automation/Manager.js";
 
 class Game {
@@ -105,6 +107,12 @@ class Game {
         WorldManager.update(
             deltaTime
         );
+
+        AchievementManager.update({
+            worldManager: WorldManager,
+            upgradeManager: UpgradeManager,
+            researchManager: ResearchManager
+        });
 
         eventBus.emit("game:update");
 
