@@ -31,6 +31,13 @@ class AutomationUI {
         input.checked = enabled;
         input.dataset.automationAction = action;
         input.dataset.automationId = id;
+        input.addEventListener("change", () => {
+            if (action === "upgrade") {
+                AutomationManager.setUpgradeAutomation(id, input.checked);
+            } else if (action === "converter") {
+                AutomationManager.setConverterAutomation(id, input.checked);
+            }
+        });
 
         wrapper.appendChild(text);
         wrapper.appendChild(input);
@@ -47,7 +54,7 @@ class AutomationUI {
         upgradeHeading.textContent = "無限アップグレード";
         container.appendChild(upgradeHeading);
 
-        UpgradeManager.getByType("infinite").forEach(upgrade => {
+        UpgradeManager.getByType("infinite").filter(upgrade => upgrade.isUnlocked()).forEach(upgrade => {
             container.appendChild(
                 this.createToggle(
                     upgrade.name,
