@@ -7,6 +7,7 @@ import ResourceManager from "../resource/Manager.js";
 import EPManager from "../ep/Manager.js";
 import BigNumber from "../number/BigNumber.js";
 import eventBus from "../core/eventBus.js";
+import AchievementManager from "../achievements/Manager.js";
 
 class Converter {
 
@@ -163,7 +164,9 @@ class Converter {
         if (count <= 0) return 0;
 
         const resourceCost = recipe.resourceCost.multiply(count);
-        const epReward = recipe.epReward.multiply(count);
+        const epReward = recipe.epReward
+            .multiply(count)
+            .multiply(AchievementManager.getTotalMultiplier());
 
         if (!ResourceManager.consume(recipe.resourceId, resourceCost)) {
             return 0;
