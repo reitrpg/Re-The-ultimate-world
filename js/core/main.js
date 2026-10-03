@@ -64,13 +64,23 @@ async function initializeGame() {
         setBootVersion();
         BootProfiler.mark("ErrorHandler + version");
 
-        const SaveManager = await loadModule("./save.js");
-        const Game = await loadModule("./game.js");
-        const OfflineProgress = await loadModule("../utils/OfflineProgress.js");
-        const ResourceManager = await loadModule("../resource/Manager.js");
-        const InputManager = await loadModule("./InputManager.js");
-        const InputActionController = await loadModule("./InputActionController.js");
-        const UI = await loadModule("../ui/UI.js");
+        const [
+            SaveManager,
+            Game,
+            OfflineProgress,
+            ResourceManager,
+            InputManager,
+            InputActionController,
+            UI
+        ] = await Promise.all([
+            loadModule("./save.js"),
+            loadModule("./game.js"),
+            loadModule("../utils/OfflineProgress.js"),
+            loadModule("../resource/Manager.js"),
+            loadModule("./InputManager.js"),
+            loadModule("./InputActionController.js"),
+            loadModule("../ui/UI.js")
+        ]);
 
         runtime.SaveManager = SaveManager;
         runtime.OfflineProgress = OfflineProgress;
