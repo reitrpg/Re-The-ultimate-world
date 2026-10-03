@@ -5,6 +5,7 @@ import ResearchManager from "../research/Manager.js";
 import UpgradeManager from "../upgrades/Manager.js";
 import eventBus from "../core/eventBus.js";
 import StatisticsManager from "../statistics/Manager.js";
+import AchievementManager from "../achievements/Manager.js";
 
 class OfflineProgress {
     constructor() {
@@ -45,7 +46,8 @@ class OfflineProgress {
         }
 
         const globalMultiplier = BigNumber.from(ResearchManager.getTotalMultiplier())
-            .multiply(UpgradeManager.getTotalMultiplier());
+            .multiply(UpgradeManager.getTotalMultiplier())
+            .multiply(AchievementManager.getTotalMultiplier());
 
         const amounts = {};
         let experienceGain = BigNumber.zero();
