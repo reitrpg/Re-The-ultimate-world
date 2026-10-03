@@ -1,4 +1,5 @@
 import eventBus from "../core/eventBus.js";
+import BootProfiler from "../core/BootProfiler.js";
 
 const MODULES = [
     ["TabUI", "./TabUI.js"],
@@ -29,11 +30,20 @@ class UI {
 
         this.initialized = true;
 
+        BootProfiler.mark("UI.initialize start");
+
         for (const [name, path] of MODULES) {
+            const start = performance.now();
+
             await this.initializeModule(name, path);
+
+            BootProfiler.mark(
+                "UI module: " + name + " (" + (performance.now() - start).toFixed(2) + " ms)"
+            );
         }
 
         eventBus.emit("ui:ready");
+        BootProfiler.mark("UI.initialize end");
     }
 
     async initializeModule(name, path) {
