@@ -35,6 +35,22 @@ class Converter {
 
         });
 
+        this.addRecipe({
+            id: "metal_to_ep",
+            name: "金属 → EP",
+            resourceId: "metal",
+            resourceCost: 10,
+            epReward: 1
+        });
+
+        this.addRecipe({
+            id: "magic_to_ep",
+            name: "魔力 → EP",
+            resourceId: "magic",
+            resourceCost: 10,
+            epReward: 1
+        });
+
     }
 
     addRecipe(recipe) {
@@ -128,9 +144,9 @@ class Converter {
         );
 
         EPManager.add(
-
-            recipe.epReward
-
+            recipe.epReward.multiply(
+                AchievementManager.getTotalMultiplier()
+            )
         );
 
         eventBus.emit(
