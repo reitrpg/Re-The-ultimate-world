@@ -12,7 +12,7 @@ import Game from "./game.js";
 import AchievementManager from "../achievements/Manager.js";
 import AutomationManager from "../automation/Manager.js";
 class SaveManager{
- constructor(){this.key="world_creator_save";this.version=6;this.autoSaveTimer=null;this.clearing=false;}
+ constructor(){this.key="world_creator_save";this.version=7;this.autoSaveTimer=null;this.clearing=false;}
  createSaveData(){return{version:this.version,timestamp:Date.now(),worlds:WorldManager.toJSON(),worldUnlock:UnlockManager.toJSON(),resources:ResourceManager.toJSON(),ep:EPManager.toJSON(),research:ResearchManager.toJSON(),upgrades:UpgradeManager.toJSON(),rebirth:RebirthManager.toJSON(),settings:SettingsManager.toJSON(),statistics:StatisticsManager.toJSON(),achievements:AchievementManager.toJSON(),automation:AutomationManager.toJSON()};}
  save(){if(this.clearing)return false;try{localStorage.setItem(this.key,JSON.stringify(this.createSaveData()));eventBus.emit("save:success");return true;}catch(error){console.error(error);eventBus.emit("save:error",error);return false;}}
  load(){
