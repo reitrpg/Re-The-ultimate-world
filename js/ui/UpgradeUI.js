@@ -48,6 +48,10 @@ class UpgradeUI {
         eventBus.on("upgrade:update", () => {
             this.render();
         });
+
+        eventBus.on("ep:update", () => {
+            this.render();
+        });
     }
 
     setCategory(category) {
@@ -92,8 +96,8 @@ class UpgradeUI {
         cost.textContent = !upgrade.isUnlocked()
             ? "解禁条件を満たしていません"
             : upgrade.isMaxed()
-            ? "コスト : ―"
-            : "コスト : " + Formatter.format(upgrade.getCost()) + " EP";
+                ? "コスト : ―"
+                : "コスト : " + Formatter.format(upgrade.getCost()) + " EP";
 
         const level = document.createElement("p");
         if (upgrade.maxLevel === null) {
@@ -104,8 +108,12 @@ class UpgradeUI {
         }
 
         const effect = document.createElement("p");
+        const effectText = upgrade.getEffectText?.() || "";
+
         effect.textContent =
-            "効果 : ×" + Formatter.format(upgrade.getMultiplier());
+            "効果 : ×" +
+            Formatter.format(upgrade.getMultiplier()) +
+            (effectText ? " / " + effectText : "");
 
         const button = document.createElement("button");
         button.type = "button";
@@ -114,10 +122,12 @@ class UpgradeUI {
             : upgrade.isMaxed()
                 ? "上限"
                 : "購入";
+
         button.disabled =
             !upgrade.isUnlocked() ||
             upgrade.isMaxed() ||
             !upgrade.canBuy();
+
         button.dataset.action = "upgrade:buy";
         button.dataset.upgradeId = upgrade.id;
 
