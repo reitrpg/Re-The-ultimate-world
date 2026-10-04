@@ -153,6 +153,10 @@ class AutomationUI {
             extra.appendChild(help);
         }
 
+        const config = document.createElement("div");
+        config.className = "automation-config";
+        config.append(value, extra);
+
         const toggle = this.createToggle(
             label,
             AutomationManager.isConverterAutomationEnabled(recipe.id),
