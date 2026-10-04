@@ -163,96 +163,75 @@ class WorldUI {
         card.dataset.action = "world:select";
         card.dataset.worldIndex = String(index);
 
-        const nameRow = document.createElement("div");
-        nameRow.className = "world-name-row";
-
-        const name = document.createElement("span");
+        const name = document.createElement("h3");
+        name.className = "world-card-title";
         name.textContent = world.name;
 
-        const renameButton = document.createElement("button");
-        renameButton.type = "button";
-        renameButton.className = "world-rename-button";
-        renameButton.textContent = "✎";
-        renameButton.setAttribute("aria-label", "世界名を変更");
-        renameButton.dataset.action = "world:rename";
-        renameButton.dataset.worldIndex = String(index);
+        const divider = () => {
+            const element = document.createElement("div");
+            element.className = "world-card-divider";
+            element.textContent = "────────────────────";
+            element.setAttribute("aria-hidden", "true");
+            return element;
+        };
 
-        nameRow.appendChild(name);
-        nameRow.appendChild(renameButton);
+        const createSectionTitle = text => {
+            const title = document.createElement("strong");
+            title.className = "world-card-section-title";
+            title.textContent = text;
+            return title;
+        };
 
-        const stats = document.createElement("div");
-        stats.className = "world-stats";
+        const createRow = (label, value) => {
+            const row = document.createElement("p");
+            row.className = "world-card-row";
+            row.textContent = label + ": " + value;
+            return row;
+        };
 
-        const rarity = document.createElement("p");
-        rarity.textContent = "レアリティ: " + this.getRarityName(world.rarity);
-
-        const rarityMultiplier = document.createElement("p");
-        rarityMultiplier.textContent =
-            "レアリティ倍率: ×" +
-            Formatter.format(world.getRarityMultiplier());
-
-        const feature = document.createElement("p");
-        feature.textContent = "特徴: " + world.getResourceFeatureName("plant");
-
-        const uniqueEffect = document.createElement("p");
-        uniqueEffect.textContent = "固有効果: " + world.getUniqueEffectName();
-
-        const level = document.createElement("p");
-        level.textContent = "Lv: " + world.level;
-
-        const exp = document.createElement("p");
-        exp.textContent =
-            "EXP: " +
-            Formatter.format(world.exp) +
-            "/" +
-            Formatter.format(world.getRequiredExperience());
-
-        const base = document.createElement("p");
-        base.textContent =
-            "基礎能力: ×" +
-            Formatter.format(world.getTotalMultiplier());
-
-        const newBirth = document.createElement("div");
-        newBirth.className = "world-newbirth";
-
-        const newBirthTitle = document.createElement("p");
-        newBirthTitle.textContent = "世界新生";
-
-        const newBirthMultiplier = document.createElement("p");
-        newBirthMultiplier.textContent =
-            "新生倍率: ×" +
-            Formatter.format(NewBirthManager.getMultiplier(index));
-
-        const newBirthGain = document.createElement("p");
-        newBirthGain.textContent =
-            "今回の倍率: ×" +
-            Formatter.format(world.getNewBirthMultiplier());
-
-        const newBirthButton = document.createElement("button");
-        newBirthButton.type = "button";
-        newBirthButton.dataset.action = "newbirth:request";
-        newBirthButton.dataset.worldIndex = String(index);
-        newBirthButton.textContent = "世界新生";
-        newBirthButton.disabled = !world.canNewBirth();
-
-        newBirth.appendChild(newBirthTitle);
-        newBirth.appendChild(newBirthMultiplier);
-        newBirth.appendChild(newBirthGain);
-        newBirth.appendChild(newBirthButton);
-
-        stats.appendChild(rarity);
-        stats.appendChild(rarityMultiplier);
-        stats.appendChild(feature);
-        stats.appendChild(uniqueEffect);
-        stats.appendChild(level);
-        stats.appendChild(exp);
-        stats.appendChild(base);
+        const info = document.createElement("div");
+        info.className = "world-card-section world-card-info";
+        info.appendChild(createSectionTitle("世界情報"));
+        info.appendChild(
+            createRow("レアリティ", this.getRarityName(world.rarity))
+        );
+        info.appendChild(
+            createRow(
+                "レアリティ倍率",
+                "×" + Formatter.format(world.getRarityMultiplier())
+            )
+        );
+        info.appendChild(
+            createRow(
+                "特徴",
+                world.getResourceFeatureName("plant")
+            )
+        );
+        info.appendChild(
+            createRow(
+                "固有効果",
+                world.getUniqueEffectName()
+            )
+        );
+        info.appendChild(createRow("Lv", String(world.level)));
+        info.appendChild(
+            createRow(
+                "EXP",
+                Formatter.format(world.exp) +
+                "/" +
+                Formatter.format(world.getRequiredExperience())
+            )
+        );
+        info.appendChild(
+            createRow(
+                "基礎能力",
+                "×" + Formatter.format(world.getTotalMultiplier())
+            )
+        );
 
         const production = document.createElement("div");
-        production.className = "world-production";
-
-        const productionTitle = document.createElement("p");
-        productionTitle.textContent = "生産";
+        production.className = "world-card-section world-production";
+        production.appendChild(createSectionTitle("生産"));
 
         const list = document.createElement("ul");
 
@@ -271,20 +250,63 @@ class WorldUI {
                     ": +" +
                     Formatter.format(rate) +
                     "/秒 (×" +
-                    world.getResourceMultiplier(id) +
+                    Formatter.format(world.getResourceMultiplier(id)) +
                     ")";
 
                 list.appendChild(item);
             }
         );
 
-        production.appendChild(productionTitle);
         production.appendChild(list);
 
+        const newBirth = document.createElement("div");
+        newBirth.className = "world-card-section world-newbirth";
+        newBirth.appendChild(createSectionTitle("新生"));
+
+        newBirth.appendChild(
+            createRow(
+                "新生倍率",
+                "×" + Formatter.format(NewBirthManager.getMultiplier(index))
+            )
+        );
+
+        newBirth.appendChild(
+            createRow(
+                "今回の倍率",
+                "×" + Formatter.format(world.getNewBirthMultiplier())
+            )
+        );
+
+        const newBirthButton = document.createElement("button");
+        newBirthButton.type = "button";
+        newBirthButton.dataset.action = "newbirth:request";
+        newBirthButton.dataset.worldIndex = String(index);
+        newBirthButton.textContent = "世界新生";
+        newBirthButton.disabled = !world.canNewBirth();
+
+        newBirth.appendChild(newBirthButton);
+
+        const renameButton = document.createElement("button");
+        renameButton.type = "button";
+        renameButton.className = "world-rename-button";
+        renameButton.textContent = "✎";
+        renameButton.setAttribute("aria-label", "世界名を変更");
+        renameButton.dataset.action = "world:rename";
+        renameButton.dataset.worldIndex = String(index);
+
+        const nameRow = document.createElement("div");
+        nameRow.className = "world-name-row";
+        nameRow.appendChild(name);
+        nameRow.appendChild(renameButton);
+
         card.appendChild(nameRow);
-        card.appendChild(stats);
+        card.appendChild(divider());
+        card.appendChild(info);
+        card.appendChild(divider());
         card.appendChild(production);
+        card.appendChild(divider());
         card.appendChild(newBirth);
+        card.appendChild(divider());
 
         if (index === WorldManager.getActiveIndex()) {
             card.classList.add("active");
@@ -293,7 +315,6 @@ class WorldUI {
 
         return card;
     }
-
     renderWorldList() {
         const container = document.getElementById("world-list");
 
