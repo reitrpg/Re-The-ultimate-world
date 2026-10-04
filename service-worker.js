@@ -1,4 +1,4 @@
-const CACHE_NAME = "world-creator-v71";
+const CACHE_NAME = "world-creator-v74";
 
 const FILES_TO_CACHE = [
     "./",
@@ -53,6 +53,7 @@ const FILES_TO_CACHE = [
     "./js/ui/AchievementUI.js",
     "./js/ui/AutomationUI.js",
     "./js/automation/Manager.js",
+    "./js/automation/FormulaEvaluator.js",
     "./icon-192.png",
     "./icon-512.png"
 ];
