@@ -112,9 +112,14 @@ class Upgrade {
             this.unlocked = true;
         }
 
-        this.maxLevel = Number.isFinite(Number(data.maxLevel))
-            ? Math.max(0, Math.floor(Number(data.maxLevel)))
-            : null;
+        if (this.type === "infinite" || data.maxLevel === null || data.maxLevel === undefined) {
+            this.maxLevel = null;
+        } else {
+            const parsedMaxLevel = Number(data.maxLevel);
+            this.maxLevel = Number.isFinite(parsedMaxLevel)
+                ? Math.max(0, Math.floor(parsedMaxLevel))
+                : null;
+        }
 
         if (this.maxLevel !== null) {
             this.level = Math.min(this.level, this.maxLevel);
