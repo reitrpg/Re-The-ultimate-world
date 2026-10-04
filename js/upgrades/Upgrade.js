@@ -34,9 +34,9 @@ class Upgrade {
     getCost() {
         // 無限強化は初期費用を維持しつつ、Lvに対して二次関数的に
         // コストが増加するようにする。
-        // Lv0: baseCost / Lv1: 3base / Lv2: 9base / Lv3: 19base ...
+        // Lv0: baseCost / Lv1: 6base / Lv2: 21base / Lv3: 46base ...
         if (this.type === "infinite") {
-            const levelFactor = 1 + (2 * Math.pow(this.level, 2));
+            const levelFactor = 1 + (5 * Math.pow(this.level, 2));
             return this.baseCost.multiply(levelFactor);
         }
 
