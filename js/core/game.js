@@ -114,7 +114,8 @@ class Game {
             researchManager: ResearchManager
         });
 
-        eventBus.emit("game:update");
+        // Pass the actual elapsed time to time-based automation.
+        eventBus.emit("game:update", deltaTime);
 
     }
 
