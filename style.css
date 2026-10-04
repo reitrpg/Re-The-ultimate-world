@@ -423,128 +423,119 @@ nav button.active {
     gap: 8px;
 }
 
-.automation-item {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    align-items: center;
-    gap: 8px;
+#automation-content .automation-item {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
     width: 100%;
+    height: auto;
+    min-height: 0;
+    margin: 0;
     padding: 8px;
     border: 1px solid var(--border);
-    overflow: hidden;
+    overflow: visible;
 }
 
-.automation-rate {
-    flex: 0 0 64px;
-    width: 64px !important;
-    margin: 0 !important;
-}
-
-.automation-type {
-    flex: 1 1 auto;
+#automation-content .automation-type {
+    display: block;
+    width: 100%;
     min-width: 0;
+    font-weight: 700;
     overflow-wrap: anywhere;
-    white-space: normal;
 }
 
-.automation-toggle-button {
+#automation-content .automation-row-body {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+}
+
+#automation-content .automation-value {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    height: auto;
+    margin: 0;
+}
+
+#automation-content .automation-mode-extra {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    height: auto;
+    margin: 0;
+    padding: 0;
+}
+
+#automation-content .automation-mode-extra:empty {
+    display: none;
+}
+
+#automation-content .automation-mode-button {
+    flex: 0 0 110px;
+    width: 110px;
+    min-width: 110px;
+    height: auto;
+    margin: 0;
+    padding: 8px 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+}
+
+#automation-content .automation-mode-button:hover {
+    background: var(--surface-active);
+}
+
+#automation-content .automation-toggle-button {
     flex: 0 0 64px;
-    width: 64px !important;
+    width: 64px;
     min-width: 64px;
-    margin: 0 !important;
+    height: auto;
+    margin: 0;
     padding: 8px 4px;
 }
 
-@media (max-width: 768px) {
-    .automation-item {
-        gap: 6px;
-    }
-
-    .automation-rate {
-        flex-basis: 58px;
-        width: 58px !important;
-    }
-
-    .automation-toggle-button {
-        flex-basis: 58px;
-        width: 58px !important;
-        min-width: 58px;
-    }
-}
-
-
-/* Automation mode controls */
-.automation-converter-item {
-    align-items: flex-start;
-}
-
-.automation-value {
-    flex: 0 1 120px;
-    width: 120px !important;
-    min-width: 0;
-    margin: 0 !important;
-}
-
-.automation-config {
-    display: flex;
-    flex: 1 1 auto;
-    min-width: 0;
-    align-items: center;
-    gap: 6px;
-}
-
-.automation-mode {
-    flex: 0 0 110px;
-    width: 110px !important;
-    min-width: 110px;
-    margin: 0 !important;
-}
-
-.automation-mode-extra {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-    flex-wrap: wrap;
-}
-
-.automation-extra-value {
-    width: 90px !important;
+#automation-content .automation-extra-value {
+    width: 90px;
     min-width: 70px;
-    margin: 0 !important;
+    margin: 0;
 }
 
-.automation-formula-help {
+#automation-content .automation-formula-help {
     max-width: 320px;
     overflow-wrap: anywhere;
 }
 
-.automation-mode-label {
-    flex: 0 0 110px;
-    text-align: center;
-}
-
 @media (max-width: 768px) {
-    .automation-converter-item {
-        flex-wrap: wrap !important;
+    #automation-content .automation-row-body {
+        flex-wrap: nowrap;
     }
 
-    .automation-converter-item .automation-type {
-        flex: 1 1 120px;
+    #automation-content .automation-mode-button {
+        flex: 0 0 96px;
+        width: 96px;
+        min-width: 96px;
     }
 
-    .automation-converter-item .automation-config {
-        flex: 1 1 180px;
+    #automation-content .automation-toggle-button {
+        flex: 0 0 58px;
+        width: 58px;
+        min-width: 58px;
     }
 
-    .automation-converter-item .automation-mode {
-        flex: 1 1 110px;
-        width: 110px !important;
-    }
-
-    .automation-formula-help {
-        width: 100%;
+    #automation-content .automation-value {
+        width: auto;
+        min-width: 0;
     }
 }
 
