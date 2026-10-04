@@ -28,7 +28,6 @@ class AutomationManager {
 
     initialize() {
         if (this.initialized) return;
-
         this.initialized = true;
 
         UpgradeManager.getByType("infinite").forEach(upgrade => {
@@ -46,60 +45,43 @@ class AutomationManager {
     }
 
     initializeConverter(id, resourceId) {
-        if (!this.converterAutomation.has(id)) {
-            this.converterAutomation.set(id, false);
-        }
-        if (!this.converterRates.has(resourceId)) {
-            this.converterRates.set(resourceId, 0);
-        }
+        if (!this.converterAutomation.has(id)) this.converterAutomation.set(id, false);
+        if (!this.converterRates.has(resourceId)) this.converterRates.set(resourceId, 0);
         if (!this.converterModes.has(id)) {
             this.converterModes.set(id, {
                 mode: MODES.RATIO,
-                threshold: 0,
+                threshold: 100,
                 multiplier: 2,
                 formula: "resource",
                 formulaThreshold: 0,
                 seconds: 1
             });
         }
-        if (!this.converterTimers.has(id)) {
-            this.converterTimers.set(id, 0);
-        }
+        if (!this.converterTimers.has(id)) this.converterTimers.set(id, 0);
     }
 
     syncUpgrades() {
         UpgradeManager.getByType("infinite").forEach(upgrade => {
-            if (!this.upgradeAutomation.has(upgrade.id)) {
-                this.upgradeAutomation.set(upgrade.id, false);
-            }
-            if (!this.upgradeSpendRates.has(upgrade.id)) {
-                this.upgradeSpendRates.set(upgrade.id, this.upgradeSpendRate);
-            }
+            if (!this.upgradeAutomation.has(upgrade.id)) this.upgradeAutomation.set(upgrade.id, false);
+            if (!this.upgradeSpendRates.has(upgrade.id)) this.upgradeSpendRates.set(upgrade.id, this.upgradeSpendRate);
         });
     }
 
     syncConverters() {
-        Converter.getRecipes().forEach(recipe => {
-            this.initializeConverter(recipe.id, recipe.resourceId);
-        });
+        Converter.getRecipes().forEach(recipe => this.initializeConverter(recipe.id, recipe.resourceId));
     }
 
     setUpgradeSpendRate(id, rate) {
-        if (!UpgradeManager.get(id) || UpgradeManager.get(id).type !== "infinite") {
-            return false;
-        }
-
+        if (!UpgradeManager.get(id) || UpgradeManager.get(id).type !== "infinite") return false;
         const value = Math.min(1, Math.max(0, Number(rate)));
         if (!Number.isFinite(value)) return false;
-
         this.upgradeSpendRates.set(id, value);
         eventBus.emit("automation:update");
         return true;
     }
 
     getUpgradeSpendRate(id) {
-        if (id) return this.upgradeSpendRates.get(id) ?? this.upgradeSpendRate;
-        return this.upgradeSpendRate;
+        return id ? (this.upgradeSpendRates.get(id) ?? this.upgradeSpendRate) : this.upgradeSpendRate;
     }
 
     setConverterRate(resourceId, rate) {
@@ -117,8 +99,7 @@ class AutomationManager {
 
     setConverterMode(id, mode) {
         if (!this.converterModes.has(id) || !Object.values(MODES).includes(mode)) return false;
-        const config = this.converterModes.get(id);
-        config.mode = mode;
+        this.converterModes.get(id).mode = mode;
         this.converterTimers.set(id, 0);
         eventBus.emit("automation:update");
         return true;
@@ -131,14 +112,14 @@ class AutomationManager {
     setConverterThreshold(id, value) {
         const config = this.converterModes.get(id);
         const number = Number(value);
-        if (!config || !Number.isFinite(number) || number < 0) return false;
+        if (!config || !Number.isFinite(number) || number <= 0) return false;
         config.threshold = number;
         eventBus.emit("automation:update");
         return true;
     }
 
     getConverterThreshold(id) {
-        return this.converterModes.get(id)?.threshold ?? 0;
+        return this.converterModes.get(id)?.threshold ?? 100;
     }
 
     setConverterMultiplier(id, value) {
@@ -163,7 +144,7 @@ class AutomationManager {
     }
 
     getConverterFormula(id) {
-        return this.converterModes.get(id)?.formula ?? "";
+        return this.converterModes.get(id)?.formula ?? "resource";
     }
 
     setConverterFormulaThreshold(id, value) {
@@ -216,74 +197,63 @@ class AutomationManager {
         return this.converterAutomation.get(id) === true;
     }
 
-    getResourceValue(resourceId) {
-        return ResourceManager.get(resourceId)?.amount ?? BigNumber.zero();
-    }
-
     getFormulaVariables(resourceId) {
         return {
-            plant: this.getResourceValue("plant"),
-            metal: this.getResourceValue("metal"),
-            magic: this.getResourceValue("magic"),
+            plant: ResourceManager.get("plant")?.amount ?? BigNumber.zero(),
+            metal: ResourceManager.get("metal")?.amount ?? BigNumber.zero(),
+            magic: ResourceManager.get("magic")?.amount ?? BigNumber.zero(),
             EP: EPManager.get(),
             ep: EPManager.get(),
-            resource: this.getResourceValue(resourceId),
+            resource: ResourceManager.get(resourceId)?.amount ?? BigNumber.zero(),
             totalMaterials: StatisticsManager.getTotalMaterials?.() ?? BigNumber.zero()
         };
     }
 
-    runConverter(id, mode, deltaTime) {
+    runConverter(id, deltaTime) {
         const recipe = Converter.getRecipe(id);
         const config = this.converterModes.get(id);
         if (!recipe || !config) return;
 
-        if (mode === MODES.RATIO) {
+        if (config.mode === MODES.RATIO) {
             const rate = this.getConverterRate(recipe.resourceId);
             if (rate > 0) Converter.convertByRate(id, rate);
             return;
         }
 
-        if (mode === MODES.PROPORTIONAL) {
-            const resource = this.getResourceValue(recipe.resourceId);
+        if (config.mode === MODES.PROPORTIONAL) {
             let threshold = BigNumber.from(config.threshold);
-
-            if (threshold.lessOrEqual(0)) return;
+            const multiplier = Number(config.multiplier);
+            if (!Number.isFinite(multiplier) || multiplier <= 0 || threshold.lessOrEqual(0)) return;
 
             let guard = 0;
-            while (resource.greater(threshold) && guard < 100) {
-                const amount = threshold.multiply(config.multiplier);
+            while (this.getFormulaVariables(recipe.resourceId).resource.greater(threshold) && guard < 100) {
+                const amount = threshold.multiply(multiplier);
                 if (Converter.convertByAmount(id, amount) <= 0) break;
-                config.threshold = threshold.multiply(config.multiplier).toNumber();
+                config.threshold = threshold.multiply(multiplier).toNumber();
+                if (!Number.isFinite(config.threshold) || config.threshold <= 0) break;
                 threshold = BigNumber.from(config.threshold);
                 guard++;
             }
             return;
         }
 
-        if (mode === MODES.FORMULA) {
+        if (config.mode === MODES.FORMULA) {
             try {
-                const result = FormulaEvaluator.evaluate(
-                    config.formula,
-                    this.getFormulaVariables(recipe.resourceId)
-                );
+                const result = FormulaEvaluator.evaluate(config.formula, this.getFormulaVariables(recipe.resourceId));
                 if (result.greater(BigNumber.from(config.formulaThreshold))) {
                     Converter.convert(id);
                 }
-            } catch (_) {
-                // Invalid formulas simply do not trigger automation.
-            }
+            } catch (_) {}
             return;
         }
 
-        if (mode === MODES.TIME) {
-            this.converterTimers.set(
-                id,
-                (this.converterTimers.get(id) ?? 0) + Math.max(0, deltaTime)
-            );
-
-            if (this.converterTimers.get(id) >= config.seconds) {
+        if (config.mode === MODES.TIME) {
+            const timer = (this.converterTimers.get(id) ?? 0) + Math.max(0, Number(deltaTime) || 0);
+            if (timer >= config.seconds) {
                 this.converterTimers.set(id, 0);
                 Converter.convert(id);
+            } else {
+                this.converterTimers.set(id, timer);
             }
         }
     }
@@ -291,21 +261,15 @@ class AutomationManager {
     update(deltaTime = 0) {
         for (const [id, enabled] of this.upgradeAutomation) {
             if (!enabled) continue;
-
             const upgrade = UpgradeManager.get(id);
             if (!upgrade || !upgrade.isUnlocked()) continue;
-
             const currentEP = EPManager.get();
-            const spendRate = this.getUpgradeSpendRate(id);
-            const allowedCost = currentEP.multiply(spendRate);
-
-            if (upgrade.getCost().greater(allowedCost)) continue;
-            UpgradeManager.buy(id);
+            const allowedCost = currentEP.multiply(this.getUpgradeSpendRate(id));
+            if (!upgrade.getCost().greater(allowedCost)) UpgradeManager.buy(id);
         }
 
         for (const [id, enabled] of this.converterAutomation) {
-            if (!enabled) continue;
-            this.runConverter(id, this.getConverterMode(id), deltaTime);
+            if (enabled) this.runConverter(id, deltaTime);
         }
     }
 
@@ -323,10 +287,7 @@ class AutomationManager {
             this.upgradeSpendRates.set(upgrade.id, this.upgradeSpendRate);
         });
 
-        Converter.getRecipes().forEach(recipe => {
-            this.initializeConverter(recipe.id, recipe.resourceId);
-        });
-
+        Converter.getRecipes().forEach(recipe => this.initializeConverter(recipe.id, recipe.resourceId));
         eventBus.emit("automation:update");
     }
 
@@ -345,54 +306,39 @@ class AutomationManager {
         this.reset();
         if (!data || typeof data !== "object") return;
 
-        const upgrades = data.upgradeAutomation;
-        if (upgrades && typeof upgrades === "object") {
-            Object.entries(upgrades).forEach(([id, enabled]) => {
-                if (UpgradeManager.get(id)?.type === "infinite") {
-                    this.upgradeAutomation.set(id, Boolean(enabled));
-                }
+        if (data.upgradeAutomation && typeof data.upgradeAutomation === "object") {
+            Object.entries(data.upgradeAutomation).forEach(([id, enabled]) => {
+                if (UpgradeManager.get(id)?.type === "infinite") this.upgradeAutomation.set(id, Boolean(enabled));
             });
         }
 
         const legacyRate = Number(data.upgradeSpendRate);
-        if (Number.isFinite(legacyRate)) {
-            this.upgradeSpendRate = Math.min(1, Math.max(0, legacyRate));
-        }
+        if (Number.isFinite(legacyRate)) this.upgradeSpendRate = Math.min(1, Math.max(0, legacyRate));
 
-        const savedSpendRates = data.upgradeSpendRates;
-        if (savedSpendRates && typeof savedSpendRates === "object") {
-            Object.entries(savedSpendRates).forEach(([id, rate]) => {
-                if (UpgradeManager.get(id)?.type === "infinite") {
-                    const value = Number(rate);
-                    if (Number.isFinite(value)) {
-                        this.upgradeSpendRates.set(id, Math.min(1, Math.max(0, value)));
-                    }
-                }
+        if (data.upgradeSpendRates && typeof data.upgradeSpendRates === "object") {
+            Object.entries(data.upgradeSpendRates).forEach(([id, rate]) => {
+                if (UpgradeManager.get(id)?.type !== "infinite") return;
+                const value = Number(rate);
+                if (Number.isFinite(value)) this.upgradeSpendRates.set(id, Math.min(1, Math.max(0, value)));
             });
         } else {
-            this.upgradeSpendRates.forEach((_, id) => {
-                this.upgradeSpendRates.set(id, this.upgradeSpendRate);
-            });
+            this.upgradeSpendRates.forEach((_, id) => this.upgradeSpendRates.set(id, this.upgradeSpendRate));
         }
 
-        const savedRates = data.converterRates;
-        if (savedRates && typeof savedRates === "object") {
-            Object.entries(savedRates).forEach(([id, rate]) => {
+        if (data.converterRates && typeof data.converterRates === "object") {
+            Object.entries(data.converterRates).forEach(([id, rate]) => {
                 if (!["plant", "metal", "magic"].includes(id)) return;
                 const value = Number(rate);
-                if (Number.isFinite(value)) {
-                    this.converterRates.set(id, Math.min(1, Math.max(0, value)));
-                }
+                if (Number.isFinite(value)) this.converterRates.set(id, Math.min(1, Math.max(0, value)));
             });
         }
 
-        const savedModes = data.converterModes;
-        if (savedModes && typeof savedModes === "object") {
-            Object.entries(savedModes).forEach(([id, saved]) => {
-                if (!this.converterModes.has(id) || !saved || typeof saved !== "object") return;
+        if (data.converterModes && typeof data.converterModes === "object") {
+            Object.entries(data.converterModes).forEach(([id, saved]) => {
                 const config = this.converterModes.get(id);
+                if (!config || !saved || typeof saved !== "object") return;
                 if (Object.values(MODES).includes(saved.mode)) config.mode = saved.mode;
-                if (Number.isFinite(Number(saved.threshold)) && Number(saved.threshold) >= 0) config.threshold = Number(saved.threshold);
+                if (Number.isFinite(Number(saved.threshold)) && Number(saved.threshold) > 0) config.threshold = Number(saved.threshold);
                 if (Number.isFinite(Number(saved.multiplier)) && Number(saved.multiplier) > 0) config.multiplier = Number(saved.multiplier);
                 if (typeof saved.formula === "string") config.formula = saved.formula;
                 if (Number.isFinite(Number(saved.formulaThreshold))) config.formulaThreshold = Number(saved.formulaThreshold);
@@ -400,9 +346,8 @@ class AutomationManager {
             });
         }
 
-        const converters = data.converterAutomation;
-        if (converters && typeof converters === "object") {
-            Object.entries(converters).forEach(([id, enabled]) => {
+        if (data.converterAutomation && typeof data.converterAutomation === "object") {
+            Object.entries(data.converterAutomation).forEach(([id, enabled]) => {
                 if (Converter.getRecipe(id)) this.converterAutomation.set(id, Boolean(enabled));
             });
         }
