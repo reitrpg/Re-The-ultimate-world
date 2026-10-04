@@ -29,7 +29,7 @@ class AchievementUI {
         const container = document.getElementById("achievement-content");
         if (container && !container.dataset.modalInputBound) {
             container.dataset.modalInputBound = "true";
-            container.addEventListener("pointerdown", event => {
+            const openFromCard = event => {
                 const card = event.target?.closest?.(".achievement-card");
                 if (!card || !container.contains(card)) return;
                 if (document.getElementById("achievement-modal")) return;
@@ -38,10 +38,19 @@ class AchievementUI {
                 if (!id) return;
 
                 window.__WC_INPUT_DIAGNOSTICS__?.record("ACHIEVEMENT_DIRECT_OPEN", {
-                    achievementId: id
+                    achievementId: id,
+                    inputType: event.type
                 });
+
                 this.openModal(id);
+            };
+
+            container.addEventListener("touchstart", openFromCard, {
+                capture: true,
+                passive: true
             });
+
+            container.addEventListener("pointerdown", openFromCard, true);
         }
 
         this.render();
