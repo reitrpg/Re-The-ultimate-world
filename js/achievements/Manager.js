@@ -90,6 +90,10 @@ class AchievementManager {
         return 1 + this.getAchievedCount() * 0.0001;
     }
 
+    getUnlockTargetName(id) {
+        return UpgradeManager.get(id)?.name || null;
+    }
+
     isUnlocked(target, id) {
         return this.getAll().some(
             achievement =>
