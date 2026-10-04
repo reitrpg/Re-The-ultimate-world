@@ -472,3 +472,78 @@ nav button.active {
         min-width: 58px;
     }
 }
+
+
+/* Automation mode controls */
+.automation-converter-item {
+    align-items: flex-start;
+}
+
+.automation-value {
+    flex: 0 1 120px;
+    width: 120px !important;
+    min-width: 0;
+    margin: 0 !important;
+}
+
+.automation-config {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    align-items: center;
+    gap: 6px;
+}
+
+.automation-mode {
+    flex: 0 0 110px;
+    width: 110px !important;
+    min-width: 110px;
+    margin: 0 !important;
+}
+
+.automation-mode-extra {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.automation-extra-value {
+    width: 90px !important;
+    min-width: 70px;
+    margin: 0 !important;
+}
+
+.automation-formula-help {
+    max-width: 320px;
+    overflow-wrap: anywhere;
+}
+
+.automation-mode-label {
+    flex: 0 0 110px;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .automation-converter-item {
+        flex-wrap: wrap !important;
+    }
+
+    .automation-converter-item .automation-type {
+        flex: 1 1 120px;
+    }
+
+    .automation-converter-item .automation-config {
+        flex: 1 1 180px;
+    }
+
+    .automation-converter-item .automation-mode {
+        flex: 1 1 110px;
+        width: 110px !important;
+    }
+
+    .automation-formula-help {
+        width: 100%;
+    }
+}
