@@ -21,7 +21,9 @@ class AutomationUI {
 
         eventBus.on("automation:update", () => this.render());
         eventBus.on("upgrade:update", () => this.render());
-        eventBus.on("converter:update", () => this.render());
+        // Do not rerender on converter:update. Time automation can convert every game tick;
+        // rebuilding the automation inputs here would replace the focused <input> and close
+        // the Android keyboard while the user is entering a value.
 
         eventBus.on("input:pressed", payload => {
             const target = payload?.target;
