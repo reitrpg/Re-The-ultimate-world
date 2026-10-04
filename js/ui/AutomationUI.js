@@ -23,6 +23,33 @@ class AutomationUI {
         eventBus.on("upgrade:update", () => this.render());
         eventBus.on("converter:update", () => this.render());
 
+        eventBus.on("input:pressed", payload => {
+            const target = payload?.target;
+            if (!target) return;
+
+            if (target.dataset?.action === "automation:toggle") {
+                const id = target.dataset.automationId;
+                const type = target.dataset.automationType;
+                const enabled = target.getAttribute("aria-pressed") !== "true";
+
+                if (type === "converter") {
+                    AutomationManager.setConverterAutomation(id, enabled);
+                } else if (type === "upgrade") {
+                    AutomationManager.setUpgradeAutomation(id, enabled);
+                }
+                return;
+            }
+
+            if (target.dataset?.action === "automation:mode") {
+                const id = target.dataset.automationId;
+                const keys = Object.keys(MODE_LABELS);
+                const current = AutomationManager.getConverterMode(id);
+                const index = Math.max(0, keys.indexOf(current));
+                const nextMode = keys[(index + 1) % keys.length];
+                AutomationManager.setConverterMode(id, nextMode);
+            }
+        });
+
         this.render();
     }
 
@@ -30,12 +57,13 @@ class AutomationUI {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "automation-toggle-button";
+        button.dataset.action = "automation:toggle";
+        button.dataset.actionOn = "down";
+        button.dataset.automationType = "";
         button.textContent = enabled ? "ON" : "OFF";
         button.setAttribute("aria-pressed", String(enabled));
         button.setAttribute("aria-label", label + "自動化");
-        button.addEventListener("click", () => {
-            onToggle(button.getAttribute("aria-pressed") !== "true");
-        });
+        button.dataset.automationHandler = "toggle";
         return button;
     }
 
@@ -62,14 +90,10 @@ class AutomationUI {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "automation-mode-button";
+        button.dataset.action = "automation:mode";
+        button.dataset.actionOn = "down";
         button.textContent = MODE_LABELS[modeValue] || modeValue;
         button.setAttribute("aria-label", label + "自動化種類");
-        button.addEventListener("click", () => {
-            const keys = Object.keys(MODE_LABELS);
-            const currentIndex = Math.max(0, keys.indexOf(modeValue));
-            const nextMode = keys[(currentIndex + 1) % keys.length];
-            onChange(nextMode);
-        });
         return button;
     }
 
@@ -99,6 +123,7 @@ class AutomationUI {
             modeValue,
             nextMode => AutomationManager.setConverterMode(recipe.id, nextMode)
         );
+        mode.dataset.automationId = recipe.id;
 
         const extra = document.createElement("div");
         extra.className = "automation-mode-extra";
@@ -162,6 +187,8 @@ class AutomationUI {
             AutomationManager.isConverterAutomationEnabled(recipe.id),
             enabled => AutomationManager.setConverterAutomation(recipe.id, enabled)
         );
+        toggle.dataset.automationId = recipe.id;
+        toggle.dataset.automationType = "converter";
 
         value.addEventListener("change", () => {
             if (modeValue === "ratio") {
@@ -220,6 +247,8 @@ class AutomationUI {
             AutomationManager.isUpgradeAutomationEnabled(upgrade.id),
             enabled => AutomationManager.setUpgradeAutomation(upgrade.id, enabled)
         );
+        toggle.dataset.automationId = upgrade.id;
+        toggle.dataset.automationType = "upgrade";
 
         body.append(value, mode, toggle);
         row.append(name, body);
