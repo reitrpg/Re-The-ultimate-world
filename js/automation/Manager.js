@@ -239,8 +239,18 @@ class AutomationManager {
 
         if (config.mode === MODES.FORMULA) {
             try {
-                const result = FormulaEvaluator.evaluate(config.formula, this.getFormulaVariables(recipe.resourceId));
-                if (result.greater(BigNumber.from(config.formulaThreshold))) {
+                const result = FormulaEvaluator.evaluate(
+                    config.formula,
+                    this.getFormulaVariables(recipe.resourceId)
+                );
+
+                const resource = ResourceManager
+                    .get(recipe.resourceId)
+                    ?.amount ?? BigNumber.zero();
+
+                // 計算式の結果を指定値とし、変換対象リソースが
+                // その指定値を超えた場合に発動する。
+                if (resource.greater(result)) {
                     Converter.convert(id);
                 }
             } catch (_) {}
