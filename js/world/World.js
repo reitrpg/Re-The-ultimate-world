@@ -33,6 +33,7 @@ class World {
         this.rarity = this.generateRarity();
         this.level = 1;
         this.exp = BigNumber.zero();
+        this.totalExperience = BigNumber.zero();
         this.newBirthMultiplier = BigNumber.one();
         this.baseProduction = BigNumber.one();
         this.uniqueEffect = { type: "none", name: "なし", multiplier: 1, resourceId: null };
@@ -163,6 +164,7 @@ class World {
 
     gainExperience(amount) {
         this.exp = this.exp.add(amount);
+        this.totalExperience = this.totalExperience.add(amount);
         let leveledUp = false;
 
         while (this.exp.greaterOrEqual(this.getRequiredExperience())) {
@@ -179,20 +181,20 @@ class World {
     }
 
     getNewBirthMultiplier() {
+        // 累計EXPを基準に新生倍率の基準値を計算する。
         const baseMultiplier = BigNumber.one().add(
-            this.exp.divide(500)
+            this.totalExperience.divide(500)
         );
 
-        if (this.newBirthCount <= 0) {
+        // 新生増加倍率 = 倍率計算式 ÷ 現在の新生倍率
+        // 最初は新生倍率1倍なので、そのまま倍率計算式になる。
+        const currentMultiplier = BigNumber.from(this.newBirthMultiplier);
+
+        if (currentMultiplier.lessOrEqual(0)) {
             return baseMultiplier;
         }
 
-        const currentMultiplier = BigNumber.from(this.newBirthMultiplier);
-        const increase = baseMultiplier
-            .subtract(1)
-            .divide(currentMultiplier);
-
-        return BigNumber.one().add(increase);
+        return baseMultiplier.divide(currentMultiplier);
     }
 
     canNewBirth() {
@@ -273,6 +275,7 @@ class World {
             luck: this.getLuck(),
             level: this.level,
             exp: this.exp.toJSON(),
+            totalExperience: this.totalExperience.toJSON(),
             newBirthMultiplier: this.newBirthMultiplier.toJSON(),
             newBirthCount: this.newBirthCount,
             baseProduction: this.baseProduction.toJSON(),
@@ -293,6 +296,9 @@ class World {
         this.luck = Math.max(1, Number(data.luck) || 1);
         this.level = Math.max(1, Number(data.level) || 1);
         this.exp = BigNumber.from(data.exp);
+        this.totalExperience = BigNumber.from(
+            data.totalExperience ?? data.totalExp ?? data.exp ?? 0
+        );
         this.newBirthMultiplier = BigNumber.from(
             data.newBirthMultiplier ?? data.rebirthMultiplier ?? 1
         );
