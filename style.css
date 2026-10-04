@@ -938,3 +938,69 @@ nav button.active {
 .automation-converter-item .automation-row-body {
     flex: 0 0 auto;
 }
+
+
+/* Automation formula layout */
+#automation-content .automation-formula-item .automation-row-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+    align-items: center;
+}
+
+#automation-content .automation-formula-item .automation-formula-value {
+    width: 100% !important;
+    min-width: 0;
+    flex: none;
+    margin: 0 !important;
+}
+
+#automation-content .automation-formula-item .automation-mode-extra {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    min-width: 0;
+}
+
+#automation-content .automation-formula-item .automation-extra-label,
+#automation-content .automation-formula-item .automation-extra-suffix {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-size: 13px;
+}
+
+#automation-content .automation-formula-item .automation-extra-value {
+    flex: 0 1 90px;
+    width: 90px;
+    min-width: 60px;
+    margin: 0 !important;
+}
+
+#automation-content .automation-formula-item .automation-mode-button {
+    flex: 0 0 96px;
+    width: 96px;
+}
+
+#automation-content .automation-formula-item .automation-toggle-button {
+    flex: 0 0 58px;
+    width: 58px !important;
+    min-width: 58px;
+}
+
+@media (max-width: 420px) {
+    #automation-content .automation-formula-item .automation-mode-extra {
+        flex-wrap: wrap;
+    }
+
+    #automation-content .automation-formula-item .automation-mode-button,
+    #automation-content .automation-formula-item .automation-toggle-button {
+        flex: 1 1 0;
+        width: auto;
+        min-width: 0;
+    }
+
+    #automation-content .automation-formula-item .automation-extra-value {
+        flex: 1 1 80px;
+    }
+}
