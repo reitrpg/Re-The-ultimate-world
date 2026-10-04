@@ -14,13 +14,15 @@ class Upgrade {
         cost = 0,
         type = "infinite",
         maxLevel = null,
-        effectText = ""
+        effectText = "",
+        targetResource = null
     ) {
         this.id = id;
         this.name = name;
         this.level = 0;
         this.multiplier = multiplier;
         this.effectText = String(effectText || "");
+        this.targetResource = ["plant", "metal", "magic"].includes(targetResource) ? targetResource : null;
         this.baseCost = BigNumber.from(cost);
         this.type = type === "limited" ? "limited" : "infinite";
         this.unlocked = true;
@@ -78,6 +80,10 @@ class Upgrade {
         return this.effectText;
     }
 
+    getTargetResource() {
+        return this.targetResource;
+    }
+
     toJSON() {
         return {
             id: this.id,
@@ -85,6 +91,7 @@ class Upgrade {
             level: this.level,
             multiplier: this.multiplier,
             effectText: this.effectText,
+            targetResource: this.targetResource,
             baseCost: this.baseCost.toJSON(),
             type: this.type,
             maxLevel: this.maxLevel,
@@ -100,6 +107,7 @@ class Upgrade {
         this.level = Math.max(0, Math.floor(Number(data.level) || 0));
         this.multiplier = Number(data.multiplier) || 1;
         this.effectText = String(data.effectText || "");
+        this.targetResource = ["plant", "metal", "magic"].includes(data.targetResource) ? data.targetResource : null;
         this.baseCost = BigNumber.from(data.baseCost);
 
         if (data.type === "limited" || data.type === "infinite") {

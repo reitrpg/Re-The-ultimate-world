@@ -236,7 +236,8 @@ class World {
         RESOURCE_IDS.forEach(id => {
             const production = this
                 .getResourceProduction(id)
-                .multiply(globalMultiplier);
+                .multiply(globalMultiplier)
+                .multiply(UpgradeManager.getResourceMultiplier(id));
 
             const amount = production.multiply(seconds);
 
