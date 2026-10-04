@@ -163,7 +163,7 @@ class AutomationManager {
     setConverterSeconds(id, value) {
         const config = this.converterModes.get(id);
         const number = Number(value);
-        if (!config || !Number.isFinite(number) || number <= 0) return false;
+        if (!config || !Number.isFinite(number) || number < 0) return false;
         config.seconds = number;
         this.converterTimers.set(id, 0);
         eventBus.emit("automation:update");
@@ -248,6 +248,13 @@ class AutomationManager {
         }
 
         if (config.mode === MODES.TIME) {
+            // 0秒は「待ち時間なし」なので、ゲーム更新ごとに1回変換する。
+            if (config.seconds <= 0) {
+                this.converterTimers.set(id, 0);
+                Converter.convert(id);
+                return;
+            }
+
             const timer = (this.converterTimers.get(id) ?? 0) + Math.max(0, Number(deltaTime) || 0);
             if (timer >= config.seconds) {
                 this.converterTimers.set(id, 0);
@@ -342,7 +349,7 @@ class AutomationManager {
                 if (Number.isFinite(Number(saved.multiplier)) && Number(saved.multiplier) > 0) config.multiplier = Number(saved.multiplier);
                 if (typeof saved.formula === "string") config.formula = saved.formula;
                 if (Number.isFinite(Number(saved.formulaThreshold))) config.formulaThreshold = Number(saved.formulaThreshold);
-                if (Number.isFinite(Number(saved.seconds)) && Number(saved.seconds) > 0) config.seconds = Number(saved.seconds);
+                if (Number.isFinite(Number(saved.seconds)) && Number(saved.seconds) >= 0) config.seconds = Number(saved.seconds);
             });
         }
 
