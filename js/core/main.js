@@ -1,8 +1,8 @@
 import ErrorHandler from "./errorHandler.js";
 import BootProfiler from "./BootProfiler.js";
 
-const APP_VERSION = "0.0.88";
-const SERVICE_WORKER_VERSION = "82";
+const APP_VERSION = "0.0.89";
+const SERVICE_WORKER_VERSION = "83";
 
 async function loadModule(path) {
     try {
