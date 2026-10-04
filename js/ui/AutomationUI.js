@@ -152,26 +152,9 @@ class AutomationUI {
         }
 
         if (modeValue === "formula") {
-            const thresholdLabel = document.createElement("span");
-            thresholdLabel.className = "automation-extra-label";
-            thresholdLabel.textContent = "指定値";
-
-            const threshold = document.createElement("input");
-            threshold.type = "number";
-            threshold.step = "any";
-            threshold.value = String(AutomationManager.getConverterFormulaThreshold(recipe.id));
-            threshold.className = "automation-extra-value";
-            threshold.title = "指定値";
-            threshold.setAttribute("aria-label", label + "指定値");
-            threshold.addEventListener("change", () => {
-                AutomationManager.setConverterFormulaThreshold(recipe.id, threshold.value);
-            });
-
-            const suffix = document.createElement("span");
-            suffix.className = "automation-extra-suffix";
-            suffix.textContent = "以上で発動";
-
-            extra.append(thresholdLabel, threshold, suffix);
+            // 計算式の結果を指定値として扱う。
+            // EP変換対象リソースがその値を超えたら発動するため、
+            // 別の指定値入力欄や resource 入力欄は表示しない。
         }
 
         if (modeValue === "time") {
