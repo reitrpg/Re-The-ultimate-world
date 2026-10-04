@@ -208,9 +208,12 @@ class AutomationUI {
         const body = document.createElement("div");
         body.className = "automation-row-body";
 
-        const mode = document.createElement("span");
+        const mode = document.createElement("button");
+        mode.type = "button";
         mode.className = "automation-mode-button automation-mode-label";
         mode.textContent = "割合式";
+        mode.disabled = true;
+        mode.setAttribute("aria-label", upgrade.name + "自動化種類");
 
         const toggle = this.createToggle(
             upgrade.name,
