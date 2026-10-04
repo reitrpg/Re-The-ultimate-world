@@ -799,3 +799,132 @@ nav button.active {
     -webkit-user-select: none;
     -webkit-touch-callout: none;
 }
+
+
+/* World card Discord-style sections */
+.world-card-title {
+    margin-bottom: 0;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.world-card-divider {
+    overflow: hidden;
+    margin: 8px 0;
+    white-space: nowrap;
+    font-family: monospace;
+    line-height: 1;
+}
+
+.world-card-section {
+    margin: 0;
+}
+
+.world-card-section-title {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 700;
+}
+
+.world-card-row {
+    margin-bottom: 4px;
+}
+
+.world-card-section ul {
+    margin: 0;
+    padding-left: 22px;
+}
+
+.world-newbirth {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    column-gap: 10px;
+    align-items: center;
+}
+
+.world-newbirth .world-card-section-title {
+    grid-column: 1 / -1;
+}
+
+.world-newbirth .world-card-row {
+    margin: 0;
+}
+
+.world-newbirth button {
+    grid-column: 2;
+    grid-row: 2 / span 2;
+    margin: 0;
+}
+
+/* Automation: name row + setting row */
+.automation-item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 6px;
+    padding: 8px;
+}
+
+.automation-type {
+    display: block;
+    width: 100%;
+    font-weight: 700;
+}
+
+.automation-row-body {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.automation-row-body .automation-value {
+    flex: 1 1 auto;
+    width: auto !important;
+    min-width: 0;
+}
+
+.automation-row-body .automation-mode-button {
+    flex: 0 0 110px;
+    width: 110px;
+    margin: 0;
+}
+
+.automation-row-body .automation-toggle-button {
+    flex: 0 0 64px;
+    width: 64px !important;
+    min-width: 64px;
+    margin: 0 !important;
+}
+
+.automation-mode-button {
+    padding: 8px 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+}
+
+.automation-mode-button:hover {
+    background: var(--surface-active);
+}
+
+@media (max-width: 768px) {
+    .automation-row-body {
+        flex-wrap: nowrap;
+    }
+
+    .automation-row-body .automation-mode-button {
+        flex-basis: 96px;
+        width: 96px;
+    }
+
+    .automation-row-body .automation-toggle-button {
+        flex-basis: 58px;
+        width: 58px !important;
+        min-width: 58px;
+    }
+
+    .automation-row-body .automation-value {
+        width: auto !important;
+        margin: 0 !important;
+    }
+}
