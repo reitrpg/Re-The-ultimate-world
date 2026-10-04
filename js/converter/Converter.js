@@ -10,29 +10,18 @@ import eventBus from "../core/eventBus.js";
 import AchievementManager from "../achievements/Manager.js";
 
 class Converter {
-
     constructor() {
-
         this.recipes = new Map();
-
         this.initialize();
-
     }
 
     initialize() {
-
         this.addRecipe({
-
             id: "plant_to_ep",
-
             name: "植物 → EP",
-
             resourceId: "plant",
-
             resourceCost: 10,
-
             epReward: 1
-
         });
 
         this.addRecipe({
@@ -50,97 +39,43 @@ class Converter {
             resourceCost: 10,
             epReward: 1
         });
-
     }
 
     addRecipe(recipe) {
-
-        this.recipes.set(
-
-            recipe.id,
-
-            {
-
-                id: recipe.id,
-
-                name: recipe.name,
-
-                resourceId: recipe.resourceId,
-
-                resourceCost: BigNumber.from(
-                    recipe.resourceCost
-                ),
-
-                epReward: BigNumber.from(
-                    recipe.epReward
-                )
-
-            }
-
-        );
-
+        this.recipes.set(recipe.id, {
+            id: recipe.id,
+            name: recipe.name,
+            resourceId: recipe.resourceId,
+            resourceCost: BigNumber.from(recipe.resourceCost),
+            epReward: BigNumber.from(recipe.epReward)
+        });
     }
 
     getRecipe(id) {
-
         return this.recipes.get(id);
-
     }
 
     getRecipes() {
-
-        return Array.from(
-
-            this.recipes.values()
-
-        );
-
+        return Array.from(this.recipes.values());
     }
 
     canConvert(id) {
-
-        const recipe =
-            this.getRecipe(id);
-
-        if (!recipe) {
-
-            return false;
-
-        }
+        const recipe = this.getRecipe(id);
+        if (!recipe) return false;
 
         return ResourceManager.has(
-
             recipe.resourceId,
-
             recipe.resourceCost
-
         );
-
     }
 
     convert(id) {
-
-        const recipe =
-            this.getRecipe(id);
-
-        if (!recipe) {
-
-            return false;
-
-        }
-
-        if (!this.canConvert(id)) {
-
-            return false;
-
-        }
+        const recipe = this.getRecipe(id);
+        if (!recipe || !this.canConvert(id)) return false;
 
         ResourceManager.consume(
-
             recipe.resourceId,
-
             recipe.resourceCost
-
         );
 
         EPManager.add(
@@ -149,16 +84,51 @@ class Converter {
             )
         );
 
-        eventBus.emit(
+        eventBus.emit("converter:update", recipe);
+        return true;
+    }
 
-            "converter:update",
+    convertByAmount(id, amount) {
+        const recipe = this.getRecipe(id);
+        if (!recipe) return 0;
 
-            recipe
+        const requested = BigNumber.from(amount);
+        if (requested.lessOrEqual(0)) return 0;
 
+        const resource = ResourceManager.get(recipe.resourceId);
+        if (!resource || resource.amount.less(recipe.resourceCost)) return 0;
+
+        const rawCount = resource.amount
+            .divide(recipe.resourceCost)
+            .toNumber();
+
+        const requestedCount = requested
+            .divide(recipe.resourceCost)
+            .toNumber();
+
+        if (!Number.isFinite(rawCount) || !Number.isFinite(requestedCount)) {
+            return this.convertAll(id);
+        }
+
+        const count = Math.min(
+            1000000,
+            Math.max(0, Math.floor(Math.min(rawCount, requestedCount)))
         );
 
-        return true;
+        if (count <= 0) return 0;
 
+        const resourceCost = recipe.resourceCost.multiply(count);
+        const epReward = recipe.epReward
+            .multiply(count)
+            .multiply(AchievementManager.getTotalMultiplier());
+
+        if (!ResourceManager.consume(recipe.resourceId, resourceCost)) {
+            return 0;
+        }
+
+        EPManager.add(epReward);
+        eventBus.emit("converter:update", recipe);
+        return count;
     }
 
     convertByRate(id, rate) {
@@ -181,18 +151,10 @@ class Converter {
 
         if (count <= 0) return 0;
 
-        const resourceCost = recipe.resourceCost.multiply(count);
-        const epReward = recipe.epReward
-            .multiply(count)
-            .multiply(AchievementManager.getTotalMultiplier());
-
-        if (!ResourceManager.consume(recipe.resourceId, resourceCost)) {
-            return 0;
-        }
-
-        EPManager.add(epReward);
-        eventBus.emit("converter:update", recipe);
-        return count;
+        return this.convertByAmount(
+            id,
+            recipe.resourceCost.multiply(count)
+        );
     }
 
     convertAll(id) {
@@ -213,21 +175,11 @@ class Converter {
 
         if (count <= 0) return 0;
 
-        const resourceCost = recipe.resourceCost.multiply(count);
-        const epReward = recipe.epReward
-            .multiply(count)
-            .multiply(AchievementManager.getTotalMultiplier());
-
-        if (!ResourceManager.consume(recipe.resourceId, resourceCost)) {
-            return 0;
-        }
-
-        EPManager.add(epReward);
-        eventBus.emit("converter:update", recipe);
-
-        return count;
+        return this.convertByAmount(
+            id,
+            recipe.resourceCost.multiply(count)
+        );
     }
-
 }
 
 export default new Converter();
