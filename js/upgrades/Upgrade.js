@@ -32,11 +32,10 @@ class Upgrade {
     }
 
     getCost() {
-        // 無限強化は初期費用を維持しつつ、Lvに対して二次関数的に
-        // コストが増加するようにする。
-        // Lv0: baseCost / Lv1: 6base / Lv2: 21base / Lv3: 46base ...
+        // 無限強化はLvに対して三次関数的にコストが増加する。
+        // Lv0: baseCost / Lv1: 11base / Lv2: 81base / Lv3: 271base ...
         if (this.type === "infinite") {
-            const levelFactor = 1 + (5 * Math.pow(this.level, 2));
+            const levelFactor = 1 + (10 * Math.pow(this.level, 3));
             return this.baseCost.multiply(levelFactor);
         }
 
@@ -81,7 +80,18 @@ class Upgrade {
     }
 
     getMultiplier() {
-        return Math.pow(this.multiplier, this.level);
+        if (this.type !== "infinite") {
+            return Math.pow(this.multiplier, this.level);
+        }
+
+        // 無限強化はLv50までは従来通り1.2倍ずつ、
+        // Lv51以降は1.1倍ずつ伸びる仮仕様。
+        if (this.level <= 50) {
+            return Math.pow(this.multiplier, this.level);
+        }
+
+        const baseAt50 = Math.pow(this.multiplier, 50);
+        return baseAt50 * Math.pow(1.1, this.level - 50);
     }
 
     getEffectText() {
