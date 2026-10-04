@@ -70,6 +70,12 @@ class InputManager {
             });
 
             if (!target || target.disabled) return;
+
+            // Native form controls must keep their browser input behavior.
+            // Preventing pointerdown here can immediately close the Android keyboard
+            // or prevent the text cursor from being placed in the field.
+            if (this.isNativeInput(target)) return;
+
             if (this.activePointers.has(event.pointerId)) return;
 
             this.activePointers.set(event.pointerId, target);
@@ -103,6 +109,8 @@ class InputManager {
             });
 
             if (!target || target.disabled) return;
+
+            if (this.isNativeInput(target)) return;
 
             event.preventDefault();
             event.stopImmediatePropagation();
@@ -140,6 +148,8 @@ class InputManager {
             const target = this.resolveTarget(event);
             if (!target || target.disabled) return;
 
+            if (this.isNativeInput(target)) return;
+
             this.diagnostics.record("KEY_DOWN", {
                 key: event.key,
                 target: this.describeTarget(target)
@@ -154,6 +164,19 @@ class InputManager {
         document.documentElement.style.setProperty(
             "touch-action",
             "manipulation"
+        );
+    }
+
+    isNativeInput(target) {
+        if (!target || !target.tagName) return false;
+
+        const tagName = target.tagName.toLowerCase();
+
+        return (
+            tagName === "input" ||
+            tagName === "textarea" ||
+            tagName === "select" ||
+            target.isContentEditable === true
         );
     }
 
