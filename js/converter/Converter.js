@@ -23,7 +23,6 @@ class Converter {
             resourceCost: 10,
             epReward: 1
         });
-
         this.addRecipe({
             id: "metal_to_ep",
             name: "金属 → EP",
@@ -31,7 +30,6 @@ class Converter {
             resourceCost: 10,
             epReward: 1
         });
-
         this.addRecipe({
             id: "magic_to_ep",
             name: "魔力 → EP",
@@ -61,11 +59,9 @@ class Converter {
 
     canConvert(id) {
         const recipe = this.getRecipe(id);
-        if (!recipe) return false;
-
-        return ResourceManager.has(
-            recipe.resourceId,
-            recipe.resourceCost
+        return Boolean(
+            recipe &&
+            ResourceManager.has(recipe.resourceId, recipe.resourceCost)
         );
     }
 
@@ -73,10 +69,7 @@ class Converter {
         const recipe = this.getRecipe(id);
         if (!recipe || !this.canConvert(id)) return false;
 
-        ResourceManager.consume(
-            recipe.resourceId,
-            recipe.resourceCost
-        );
+        if (!ResourceManager.consume(recipe.resourceId, recipe.resourceCost)) return false;
 
         EPManager.add(
             recipe.epReward.multiply(
@@ -96,23 +89,22 @@ class Converter {
         if (requested.lessOrEqual(0)) return 0;
 
         const resource = ResourceManager.get(recipe.resourceId);
-        if (!resource || resource.amount.less(recipe.resourceCost)) return 0;
+        if (!resource) return 0;
 
-        const rawCount = resource.amount
+        const availableCount = resource.amount
             .divide(recipe.resourceCost)
             .toNumber();
-
         const requestedCount = requested
             .divide(recipe.resourceCost)
             .toNumber();
 
-        if (!Number.isFinite(rawCount) || !Number.isFinite(requestedCount)) {
+        if (!Number.isFinite(availableCount) || !Number.isFinite(requestedCount)) {
             return this.convertAll(id);
         }
 
         const count = Math.min(
             1000000,
-            Math.max(0, Math.floor(Math.min(rawCount, requestedCount)))
+            Math.max(0, Math.floor(Math.min(availableCount, requestedCount)))
         );
 
         if (count <= 0) return 0;
@@ -122,9 +114,7 @@ class Converter {
             .multiply(count)
             .multiply(AchievementManager.getTotalMultiplier());
 
-        if (!ResourceManager.consume(recipe.resourceId, resourceCost)) {
-            return 0;
-        }
+        if (!ResourceManager.consume(recipe.resourceId, resourceCost)) return 0;
 
         EPManager.add(epReward);
         eventBus.emit("converter:update", recipe);
@@ -164,13 +154,14 @@ class Converter {
         const resource = ResourceManager.get(recipe.resourceId);
         if (!resource || !this.canConvert(id)) return 0;
 
-        const rawCount = resource.amount
-            .divide(recipe.resourceCost)
-            .toNumber();
-
         const count = Math.min(
             1000,
-            Math.max(0, Math.floor(rawCount))
+            Math.max(
+                0,
+                Math.floor(
+                    resource.amount.divide(recipe.resourceCost).toNumber()
+                )
+            )
         );
 
         if (count <= 0) return 0;
