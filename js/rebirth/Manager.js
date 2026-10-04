@@ -4,10 +4,25 @@ import StatisticsManager from "../statistics/Manager.js";
 
 class NewBirthManager {
     getWorld() { return WorldManager.getActive(); }
-    getCount() { return this.getWorld()?.rebirthCount || 0; }
-    getMultiplier() { return this.getWorld()?.rebirthMultiplier || 1; }
-    getSacrificeMultiplier() { return this.getWorld()?.getRebirthMultiplier() || 1; }
-    canNewBirth() { return !!this.getWorld() && this.getWorld().canNewBirth(); }
+    getCount(index = null) {
+        const world = index === null ? this.getWorld() : WorldManager.get(Number(index));
+        return world?.newBirthCount || 0;
+    }
+
+    getMultiplier(index = null) {
+        const world = index === null ? this.getWorld() : WorldManager.get(Number(index));
+        return world?.newBirthMultiplier || 1;
+    }
+
+    getSacrificeMultiplier(index = null) {
+        const world = index === null ? this.getWorld() : WorldManager.get(Number(index));
+        return world?.getNewBirthMultiplier() || 1;
+    }
+
+    canNewBirth(index = null) {
+        const world = index === null ? this.getWorld() : WorldManager.get(Number(index));
+        return !!world && world.canNewBirth();
+    }
 
     newBirth(index = null) {
         const world = index === null
@@ -24,8 +39,8 @@ class NewBirthManager {
 
     reset() {
         for(const world of WorldManager.getAll()) {
-            world.rebirthCount=0;
-            world.rebirthMultiplier=world.rebirthMultiplier.constructor.one();
+            world.newBirthCount = 0;
+            world.newBirthMultiplier = world.newBirthMultiplier.constructor.one();
         }
         eventBus.emit("newbirth:update");
         eventBus.emit("world:update");

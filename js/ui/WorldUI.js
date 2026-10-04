@@ -221,7 +221,7 @@ class WorldUI {
         const newBirthMultiplier = document.createElement("p");
         newBirthMultiplier.textContent =
             "新生倍率: ×" +
-            Formatter.format(NewBirthManager.getMultiplier());
+            Formatter.format(NewBirthManager.getMultiplier(index));
 
         const newBirthGain = document.createElement("p");
         newBirthGain.textContent =
