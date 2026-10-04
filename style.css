@@ -928,3 +928,22 @@ nav button.active {
         margin: 0 !important;
     }
 }
+
+
+/* Automation: prevent converter cards from stretching on mobile */
+.automation-item {
+    height: auto !important;
+    min-height: 0;
+    justify-content: flex-start !important;
+}
+
+.automation-row-body {
+    height: auto !important;
+    min-height: 0;
+    flex: 0 0 auto;
+    justify-content: flex-start;
+}
+
+.automation-converter-item .automation-row-body {
+    flex: 0 0 auto;
+}
