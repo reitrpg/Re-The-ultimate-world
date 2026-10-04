@@ -108,6 +108,7 @@ class UpgradeManager {
 
         this.getAll().forEach(upgrade => {
             if (!upgrade.isUnlocked()) return;
+            if (upgrade.getTargetResource?.() !== null) return;
             multiplier *= upgrade.getMultiplier();
         });
 

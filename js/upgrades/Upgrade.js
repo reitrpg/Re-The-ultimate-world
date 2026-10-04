@@ -107,7 +107,11 @@ class Upgrade {
         this.level = Math.max(0, Math.floor(Number(data.level) || 0));
         this.multiplier = Number(data.multiplier) || 1;
         this.effectText = String(data.effectText || "");
-        this.targetResource = ["plant", "metal", "magic"].includes(data.targetResource) ? data.targetResource : null;
+        if (Object.prototype.hasOwnProperty.call(data, "targetResource")) {
+            this.targetResource = ["plant", "metal", "magic"].includes(data.targetResource)
+                ? data.targetResource
+                : null;
+        }
         this.baseCost = BigNumber.from(data.baseCost);
 
         if (data.type === "limited" || data.type === "infinite") {
