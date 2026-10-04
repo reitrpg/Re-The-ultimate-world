@@ -183,7 +183,7 @@ class World {
     getNewBirthMultiplier() {
         // 累計EXPを基準に新生倍率の基準値を計算する。
         const baseMultiplier = BigNumber.one().add(
-            this.totalExperience.divide(500)
+            this.totalExperience.divide(500000)
         );
 
         // 新生増加倍率 = 倍率計算式 ÷ 現在の新生倍率
