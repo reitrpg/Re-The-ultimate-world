@@ -14,7 +14,7 @@
 <link rel="modulepreload" href="./js/core/InputManager.js">
 <link rel="modulepreload" href="./js/core/InputActionController.js">
 <link rel="modulepreload" href="./js/ui/UI.js">
-<link rel="stylesheet" href="./style.css?v=0.0.110">
+<link rel="stylesheet" href="./style.css?v=0.0.111">
 <title>World Creator</title>
 </head>
 <body>
@@ -43,6 +43,12 @@
 <div id="world-list"></div>
 <div id="next-world"><p class="next-world-cost">必要EP: 1e100 EP</p><button id="unlock-world" type="button" data-action="world:create:request">世界作成</button></div>
 
+
+</div>
+<div id="world-category-converter" class="world-category-panel" data-world-category-panel="converter" hidden>
+<div id="converter-list"></div>
+</div>
+
 <section id="upgrade-panel" aria-label="強化">
 <h3>強化</h3>
 <div class="upgrade-subtabs" role="tablist" aria-label="強化カテゴリ">
@@ -56,10 +62,6 @@
 <div id="upgrade-limited-list"></div>
 </div>
 </section>
-</div>
-<div id="world-category-converter" class="world-category-panel" data-world-category-panel="converter" hidden>
-<div id="converter-list"></div>
-</div>
 </section>
 <section id="automation-tab" class="tab-content" data-tab-panel="automation" hidden>
 <h2>自動化</h2>
@@ -108,7 +110,7 @@
 </section>
 </main>
 <div id="notification-container" aria-live="polite"></div>
-<footer id="app-version">World Creator v0.0.110</footer>
-<script type="module" src="./js/core/main.js?v=0.0.110"></script>
+<footer id="app-version">World Creator v0.0.111</footer>
+<script type="module" src="./js/core/main.js?v=0.0.111"></script>
 </body>
 </html>
