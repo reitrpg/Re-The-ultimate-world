@@ -26,6 +26,24 @@ class AchievementUI {
             this.closeModal();
         });
 
+        const container = document.getElementById("achievement-content");
+        if (container && !container.dataset.modalInputBound) {
+            container.dataset.modalInputBound = "true";
+            container.addEventListener("pointerdown", event => {
+                const card = event.target?.closest?.(".achievement-card");
+                if (!card || !container.contains(card)) return;
+                if (document.getElementById("achievement-modal")) return;
+
+                const id = card.dataset.achievementId;
+                if (!id) return;
+
+                window.__WC_INPUT_DIAGNOSTICS__?.record("ACHIEVEMENT_DIRECT_OPEN", {
+                    achievementId: id
+                });
+                this.openModal(id);
+            });
+        }
+
         this.render();
     }
 
@@ -70,6 +88,7 @@ class AchievementUI {
         close.type = "button";
         close.className = "achievement-modal-close";
         close.dataset.action = "achievement:close";
+        close.dataset.actionOn = "down";
         close.textContent = "×";
         close.setAttribute("aria-label", "閉じる");
 
