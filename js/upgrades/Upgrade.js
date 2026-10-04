@@ -45,13 +45,39 @@ class Upgrade {
             return BigNumber.fromLayered(mantissa, exponent, 0);
         }
 
-        // 無限強化はLv10までを軽くし、Lv11以降は三次関数的にコストを増加させる。
-        // Lv0: baseCost / Lv1: 2.5base / Lv10: 151base
-        // Lv11以降: 1 + 10 × Lv^3
+        // 無限強化はLv帯ごとに三次関数の係数を段階的に上げる。
+        // Lv0〜10: 1.5 × Lv^2
+        // Lv11〜20: 3 × Lv^3
+        // Lv21〜30: 5 × Lv^3
+        // Lv31〜40: 7 × Lv^3
+        // Lv41〜50: 8.5 × Lv^3
+        // Lv51〜99: 10 × Lv^3
+        // Lv100以降: 13 × Lv^3
         if (this.type === "infinite") {
-            const levelFactor = this.level <= 10
-                ? 1 + (1.5 * Math.pow(this.level, 2))
-                : 1 + (10 * Math.pow(this.level, 3));
+            let levelFactor;
+
+            if (this.level <= 10) {
+                levelFactor = 1 + (1.5 * Math.pow(this.level, 2));
+            } else {
+                let coefficient;
+
+                if (this.level >= 100) {
+                    coefficient = 13;
+                } else if (this.level >= 51) {
+                    coefficient = 10;
+                } else if (this.level >= 41) {
+                    coefficient = 8.5;
+                } else if (this.level >= 31) {
+                    coefficient = 7;
+                } else if (this.level >= 21) {
+                    coefficient = 5;
+                } else {
+                    coefficient = 3;
+                }
+
+                levelFactor = 1 + (coefficient * Math.pow(this.level, 3));
+            }
+
             return this.baseCost.multiply(levelFactor);
         }
 
