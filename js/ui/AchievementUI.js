@@ -182,6 +182,7 @@ class AchievementUI {
                 (achieved ? " achieved" : " locked");
 
             item.dataset.action = "achievement:open";
+            item.dataset.actionOn = "down";
             item.dataset.achievementId = achievement.id;
             item.setAttribute("role", "button");
             item.tabIndex = 0;
