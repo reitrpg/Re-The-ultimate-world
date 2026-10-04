@@ -81,6 +81,11 @@ class InputManager {
             }
 
             event.preventDefault();
+
+            if (target.dataset?.actionOn === "down") {
+                this.activePointers.delete(event.pointerId);
+                this.dispatch(target, event, "pointerdown");
+            }
         }, true);
 
         document.addEventListener("pointerup", event => {
