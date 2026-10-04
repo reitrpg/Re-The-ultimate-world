@@ -35,10 +35,14 @@ class Upgrade {
     }
 
     getCost() {
-        // 無限強化はLvに対して三次関数的にコストが増加する。
-        // Lv0: baseCost / Lv1: 11base / Lv2: 81base / Lv3: 271base ...
+        // 無限強化は序盤10Lvだけ旧仕様寄りに軽くし、
+        // Lv11以降は三次関数的にコストを大きく増加させる。
+        // Lv0: baseCost / Lv1: 6base / Lv2: 21base / Lv10: 501base
+        // Lv11以降: 1 + 10 × Lv^3
         if (this.type === "infinite") {
-            const levelFactor = 1 + (10 * Math.pow(this.level, 3));
+            const levelFactor = this.level <= 10
+                ? 1 + (5 * Math.pow(this.level, 2))
+                : 1 + (10 * Math.pow(this.level, 3));
             return this.baseCost.multiply(levelFactor);
         }
 
