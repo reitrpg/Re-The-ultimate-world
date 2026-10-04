@@ -142,7 +142,46 @@ class UpgradeManager {
             }
         });
 
+        this.normalizeInfiniteUpgradeDefinitions();
+
         eventBus.emit("upgrade:update");
+    }
+
+    normalizeInfiniteUpgradeDefinitions() {
+        const definitions = {
+            divine_revelation: {
+                multiplier: 1.20,
+                targetResource: "plant",
+                effectText: "植物の生産量を1.2倍"
+            },
+            heavenly_blessing: {
+                multiplier: 1.20,
+                targetResource: "metal",
+                effectText: "金属の生産量を1.2倍"
+            },
+            world_tree: {
+                multiplier: 1.20,
+                targetResource: "magic",
+                effectText: "魔力の生産量を1.2倍"
+            },
+            creator_will: {
+                multiplier: 1.75,
+                targetResource: null,
+                effectText: "全体生産量を大きく増加"
+            }
+        };
+
+        Object.entries(definitions).forEach(([id, definition]) => {
+            const upgrade = this.get(id);
+
+            if (!upgrade) {
+                return;
+            }
+
+            upgrade.multiplier = definition.multiplier;
+            upgrade.targetResource = definition.targetResource;
+            upgrade.effectText = definition.effectText;
+        });
     }
 }
 
