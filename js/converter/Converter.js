@@ -81,6 +81,32 @@ class Converter {
         return true;
     }
 
+    getWholeCount(amount, unitCost) {
+        const quotient = BigNumber.from(amount).divide(unitCost);
+
+        if (quotient.lessOrEqual(0)) return BigNumber.zero();
+
+        // Layered values are already far beyond normal Number precision.
+        // At this scale, the stored representation is treated as an integer count.
+        if (quotient.layer > 0) return quotient;
+
+        if (quotient.exponent < 0) {
+            return BigNumber.zero();
+        }
+
+        if (quotient.exponent === 0) {
+            return BigNumber.from(Math.floor(quotient.mantissa));
+        }
+
+        // The internal base is 1000. An exponent >= 1 represents a whole
+        // resource count at the game's supported precision.
+        return BigNumber.fromLayered(
+            Math.floor(quotient.mantissa),
+            quotient.exponent,
+            quotient.layer
+        );
+    }
+
     convertByAmount(id, amount) {
         const recipe = this.getRecipe(id);
         if (!recipe) return 0;
@@ -91,23 +117,20 @@ class Converter {
         const resource = ResourceManager.get(recipe.resourceId);
         if (!resource) return 0;
 
-        const availableCount = resource.amount
-            .divide(recipe.resourceCost)
-            .toNumber();
-        const requestedCount = requested
-            .divide(recipe.resourceCost)
-            .toNumber();
-
-        if (!Number.isFinite(availableCount) || !Number.isFinite(requestedCount)) {
-            return this.convertAll(id);
-        }
-
-        const count = Math.min(
-            1000000,
-            Math.max(0, Math.floor(Math.min(availableCount, requestedCount)))
+        const availableCount = this.getWholeCount(
+            resource.amount,
+            recipe.resourceCost
+        );
+        const requestedCount = this.getWholeCount(
+            requested,
+            recipe.resourceCost
         );
 
-        if (count <= 0) return 0;
+        let count = availableCount.lessOrEqual(requestedCount)
+            ? availableCount
+            : requestedCount;
+
+        if (count.lessOrEqual(0)) return 0;
 
         const resourceCost = recipe.resourceCost.multiply(count);
         const epReward = recipe.epReward
@@ -118,7 +141,9 @@ class Converter {
 
         EPManager.add(epReward);
         eventBus.emit("converter:update", recipe);
-        return count;
+
+        const numericCount = count.toNumber();
+        return Number.isFinite(numericCount) ? numericCount : Number.MAX_VALUE;
     }
 
     convertByRate(id, rate) {
@@ -152,27 +177,27 @@ class Converter {
         if (!recipe) return 0;
 
         const resource = ResourceManager.get(recipe.resourceId);
-        if (!resource || !this.canConvert(id)) return 0;
+        if (!resource) return 0;
 
-        const rawCount = resource.amount
-            .divide(recipe.resourceCost)
-            .toNumber();
-
-        if (!Number.isFinite(rawCount)) {
-            return this.convertByAmount(id, resource.amount);
-        }
-
-        const count = Math.min(
-            1000000,
-            Math.max(0, Math.floor(rawCount))
+        const count = this.getWholeCount(
+            resource.amount,
+            recipe.resourceCost
         );
 
-        if (count <= 0) return 0;
+        if (count.lessOrEqual(0)) return 0;
 
-        return this.convertByAmount(
-            id,
-            recipe.resourceCost.multiply(count)
-        );
+        const resourceCost = recipe.resourceCost.multiply(count);
+        const epReward = recipe.epReward
+            .multiply(count)
+            .multiply(AchievementManager.getTotalMultiplier());
+
+        if (!ResourceManager.consume(recipe.resourceId, resourceCost)) return 0;
+
+        EPManager.add(epReward);
+        eventBus.emit("converter:update", recipe);
+
+        const numericCount = count.toNumber();
+        return Number.isFinite(numericCount) ? numericCount : Number.MAX_VALUE;
     }
 }
 
