@@ -1,4 +1,4 @@
-const CACHE_NAME = "world-creator-v89";
+const CACHE_NAME = "world-creator-v90";
 
 const FILES_TO_CACHE = [
     "./",
@@ -151,7 +151,7 @@ self.addEventListener("fetch", event => {
         request.mode === "navigate"
             ? networkFirst
             : isJavaScript
-                ? cacheFirst
+                ? networkFirst
                 : cacheFirst;
 
     event.respondWith(
