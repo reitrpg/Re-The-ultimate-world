@@ -26,9 +26,12 @@ class Upgrade {
         this.baseCost = BigNumber.from(cost);
         this.type = type === "limited" ? "limited" : "infinite";
         this.unlocked = true;
-        this.maxLevel = Number.isFinite(Number(maxLevel))
-            ? Math.max(0, Math.floor(Number(maxLevel)))
-            : null;
+        this.maxLevel =
+            maxLevel !== null &&
+            maxLevel !== undefined &&
+            Number.isFinite(Number(maxLevel))
+                ? Math.max(0, Math.floor(Number(maxLevel)))
+                : null;
     }
 
     getCost() {
