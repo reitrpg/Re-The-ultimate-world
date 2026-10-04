@@ -1,4 +1,4 @@
-const CACHE_NAME = "world-creator-v76";
+const CACHE_NAME = "world-creator-v77";
 
 const FILES_TO_CACHE = [
     "./",
