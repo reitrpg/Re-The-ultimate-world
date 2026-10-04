@@ -77,7 +77,7 @@ class StatisticsUI {
     }
 
     setPage(page) {
-        if (!["statistics", "multipliers", "abilities", "achievements"].includes(page)) return;
+        if (!["statistics", "multipliers", "abilities"].includes(page)) return;
         this.page = page;
         this.render();
     }
@@ -171,8 +171,7 @@ class StatisticsUI {
         [
             ["statistics", "統計"],
             ["multipliers", "倍率"],
-            ["abilities", "能力値"],
-            ["achievements", "実績"]
+            ["abilities", "能力値"]
         ].forEach(([page, label]) => {
             const button = document.createElement("button");
             button.type = "button";
@@ -217,6 +216,15 @@ class StatisticsUI {
             this.createRow(
                 "総取得EP",
                 Formatter.format(StatisticsManager.getTotalEP())
+            )
+        );
+
+        section.content.appendChild(
+            this.createRow(
+                "実績達成数",
+                AchievementManager.getAchievedCount() +
+                " / " +
+                AchievementManager.getAll().length
             )
         );
 
@@ -328,46 +336,6 @@ class StatisticsUI {
         container.appendChild(multipliers.section);
     }
 
-    renderAchievementsPage(container) {
-        const section = this.createSection("実績");
-
-        section.content.appendChild(
-            this.createRow(
-                "達成数",
-                AchievementManager.getAchievedCount() +
-                " / " +
-                AchievementManager.getAll().length
-            )
-        );
-
-        section.content.appendChild(
-            this.createRow(
-                "実績倍率",
-                "×" + AchievementManager.getTotalMultiplier().toFixed(4)
-            )
-        );
-
-        AchievementManager.getAll().forEach(achievement => {
-            const row = document.createElement("div");
-            row.className = "statistics-row";
-
-            const label = document.createElement("span");
-            label.textContent =
-                (achievement.isAchieved() ? "✓ " : "□ ") +
-                achievement.name;
-
-            const value = document.createElement("strong");
-            value.textContent = achievement.isAchieved()
-                ? "達成済み"
-                : achievement.description;
-
-            row.appendChild(label);
-            row.appendChild(value);
-            section.content.appendChild(row);
-        });
-
-        container.appendChild(section.section);
-    }
 
     renderAbilitiesPage(container, world) {
         const section = this.createSection("能力値");
@@ -403,8 +371,6 @@ class StatisticsUI {
             this.renderStatisticsPage(content);
         } else if (this.page === "multipliers") {
             this.renderMultiplierPage(content, world);
-        } else if (this.page === "achievements") {
-            this.renderAchievementsPage(content);
         } else {
             this.renderAbilitiesPage(content, world);
         }
