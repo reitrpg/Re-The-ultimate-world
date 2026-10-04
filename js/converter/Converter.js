@@ -154,14 +154,17 @@ class Converter {
         const resource = ResourceManager.get(recipe.resourceId);
         if (!resource || !this.canConvert(id)) return 0;
 
+        const rawCount = resource.amount
+            .divide(recipe.resourceCost)
+            .toNumber();
+
+        if (!Number.isFinite(rawCount)) {
+            return this.convertByAmount(id, resource.amount);
+        }
+
         const count = Math.min(
-            1000,
-            Math.max(
-                0,
-                Math.floor(
-                    resource.amount.divide(recipe.resourceCost).toNumber()
-                )
-            )
+            1000000,
+            Math.max(0, Math.floor(rawCount))
         );
 
         if (count <= 0) return 0;
