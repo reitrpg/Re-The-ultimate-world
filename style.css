@@ -790,3 +790,12 @@ nav button.active {
         padding: 18px;
     }
 }
+
+
+/* Achievement cards: prevent long-press selection/copy UI from interfering with taps */
+.achievement-card {
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
