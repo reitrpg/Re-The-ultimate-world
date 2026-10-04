@@ -275,7 +275,7 @@ class WorldUI {
 
         newBirth.appendChild(
             createRow(
-                "今回の倍率",
+                "新生増加倍率",
                 "×" + Formatter.format(world.getNewBirthMultiplier())
             )
         );
