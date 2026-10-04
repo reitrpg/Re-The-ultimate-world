@@ -102,7 +102,8 @@ class AutomationUI {
         const modeValue = AutomationManager.getConverterMode(recipe.id);
 
         const row = document.createElement("div");
-        row.className = "automation-item automation-converter-item";
+        row.className = "automation-item automation-converter-item" +
+            (modeValue === "formula" ? " automation-formula-item" : "");
 
         const name = document.createElement("span");
         name.className = "automation-type";
@@ -113,7 +114,8 @@ class AutomationUI {
 
         const value = document.createElement("input");
         value.type = modeValue === "formula" ? "text" : "number";
-        value.className = "automation-value";
+        value.className = "automation-value" +
+            (modeValue === "formula" ? " automation-formula-value" : "");
         value.value = this.getPrimaryValue(recipe.id, recipe.resourceId, modeValue);
         value.setAttribute("aria-label", label + "設定値");
         value.title = modeValue === "ratio" ? "割合（%）" : modeValue === "proportional" ? "A（指定値）" : modeValue === "formula" ? "計算式" : "秒数";
@@ -148,6 +150,10 @@ class AutomationUI {
         }
 
         if (modeValue === "formula") {
+            const thresholdLabel = document.createElement("span");
+            thresholdLabel.className = "automation-extra-label";
+            thresholdLabel.textContent = "指定値";
+
             const threshold = document.createElement("input");
             threshold.type = "number";
             threshold.step = "any";
@@ -158,24 +164,18 @@ class AutomationUI {
             threshold.addEventListener("change", () => {
                 AutomationManager.setConverterFormulaThreshold(recipe.id, threshold.value);
             });
-            extra.appendChild(threshold);
 
             const suffix = document.createElement("span");
-            suffix.textContent = "を超えたら発動";
-            extra.appendChild(suffix);
+            suffix.className = "automation-extra-suffix";
+            suffix.textContent = "以上で発動";
+
+            extra.append(thresholdLabel, threshold, suffix);
         }
 
         if (modeValue === "time") {
             const suffix = document.createElement("span");
             suffix.textContent = "秒ごと";
             extra.appendChild(suffix);
-        }
-
-        if (modeValue === "formula") {
-            const help = document.createElement("small");
-            help.className = "automation-formula-help";
-            help.textContent = "変数: plant / metal / magic / EP / resource / totalMaterials　関数: floor / ceil / round / abs / sqrt / log / log10 / min / max / pow";
-            extra.appendChild(help);
         }
 
         const config = document.createElement("div");
