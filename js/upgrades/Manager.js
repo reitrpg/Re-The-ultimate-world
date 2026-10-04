@@ -20,7 +20,7 @@ class UpgradeManager {
         this.create("divine_revelation", "神託", 1.20, 10, "infinite", null, true, "植物の生産量を1.2倍", "plant");
         this.create("heavenly_blessing", "天恵", 1.20, 10, "infinite", null, true, "金属の生産量を1.2倍", "metal");
         this.create("world_tree", "世界樹の加護", 1.20, 10, "infinite", null, true, "魔力の生産量を1.2倍", "magic");
-        this.create("creator_will", "創造神の意思", 1.75, 5000, "infinite", null, false, "全体生産量を大きく増加");
+        this.create("creator_will", "創造神の意思", 2.00, 1000, "infinite", null, false, "全体生産量を2倍");
         this.create("automation_unlock", "自動化解禁", 1, 10000, "limited", 1, true, "自動化機能を解禁");
     }
 
@@ -165,9 +165,9 @@ class UpgradeManager {
                 effectText: "魔力の生産量を1.2倍"
             },
             creator_will: {
-                multiplier: 1.75,
+                multiplier: 2.00,
                 targetResource: null,
-                effectText: "全体生産量を大きく増加"
+                effectText: "全体生産量を2倍"
             }
         };
 
