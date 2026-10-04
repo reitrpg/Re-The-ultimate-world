@@ -58,6 +58,21 @@ class AutomationUI {
         return String(AutomationManager.getConverterSeconds(id));
     }
 
+    createModeButton(label, modeValue, onChange) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "automation-mode-button";
+        button.textContent = MODE_LABELS[modeValue] || modeValue;
+        button.setAttribute("aria-label", label + "自動化種類");
+        button.addEventListener("click", () => {
+            const keys = Object.keys(MODE_LABELS);
+            const currentIndex = Math.max(0, keys.indexOf(modeValue));
+            const nextMode = keys[(currentIndex + 1) % keys.length];
+            onChange(nextMode);
+        });
+        return button;
+    }
+
     createConverterRow(recipe) {
         const label = this.getConverterLabel(recipe.resourceId);
         const modeValue = AutomationManager.getConverterMode(recipe.id);
@@ -69,6 +84,9 @@ class AutomationUI {
         name.className = "automation-type";
         name.textContent = label;
 
+        const body = document.createElement("div");
+        body.className = "automation-row-body";
+
         const value = document.createElement("input");
         value.type = modeValue === "formula" ? "text" : "number";
         value.className = "automation-value";
@@ -76,16 +94,11 @@ class AutomationUI {
         value.setAttribute("aria-label", label + "設定値");
         value.title = modeValue === "ratio" ? "割合（%）" : modeValue === "proportional" ? "A（指定値）" : modeValue === "formula" ? "計算式" : "秒数";
 
-        const mode = document.createElement("select");
-        mode.className = "automation-mode";
-        mode.setAttribute("aria-label", label + "モード");
-        Object.entries(MODE_LABELS).forEach(([key, text]) => {
-            const option = document.createElement("option");
-            option.value = key;
-            option.textContent = text;
-            mode.appendChild(option);
-        });
-        mode.value = modeValue;
+        const mode = this.createModeButton(
+            label,
+            modeValue,
+            nextMode => AutomationManager.setConverterMode(recipe.id, nextMode)
+        );
 
         const extra = document.createElement("div");
         extra.className = "automation-mode-extra";
@@ -151,23 +164,20 @@ class AutomationUI {
         );
 
         value.addEventListener("change", () => {
-            if (mode.value === "ratio") {
+            if (modeValue === "ratio") {
                 const number = Number(value.value);
                 if (Number.isFinite(number)) AutomationManager.setConverterRate(recipe.resourceId, number / 100);
-            } else if (mode.value === "proportional") {
+            } else if (modeValue === "proportional") {
                 AutomationManager.setConverterThreshold(recipe.id, value.value);
-            } else if (mode.value === "formula") {
+            } else if (modeValue === "formula") {
                 AutomationManager.setConverterFormula(recipe.id, value.value);
             } else {
                 AutomationManager.setConverterSeconds(recipe.id, value.value);
             }
         });
 
-        mode.addEventListener("change", () => {
-            AutomationManager.setConverterMode(recipe.id, mode.value);
-        });
-
-        row.append(name, config, mode, toggle);
+        body.append(value, extra, mode, toggle);
+        row.append(name, body);
         return row;
     }
 
@@ -195,8 +205,11 @@ class AutomationUI {
             AutomationManager.setUpgradeSpendRate(upgrade.id, next / 100);
         });
 
+        const body = document.createElement("div");
+        body.className = "automation-row-body";
+
         const mode = document.createElement("span");
-        mode.className = "automation-mode-label";
+        mode.className = "automation-mode-button automation-mode-label";
         mode.textContent = "割合式";
 
         const toggle = this.createToggle(
@@ -205,7 +218,8 @@ class AutomationUI {
             enabled => AutomationManager.setUpgradeAutomation(upgrade.id, enabled)
         );
 
-        row.append(name, value, mode, toggle);
+        body.append(value, mode, toggle);
+        row.append(name, body);
         return row;
     }
 
@@ -233,7 +247,6 @@ class AutomationUI {
         }
 
         container.innerHTML = "";
-        container.appendChild(this.createHeading("自動化種類"));
 
         UpgradeManager
             .getByType("infinite")
