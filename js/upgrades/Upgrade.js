@@ -38,16 +38,19 @@ class Upgrade {
         // 創造神の意思は1回目1e3、以降購入するたびに指数を1ずつ増やす。
         // Lv0: 1e3 / Lv1: 1e4 / Lv2: 1e5 / Lv3: 1e6 ...
         if (this.id === "creator_will") {
-            return BigNumber.fromLayered(1, this.level + 1, 0);
+            const decimalExponent = this.level + 3;
+            const exponent = Math.floor(decimalExponent / 3);
+            const remainder = decimalExponent % 3;
+            const mantissa = Math.pow(10, remainder);
+            return BigNumber.fromLayered(mantissa, exponent, 0);
         }
 
-        // 無限強化は序盤10Lvだけ旧仕様寄りに軽くし、
-        // Lv11以降は三次関数的にコストを大きく増加させる。
-        // Lv0: baseCost / Lv1: 6base / Lv2: 21base / Lv10: 501base
+        // 無限強化はLv10までを軽くし、Lv11以降は三次関数的にコストを増加させる。
+        // Lv0: baseCost / Lv1: 2.5base / Lv10: 151base
         // Lv11以降: 1 + 10 × Lv^3
         if (this.type === "infinite") {
             const levelFactor = this.level <= 10
-                ? 1 + (5 * Math.pow(this.level, 2))
+                ? 1 + (1.5 * Math.pow(this.level, 2))
                 : 1 + (10 * Math.pow(this.level, 3));
             return this.baseCost.multiply(levelFactor);
         }
