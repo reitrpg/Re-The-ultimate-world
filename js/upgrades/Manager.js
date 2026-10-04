@@ -17,9 +17,9 @@ class UpgradeManager {
             return;
         }
 
-        this.create("divine_revelation", "神託", 1.05, 100, "infinite", null, true, "全体生産量を増加");
-        this.create("heavenly_blessing", "天恵", 1.10, 500, "infinite", null, true, "全体生産量を増加");
-        this.create("world_tree", "世界樹の加護", 1.25, 1000, "infinite", null, true, "全体生産量を増加");
+        this.create("divine_revelation", "神託", 1.05, 10, "infinite", null, true, "全体生産量を増加");
+        this.create("heavenly_blessing", "天恵", 1.10, 10, "infinite", null, true, "全体生産量を増加");
+        this.create("world_tree", "世界樹の加護", 1.25, 10, "infinite", null, true, "全体生産量を増加");
         this.create("creator_will", "創造神の意思", 1.50, 5000, "infinite", null, false, "全体生産量を大きく増加");
         this.create("automation_unlock", "自動化解禁", 1, 10000, "limited", 1, true, "自動化機能を解禁");
     }
