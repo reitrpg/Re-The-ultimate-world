@@ -13,6 +13,7 @@ class WorldUI {
         this.renderQueued = false;
         this.lastRenderTime = 0;
         this.renderInterval = 100;
+        this.expRefreshQueued = false;
     }
 
     initialize() {
@@ -32,6 +33,8 @@ class WorldUI {
                 this.renameWorld(Number(button.dataset.worldIndex));
             }
         });
+
+        eventBus.on("world:tick", () => this.refreshExperience());
 
         eventBus.on("action:newbirth:request", payload => {
             const button = payload?.target?.closest?.("[data-action='newbirth:request']");
@@ -355,6 +358,19 @@ class WorldUI {
         container.appendChild(button);
     }
 
+    refreshExperience() {
+        const value = document.getElementById("world-exp-value");
+        const world = WorldManager.getActive();
+
+        if (!value || !world) return;
+
+        value.textContent =
+            "EXP: " +
+            Formatter.format(world.exp) +
+            " / " +
+            Formatter.format(world.getRequiredExperience());
+    }
+
     render() {
         this.renderCategory();
 
@@ -364,6 +380,8 @@ class WorldUI {
             console.error("World list render failed:", error);
             eventBus.emit("error:update", error);
         }
+
+        this.refreshExperience();
 
         try {
             this.renderNextWorld();
