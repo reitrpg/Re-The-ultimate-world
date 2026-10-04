@@ -30,7 +30,8 @@ class Upgrade {
     }
 
     getCost() {
-        return this.baseCost.multiply(Math.pow(2, this.level));
+        const levelFactor = Math.pow(this.level + 1, 2);
+        return this.baseCost.multiply(levelFactor);
     }
 
     canBuy() {
