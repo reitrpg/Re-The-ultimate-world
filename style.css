@@ -547,3 +547,145 @@ nav button.active {
         width: 100%;
     }
 }
+
+
+/* Achievements */
+#achievement-content {
+    width: 100%;
+}
+
+.achievement-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+}
+
+.achievement-summary,
+.achievement-multiplier {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.achievement-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.achievement-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    padding: 6px;
+    border: 1px solid var(--border);
+    background: #ddd;
+    text-align: center;
+}
+
+.achievement-card.locked {
+    opacity: 0.58;
+    filter: grayscale(0.9);
+}
+
+.achievement-card.achieved {
+    background: #f4f4f4;
+}
+
+.achievement-number {
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    z-index: 2;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.achievement-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 auto;
+    min-height: 0;
+    margin: 12px 4px 4px;
+    border: 1px solid var(--border);
+    background: var(--surface-active);
+    font-size: clamp(28px, 7vw, 54px);
+    font-weight: 700;
+    line-height: 1;
+}
+
+.achievement-title {
+    margin: 0;
+    min-height: 2.4em;
+    overflow: hidden;
+    font-size: clamp(11px, 2.5vw, 15px);
+    line-height: 1.2;
+}
+
+.achievement-description {
+    display: -webkit-box;
+    min-height: 2.4em;
+    margin: 3px 0 0;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: clamp(8px, 1.8vw, 11px);
+    line-height: 1.2;
+}
+
+.achievement-status {
+    position: absolute;
+    right: 4px;
+    bottom: 3px;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.achievement-effect {
+    position: absolute;
+    left: 4px;
+    bottom: 3px;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+@media (max-width: 768px) {
+    .achievement-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 5px;
+    }
+
+    .achievement-header {
+        margin-bottom: 8px;
+        padding: 6px 8px;
+    }
+
+    .achievement-summary,
+    .achievement-multiplier {
+        font-size: 11px;
+    }
+
+    .achievement-card {
+        padding: 4px;
+    }
+
+    .achievement-icon {
+        margin: 10px 2px 3px;
+    }
+
+    .achievement-description {
+        display: none;
+    }
+
+    .achievement-title {
+        min-height: 2.4em;
+    }
+}
