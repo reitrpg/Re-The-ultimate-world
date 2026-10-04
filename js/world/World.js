@@ -33,7 +33,7 @@ class World {
         this.rarity = this.generateRarity();
         this.level = 1;
         this.exp = BigNumber.zero();
-        this.rebirthMultiplier = BigNumber.one();
+        this.newBirthMultiplier = BigNumber.one();
         this.baseProduction = BigNumber.one();
         this.uniqueEffect = { type: "none", name: "なし", multiplier: 1, resourceId: null };
         this.resourceMultipliers = { plant: 1.4, metal: 0.75, magic: 1 };
@@ -42,7 +42,7 @@ class World {
             metal: "植物の大地",
             magic: "植物の大地"
         };
-        this.rebirthCount = 0;
+        this.newBirthCount = 0;
     }
 
     generateRarity() {
@@ -158,7 +158,7 @@ class World {
         return levelAdjustedProduction
             .multiply(this.getResourceMultiplier(id))
             .multiply(uniqueMultiplier)
-            .multiply(this.rebirthMultiplier);
+            .multiply(this.newBirthMultiplier);
     }
 
     gainExperience(amount) {
@@ -178,21 +178,34 @@ class World {
         return BigNumber.from(this.level * this.level * 100);
     }
 
-    getRebirthMultiplier() {
-        return BigNumber.one().add(this.exp.divide(100));
+    getNewBirthMultiplier() {
+        const baseMultiplier = BigNumber.one().add(
+            this.exp.divide(500)
+        );
+
+        if (this.newBirthCount <= 0) {
+            return baseMultiplier;
+        }
+
+        const currentMultiplier = BigNumber.from(this.newBirthMultiplier);
+        const increase = baseMultiplier
+            .subtract(1)
+            .divide(currentMultiplier);
+
+        return BigNumber.one().add(increase);
     }
 
-    canRebirth() {
-        return this.getRebirthMultiplier().greaterOrEqual(2.5);
+    canNewBirth() {
+        return this.getNewBirthMultiplier().greaterOrEqual(1.5);
     }
 
-    performRebirth() {
-        if (!this.canRebirth()) return false;
+    performNewBirth() {
+        if (!this.canNewBirth()) return false;
 
-        const sacrifice = this.getRebirthMultiplier();
+        const sacrifice = this.getNewBirthMultiplier();
 
-        this.rebirthMultiplier = this.rebirthMultiplier.multiply(sacrifice);
-        this.rebirthCount += 1;
+        this.newBirthMultiplier = this.newBirthMultiplier.multiply(sacrifice);
+        this.newBirthCount += 1;
         this.exp = BigNumber.zero();
         this.level = 1;
         this.baseProduction = BigNumber.one();
@@ -259,8 +272,8 @@ class World {
             luck: this.getLuck(),
             level: this.level,
             exp: this.exp.toJSON(),
-            rebirthMultiplier: this.rebirthMultiplier.toJSON(),
-            rebirthCount: this.rebirthCount,
+            newBirthMultiplier: this.newBirthMultiplier.toJSON(),
+            newBirthCount: this.newBirthCount,
             baseProduction: this.baseProduction.toJSON(),
             uniqueEffect: { ...this.uniqueEffect },
             resourceMultipliers: { ...this.resourceMultipliers },
@@ -279,8 +292,13 @@ class World {
         this.luck = Math.max(1, Number(data.luck) || 1);
         this.level = Math.max(1, Number(data.level) || 1);
         this.exp = BigNumber.from(data.exp);
-        this.rebirthMultiplier = BigNumber.from(data.rebirthMultiplier ?? 1);
-        this.rebirthCount = Math.max(0, Number(data.rebirthCount) || 0);
+        this.newBirthMultiplier = BigNumber.from(
+            data.newBirthMultiplier ?? data.rebirthMultiplier ?? 1
+        );
+        this.newBirthCount = Math.max(
+            0,
+            Number(data.newBirthCount ?? data.rebirthCount) || 0
+        );
         this.baseProduction = BigNumber.from(data.baseProduction ?? 10);
 
         if (this.baseProduction.less(1)) {

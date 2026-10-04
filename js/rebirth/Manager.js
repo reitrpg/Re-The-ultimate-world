@@ -2,18 +2,22 @@ import eventBus from "../core/eventBus.js";
 import WorldManager from "../world/Manager.js";
 import StatisticsManager from "../statistics/Manager.js";
 
-class RebirthManager {
+class NewBirthManager {
     getWorld() { return WorldManager.getActive(); }
     getCount() { return this.getWorld()?.rebirthCount || 0; }
     getMultiplier() { return this.getWorld()?.rebirthMultiplier || 1; }
     getSacrificeMultiplier() { return this.getWorld()?.getRebirthMultiplier() || 1; }
-    canRebirth() { return !!this.getWorld() && this.getWorld().canRebirth(); }
+    canNewBirth() { return !!this.getWorld() && this.getWorld().canNewBirth(); }
 
-    rebirth() {
-        const world=this.getWorld();
-        if(!world || !world.performRebirth()) return false;
+    newBirth(index = null) {
+        const world = index === null
+            ? this.getWorld()
+            : WorldManager.get(Number(index));
+
+        if (!world || !world.performNewBirth()) return false;
+
         StatisticsManager.recordRebirth();
-        eventBus.emit("rebirth:update");
+        eventBus.emit("newbirth:update", { world });
         eventBus.emit("world:update");
         return true;
     }
@@ -23,12 +27,12 @@ class RebirthManager {
             world.rebirthCount=0;
             world.rebirthMultiplier=world.rebirthMultiplier.constructor.one();
         }
-        eventBus.emit("rebirth:update");
+        eventBus.emit("newbirth:update");
         eventBus.emit("world:update");
     }
 
-    toJSON() { return {version:2}; }
-    load() { eventBus.emit("rebirth:update"); }
+    toJSON() { return {version:3}; }
+    load() { eventBus.emit("newbirth:update"); }
 }
 
-export default new RebirthManager();
+export default new NewBirthManager();

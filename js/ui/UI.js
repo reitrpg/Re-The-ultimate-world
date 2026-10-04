@@ -8,7 +8,6 @@ const MODULES = [
     ["WorldUI", "./WorldUI.js"],
     ["UpgradeUI", "./UpgradeUI.js"],
     ["ConverterUI", "./ConverterUI.js"],
-    ["RebirthUI", "./RebirthUI.js"],
     ["SettingsUI", "./SettingsUI.js"],
     ["DebugUI", "./DebugUI.js"],
     ["SaveUI", "./SaveUI.js"],

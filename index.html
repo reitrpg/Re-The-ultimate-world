@@ -14,7 +14,7 @@
 <link rel="modulepreload" href="./js/core/InputManager.js">
 <link rel="modulepreload" href="./js/core/InputActionController.js">
 <link rel="modulepreload" href="./js/ui/UI.js">
-<link rel="stylesheet" href="./style.css?v=0.0.89">
+<link rel="stylesheet" href="./style.css?v=0.0.90">
 <title>World Creator</title>
 </head>
 <body>
@@ -28,7 +28,6 @@
 <nav aria-label="ゲームメニュー">
 <button type="button" data-tab="world" aria-selected="true">世界</button>
 <button type="button" data-tab="automation" aria-selected="false" hidden>自動化</button>
-<button type="button" data-tab="rebirth" aria-selected="false">転生</button>
 <button type="button" data-tab="statistics" aria-selected="false">統計・倍率</button>
 <button type="button" data-tab="achievements" aria-selected="false">実績</button>
 <button type="button" data-tab="settings" aria-selected="false">設定</button>
@@ -65,16 +64,6 @@
 <section id="automation-tab" class="tab-content" data-tab-panel="automation" hidden>
 <h2>自動化</h2>
 <div id="automation-content"></div>
-</section>
-<section id="rebirth-tab" class="tab-content" data-tab-panel="rebirth" hidden>
-<h2>転生</h2>
-<p>対象世界: <span id="rebirth-world-name">-</span></p>
-<p>転生回数: <span id="rebirth-count">0</span></p>
-<p>現在の転生倍率: ×<span id="rebirth-multiplier">1</span></p>
-<p>今回の転生倍率: ×<span id="rebirth-sacrifice-multiplier">1</span></p>
-<p>必要倍率: ×2.5</p>
-<p>世界経験値: <span id="rebirth-world-exp">0</span></p>
-<button id="rebirth-button" type="button" disabled>転生</button>
 </section>
 <section id="achievements-tab" class="tab-content" data-tab-panel="achievements" hidden>
 <h2>実績</h2>
@@ -119,7 +108,7 @@
 </section>
 </main>
 <div id="notification-container" aria-live="polite"></div>
-<footer id="app-version">World Creator v0.0.89</footer>
-<script type="module" src="./js/core/main.js?v=0.0.89"></script>
+<footer id="app-version">World Creator v0.0.90</footer>
+<script type="module" src="./js/core/main.js?v=0.0.90"></script>
 </body>
 </html>

@@ -3,6 +3,7 @@ import UnlockManager from "../world/UnlockManager.js";
 import Formatter from "../utils/Formatter.js";
 import ResearchManager from "../research/Manager.js";
 import UpgradeManager from "../upgrades/Manager.js";
+import NewBirthManager from "../rebirth/Manager.js";
 import eventBus from "../core/eventBus.js";
 
 class WorldUI {
@@ -29,6 +30,13 @@ class WorldUI {
             const button = payload?.target?.closest?.("[data-action='world:rename']");
             if (button) {
                 this.renameWorld(Number(button.dataset.worldIndex));
+            }
+        });
+
+        eventBus.on("action:newbirth:request", payload => {
+            const button = payload?.target?.closest?.("[data-action='newbirth:request']");
+            if (button) {
+                NewBirthManager.newBirth(Number(button.dataset.worldIndex));
             }
         });
 
@@ -62,7 +70,7 @@ class WorldUI {
             "world:create:failed",
             "research:update",
             "upgrade:update",
-            "rebirth:update",
+            "newbirth:update",
             "world:unlock:update",
             "save:clear"
         ].forEach(event => {
@@ -204,6 +212,34 @@ class WorldUI {
             "基礎能力: ×" +
             Formatter.format(world.getTotalMultiplier());
 
+        const newBirth = document.createElement("div");
+        newBirth.className = "world-newbirth";
+
+        const newBirthTitle = document.createElement("p");
+        newBirthTitle.textContent = "世界新生";
+
+        const newBirthMultiplier = document.createElement("p");
+        newBirthMultiplier.textContent =
+            "新生倍率: ×" +
+            Formatter.format(NewBirthManager.getMultiplier());
+
+        const newBirthGain = document.createElement("p");
+        newBirthGain.textContent =
+            "今回の倍率: ×" +
+            Formatter.format(world.getNewBirthMultiplier());
+
+        const newBirthButton = document.createElement("button");
+        newBirthButton.type = "button";
+        newBirthButton.dataset.action = "newbirth:request";
+        newBirthButton.dataset.worldIndex = String(index);
+        newBirthButton.textContent = "世界新生";
+        newBirthButton.disabled = !world.canNewBirth();
+
+        newBirth.appendChild(newBirthTitle);
+        newBirth.appendChild(newBirthMultiplier);
+        newBirth.appendChild(newBirthGain);
+        newBirth.appendChild(newBirthButton);
+
         stats.appendChild(rarity);
         stats.appendChild(rarityMultiplier);
         stats.appendChild(feature);
@@ -248,6 +284,7 @@ class WorldUI {
         card.appendChild(nameRow);
         card.appendChild(stats);
         card.appendChild(production);
+        card.appendChild(newBirth);
 
         if (index === WorldManager.getActiveIndex()) {
             card.classList.add("active");
