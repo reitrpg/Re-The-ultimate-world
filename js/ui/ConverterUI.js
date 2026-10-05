@@ -56,7 +56,7 @@ class ConverterUI {
 
     createConverterElement(recipe) {
         const item = document.createElement("div");
-        item.className = "converter-item";
+        item.className = "ep-converter-item";
 
         const convertButton = document.createElement("button");
         convertButton.type = "button";
