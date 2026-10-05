@@ -18,21 +18,21 @@ class Converter {
     initialize() {
         this.addRecipe({
             id: "plant_to_ep",
-            name: "植物 → EP",
+            name: "植物",
             resourceId: "plant",
             resourceCost: 10,
             epReward: 1
         });
         this.addRecipe({
             id: "metal_to_ep",
-            name: "金属 → EP",
+            name: "金属",
             resourceId: "metal",
             resourceCost: 10,
             epReward: 1
         });
         this.addRecipe({
             id: "magic_to_ep",
-            name: "魔力 → EP",
+            name: "魔力",
             resourceId: "magic",
             resourceCost: 10,
             epReward: 1
