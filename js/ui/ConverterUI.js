@@ -76,7 +76,7 @@ class ConverterUI {
             "<h3>" + recipe.name + "</h3>" +
             "<p>" +
             Formatter.format(recipe.resourceCost) +
-            " → " +
+            "＝" +
             Formatter.format(recipe.epReward) +
             " EP</p>";
 
