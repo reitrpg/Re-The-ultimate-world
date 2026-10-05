@@ -1014,3 +1014,36 @@ nav button.active {
         flex: 1 1 80px;
     }
 }
+
+
+/* EP conversion: compact three-column layout */
+#converter-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+}
+
+#converter-list .converter-item {
+    min-width: 0;
+    padding: 8px;
+}
+
+#converter-list .converter-item h3 {
+    margin-bottom: 4px;
+    font-size: 16px;
+}
+
+#converter-list .converter-item p {
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+
+#converter-list .converter-item button {
+    width: 100%;
+    margin: 0 0 4px;
+    padding: 6px 4px;
+}
+
+#converter-list .converter-item button:last-child {
+    margin-bottom: 0;
+}
