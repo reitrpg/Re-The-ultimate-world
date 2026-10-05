@@ -23,6 +23,16 @@ header {
     margin-bottom: 20px;
 }
 
+#status-panel {
+    padding: 10px 12px;
+    border: 2px solid var(--border-strong);
+    font-weight: 700;
+}
+
+#status-panel p {
+    font-weight: 700;
+}
+
 section {
     margin-bottom: 20px;
 }
