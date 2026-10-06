@@ -196,6 +196,12 @@ class WorldUI {
         toggleButton.className = "world-card-toggle";
         toggleButton.dataset.action = "world:toggle";
         toggleButton.dataset.worldIndex = String(index);
+        toggleButton.setAttribute("aria-label", "世界カードを折りたたむ・展開する");
+
+        const toggleArrow = document.createElement("span");
+        toggleArrow.className = "world-card-toggle-arrow";
+        toggleArrow.setAttribute("aria-hidden", "true");
+        toggleArrow.textContent = ">";
 
         const divider = () => {
             const element = document.createElement("div");
@@ -329,6 +335,7 @@ class WorldUI {
         nameRow.appendChild(name);
         nameRow.appendChild(levelSummary);
         nameRow.appendChild(renameButton);
+        toggleButton.appendChild(toggleArrow);
         nameRow.appendChild(toggleButton);
 
         const details = document.createElement("div");
@@ -372,8 +379,16 @@ class WorldUI {
         }
 
         if (toggleButton) {
-            toggleButton.textContent = collapsed ? "展開" : "折りたたむ";
             toggleButton.setAttribute("aria-expanded", String(!collapsed));
+            toggleButton.setAttribute(
+                "aria-label",
+                collapsed ? "世界カードを展開する" : "世界カードを折りたたむ"
+            );
+        }
+
+        const levelSummary = card.querySelector(".world-card-level");
+        if (levelSummary) {
+            levelSummary.hidden = !collapsed;
         }
     }
 
