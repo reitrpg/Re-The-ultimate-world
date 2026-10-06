@@ -22,9 +22,9 @@ class UpgradeManager {
         this.create("world_tree", "神秘:魔法技術 Ⅰ", 1.20, 10, "infinite", null, true, "魔力の生産量を1.2倍", "magic");
         this.create("creator_will", "創造神の意思", 2.00, 1000, "infinite", null, false, "全体生産量を2倍");
 
-        this.create("plant_fivefold", "植物五倍", 5.00, 1000, "limited", 1, true, "植物の生産量を5倍", "plant", "plant", "divine_revelation");
-        this.create("metal_fivefold", "金属五倍", 5.00, 1000, "limited", 1, true, "金属の生産量を5倍", "metal", "metal", "heavenly_blessing");
-        this.create("magic_fivefold", "魔力五倍", 5.00, 1000, "limited", 1, true, "魔力の生産量を5倍", "magic", "magic", "world_tree");
+        this.create("plant_fivefold", "植物五倍", 5.00, 200, "limited", 1, true, "植物の生産量を5倍", "plant", "plant", "divine_revelation");
+        this.create("metal_fivefold", "金属五倍", 5.00, 200, "limited", 1, true, "金属の生産量を5倍", "metal", "metal", "heavenly_blessing");
+        this.create("magic_fivefold", "魔力五倍", 5.00, 200, "limited", 1, true, "魔力の生産量を5倍", "magic", "magic", "world_tree");
 
         this.create("automation_unlock", "自動化解禁", 1, 10000, "limited", 1, true, "自動化機能を解禁");
     }
@@ -103,14 +103,15 @@ class UpgradeManager {
             heavenly_blessing: { name: "神域:亡霊鉱山 Ⅰ", multiplier: 1.20, targetResource: "metal", effectText: "金属の生産量を1.2倍" },
             world_tree: { name: "神秘:魔法技術 Ⅰ", multiplier: 1.20, targetResource: "magic", effectText: "魔力の生産量を1.2倍" },
             creator_will: { multiplier: 2.00, targetResource: null, effectText: "全体生産量を2倍" },
-            plant_fivefold: { multiplier: 5.00, targetResource: "plant", costResource: "plant", prerequisiteId: "divine_revelation", effectText: "植物の生産量を5倍" },
-            metal_fivefold: { multiplier: 5.00, targetResource: "metal", costResource: "metal", prerequisiteId: "heavenly_blessing", effectText: "金属の生産量を5倍" },
-            magic_fivefold: { multiplier: 5.00, targetResource: "magic", costResource: "magic", prerequisiteId: "world_tree", effectText: "魔力の生産量を5倍" }
+            plant_fivefold: { cost: 200, multiplier: 5.00, targetResource: "plant", costResource: "plant", prerequisiteId: "divine_revelation", effectText: "植物の生産量を5倍" },
+            metal_fivefold: { cost: 200, multiplier: 5.00, targetResource: "metal", costResource: "metal", prerequisiteId: "heavenly_blessing", effectText: "金属の生産量を5倍" },
+            magic_fivefold: { cost: 200, multiplier: 5.00, targetResource: "magic", costResource: "magic", prerequisiteId: "world_tree", effectText: "魔力の生産量を5倍" }
         };
         Object.entries(definitions).forEach(([id, definition]) => {
             const upgrade = this.get(id);
             if (!upgrade) return;
             if (definition.name) upgrade.name = definition.name;
+            if (definition.cost !== undefined) upgrade.baseCost = definition.cost;
             upgrade.multiplier = definition.multiplier;
             upgrade.targetResource = definition.targetResource;
             upgrade.costResource = definition.costResource || null;
