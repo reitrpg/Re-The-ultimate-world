@@ -21,6 +21,10 @@ class UpgradeManager {
         this.create("heavenly_blessing", "天恵", 1.20, 10, "infinite", null, true, "金属の生産量を1.2倍", "metal");
         this.create("world_tree", "世界樹の加護", 1.20, 10, "infinite", null, true, "魔力の生産量を1.2倍", "magic");
         this.create("creator_will", "創造神の意思", 2.00, 1000, "infinite", null, false, "全体生産量を2倍");
+
+        this.create("plant_fivefold", "植物五倍", 5.00, 1000, "limited", 1, true, "植物の生産量を5倍", "plant");
+        this.create("metal_fivefold", "金属五倍", 5.00, 1000, "limited", 1, true, "金属の生産量を5倍", "metal");
+        this.create("magic_fivefold", "魔力五倍", 5.00, 1000, "limited", 1, true, "魔力の生産量を5倍", "magic");
         this.create("automation_unlock", "自動化解禁", 1, 10000, "limited", 1, true, "自動化機能を解禁");
     }
 
@@ -95,11 +99,13 @@ class UpgradeManager {
 
     getResourceMultiplier(id) {
         let multiplier = 1;
+
         this.getAll().forEach(upgrade => {
             if (!upgrade.isUnlocked()) return;
             if (upgrade.getTargetResource?.() !== id) return;
             multiplier *= upgrade.getMultiplier();
         });
+
         return multiplier;
     }
 
