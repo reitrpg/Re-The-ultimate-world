@@ -4,6 +4,7 @@
  */
 
 import EPManager from "../ep/Manager.js";
+import ResourceManager from "../resource/Manager.js";
 import BigNumber from "../number/BigNumber.js";
 
 class Upgrade {
@@ -15,7 +16,9 @@ class Upgrade {
         type = "infinite",
         maxLevel = null,
         effectText = "",
-        targetResource = null
+        targetResource = null,
+        costResource = null,
+        prerequisiteId = null
     ) {
         this.id = id;
         this.name = name;
@@ -23,6 +26,8 @@ class Upgrade {
         this.multiplier = multiplier;
         this.effectText = String(effectText || "");
         this.targetResource = ["plant", "metal", "magic"].includes(targetResource) ? targetResource : null;
+        this.costResource = ["plant", "metal", "magic"].includes(costResource) ? costResource : null;
+        this.prerequisiteId = prerequisiteId || null;
         this.baseCost = BigNumber.from(cost);
         this.type = type === "limited" ? "limited" : "infinite";
         this.unlocked = true;
@@ -35,8 +40,6 @@ class Upgrade {
     }
 
     getCost() {
-        // 創造神の意思は1回目1e3、以降購入するたびに指数を1ずつ増やす。
-        // Lv0: 1e3 / Lv1: 1e4 / Lv2: 1e5 / Lv3: 1e6 ...
         if (this.id === "creator_will") {
             const decimalExponent = this.level + 3;
             const exponent = Math.floor(decimalExponent / 3);
@@ -45,14 +48,6 @@ class Upgrade {
             return BigNumber.fromLayered(mantissa, exponent, 0);
         }
 
-        // 無限強化はLv帯ごとに三次関数の係数を段階的に上げる。
-        // Lv0〜10: 1.5 × Lv^2
-        // Lv11〜20: 3 × Lv^3
-        // Lv21〜30: 5 × Lv^3
-        // Lv31〜40: 7 × Lv^3
-        // Lv41〜50: 8.5 × Lv^3
-        // Lv51〜99: 10 × Lv^3
-        // Lv100以降: 13 × Lv^3
         if (this.type === "infinite") {
             let levelFactor;
 
@@ -81,22 +76,56 @@ class Upgrade {
             return this.baseCost.multiply(levelFactor);
         }
 
-        const levelFactor = Math.pow(this.level + 1, 2);
-        return this.baseCost.multiply(levelFactor);
+        return this.baseCost;
+    }
+
+    getCostResource() {
+        return this.costResource;
+    }
+
+    getPrerequisiteId() {
+        return this.prerequisiteId;
+    }
+
+    getUnlockConditionText() {
+        if (!this.prerequisiteId) {
+            return "";
+        }
+
+        const names = {
+            divine_revelation: "神託 Lv1",
+            heavenly_blessing: "天恵 Lv1",
+            world_tree: "世界樹の加護 Lv1"
+        };
+
+        return names[this.prerequisiteId] || "前提強化 Lv1";
     }
 
     canBuy() {
-        if (!this.unlocked) return false;
+        if (!this.isUnlocked()) return false;
         if (this.isMaxed()) return false;
-        return EPManager.has(this.getCost());
+
+        const cost = this.getCost();
+
+        if (this.costResource) {
+            return ResourceManager.has(this.costResource, cost);
+        }
+
+        return EPManager.has(cost);
     }
 
     buy() {
-        if (!this.unlocked || !this.canBuy()) {
+        if (!this.isUnlocked() || !this.canBuy()) {
             return false;
         }
 
-        if (!EPManager.consume(this.getCost())) {
+        const cost = this.getCost();
+
+        if (this.costResource) {
+            if (!ResourceManager.consume(this.costResource, cost)) {
+                return false;
+            }
+        } else if (!EPManager.consume(cost)) {
             return false;
         }
 
@@ -105,7 +134,20 @@ class Upgrade {
     }
 
     isUnlocked() {
-        return this.unlocked === true;
+        if (!this.unlocked) return false;
+
+        if (this.prerequisiteId) {
+            const prerequisite = this._upgradeManager?.get?.(this.prerequisiteId);
+            if (prerequisite) {
+                return prerequisite.level >= 1;
+            }
+        }
+
+        return true;
+    }
+
+    setUpgradeManager(manager) {
+        this._upgradeManager = manager;
     }
 
     unlock() {
@@ -126,8 +168,6 @@ class Upgrade {
             return Math.pow(this.multiplier, this.level);
         }
 
-        // 無限強化はLv50までは従来通り1.2倍ずつ、
-        // Lv51以降は1.1倍ずつ伸びる仮仕様。
         if (this.level <= 50) {
             return Math.pow(this.multiplier, this.level);
         }
@@ -152,6 +192,8 @@ class Upgrade {
             multiplier: this.multiplier,
             effectText: this.effectText,
             targetResource: this.targetResource,
+            costResource: this.costResource,
+            prerequisiteId: this.prerequisiteId,
             baseCost: this.baseCost.toJSON(),
             type: this.type,
             maxLevel: this.maxLevel,
@@ -167,11 +209,23 @@ class Upgrade {
         this.level = Math.max(0, Math.floor(Number(data.level) || 0));
         this.multiplier = Number(data.multiplier) || 1;
         this.effectText = String(data.effectText || "");
+
         if (Object.prototype.hasOwnProperty.call(data, "targetResource")) {
             this.targetResource = ["plant", "metal", "magic"].includes(data.targetResource)
                 ? data.targetResource
                 : null;
         }
+
+        if (Object.prototype.hasOwnProperty.call(data, "costResource")) {
+            this.costResource = ["plant", "metal", "magic"].includes(data.costResource)
+                ? data.costResource
+                : null;
+        }
+
+        if (Object.prototype.hasOwnProperty.call(data, "prerequisiteId")) {
+            this.prerequisiteId = data.prerequisiteId || null;
+        }
+
         this.baseCost = BigNumber.from(data.baseCost);
 
         if (data.type === "limited" || data.type === "infinite") {
