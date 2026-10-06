@@ -14,6 +14,7 @@ class WorldUI {
         this.lastRenderTime = 0;
         this.renderInterval = 100;
         this.expRefreshQueued = false;
+        this.collapsedWorlds = new Set();
     }
 
     initialize() {
@@ -25,6 +26,22 @@ class WorldUI {
         eventBus.on("action:world:category", payload => {
             const button = payload?.target?.closest?.("[data-world-category]");
             if (button) this.setCategory(button.dataset.worldCategory);
+        });
+
+        eventBus.on("action:world:toggle", payload => {
+            const button = payload?.target?.closest?.("[data-action='world:toggle']");
+            if (!button) return;
+
+            const index = Number(button.dataset.worldIndex);
+            if (!Number.isInteger(index)) return;
+
+            if (this.collapsedWorlds.has(index)) {
+                this.collapsedWorlds.delete(index);
+            } else {
+                this.collapsedWorlds.add(index);
+            }
+
+            this.updateWorldCardCollapse(index);
         });
 
         eventBus.on("action:world:rename", payload => {
@@ -170,6 +187,16 @@ class WorldUI {
         name.className = "world-card-title";
         name.textContent = world.name;
 
+        const levelSummary = document.createElement("span");
+        levelSummary.className = "world-card-level";
+        levelSummary.textContent = "Lv " + world.level;
+
+        const toggleButton = document.createElement("button");
+        toggleButton.type = "button";
+        toggleButton.className = "world-card-toggle";
+        toggleButton.dataset.action = "world:toggle";
+        toggleButton.dataset.worldIndex = String(index);
+
         const divider = () => {
             const element = document.createElement("div");
             element.className = "world-card-divider";
@@ -300,16 +327,24 @@ class WorldUI {
         const nameRow = document.createElement("div");
         nameRow.className = "world-name-row";
         nameRow.appendChild(name);
+        nameRow.appendChild(levelSummary);
         nameRow.appendChild(renameButton);
+        nameRow.appendChild(toggleButton);
+
+        const details = document.createElement("div");
+        details.className = "world-card-details";
+        details.appendChild(divider());
+        details.appendChild(info);
+        details.appendChild(divider());
+        details.appendChild(production);
+        details.appendChild(divider());
+        details.appendChild(newBirth);
+        details.appendChild(divider());
 
         card.appendChild(nameRow);
-        card.appendChild(divider());
-        card.appendChild(info);
-        card.appendChild(divider());
-        card.appendChild(production);
-        card.appendChild(divider());
-        card.appendChild(newBirth);
-        card.appendChild(divider());
+        card.appendChild(details);
+
+        this.applyWorldCardCollapse(card, index);
 
         if (index === WorldManager.getActiveIndex()) {
             card.classList.add("active");
@@ -318,6 +353,40 @@ class WorldUI {
 
         return card;
     }
+
+    applyWorldCardCollapse(card, index) {
+        const collapsed = this.collapsedWorlds.has(index);
+        const renameButton = card.querySelector(".world-rename-button");
+        const toggleButton = card.querySelector(".world-card-toggle");
+        const details = card.querySelector(".world-card-details");
+
+        card.classList.toggle("collapsed", collapsed);
+
+        if (details) {
+            details.hidden = collapsed;
+        }
+
+        if (renameButton) {
+            renameButton.hidden = collapsed;
+            renameButton.disabled = collapsed;
+        }
+
+        if (toggleButton) {
+            toggleButton.textContent = collapsed ? "展開" : "折りたたむ";
+            toggleButton.setAttribute("aria-expanded", String(!collapsed));
+        }
+    }
+
+    updateWorldCardCollapse(index) {
+        const card = document.querySelector(
+            ".world-card[data-world-index='" + CSS.escape(String(index)) + "']"
+        );
+
+        if (card) {
+            this.applyWorldCardCollapse(card, index);
+        }
+    }
+
     renderWorldList() {
         const container = document.getElementById("world-list");
 
