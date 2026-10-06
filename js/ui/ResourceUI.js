@@ -9,6 +9,8 @@ import eventBus from "../core/eventBus.js";
 class ResourceUI {
     constructor() {
         this.initialized = false;
+        this.animationFrame = null;
+        this.lastSyncTime = 0;
     }
 
     initialize() {
@@ -16,6 +18,7 @@ class ResourceUI {
         this.initialized = true;
         eventBus.on("resource:update", () => this.refresh());
         this.render();
+        this.startDisplayLoop();
     }
 
     render() {
@@ -39,7 +42,36 @@ class ResourceUI {
         this.refresh();
     }
 
+    startDisplayLoop() {
+        if (this.animationFrame !== null) return;
+
+        const updateDisplay = () => {
+            if (!this.initialized) return;
+
+            const elapsed = Math.max(0, (performance.now() - this.lastSyncTime) / 1000);
+
+            ResourceManager.getAll().forEach(resource => {
+                const selector = "[data-resource-value='" + CSS.escape(resource.id) + "']";
+                const value = document.querySelector(selector);
+                if (!value) return;
+
+                let displayAmount = resource.amount;
+                if (elapsed > 0 && resource.production && typeof resource.production.multiply === "function") {
+                    displayAmount = resource.amount.add(resource.production.multiply(elapsed));
+                }
+
+                value.textContent = resource.name + ": " + Formatter.format(displayAmount);
+            });
+
+            this.animationFrame = window.requestAnimationFrame(updateDisplay);
+        };
+
+        this.lastSyncTime = performance.now();
+        this.animationFrame = window.requestAnimationFrame(updateDisplay);
+    }
+
     refresh() {
+        this.lastSyncTime = performance.now();
         ResourceManager.getAll().forEach(resource => {
             const value = document.querySelector(
                 "[data-resource-value='" + CSS.escape(resource.id) + "']"
