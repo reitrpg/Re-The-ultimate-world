@@ -52,6 +52,10 @@ class UpgradeUI {
         eventBus.on("ep:update", () => {
             this.render();
         });
+
+        eventBus.on("resource:update", () => {
+            this.render();
+        });
     }
 
     setCategory(category) {
@@ -93,11 +97,28 @@ class UpgradeUI {
         title.textContent = upgrade.name;
 
         const cost = document.createElement("p");
-        cost.textContent = !upgrade.isUnlocked()
-            ? "解禁条件を満たしていません"
-            : upgrade.isMaxed()
-                ? "コスト : ―"
-                : "コスト : " + Formatter.format(upgrade.getCost()) + " EP";
+
+        if (!upgrade.isUnlocked()) {
+            const condition = upgrade.getUnlockConditionText?.() || "解禁条件を満たしていません";
+            cost.textContent = "解禁条件 : " + condition;
+        } else if (upgrade.isMaxed()) {
+            cost.textContent = "コスト : ―";
+        } else if (upgrade.getCostResource?.()) {
+            cost.textContent =
+                "コスト : " +
+                Formatter.format(upgrade.getCost()) +
+                " " +
+                ({
+                    plant: "植物",
+                    metal: "金属",
+                    magic: "魔力"
+                }[upgrade.getCostResource()] || "");
+        } else {
+            cost.textContent =
+                "コスト : " +
+                Formatter.format(upgrade.getCost()) +
+                " EP";
+        }
 
         const level = document.createElement("p");
         if (upgrade.maxLevel === null) {
