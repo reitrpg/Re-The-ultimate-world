@@ -166,12 +166,37 @@ nav button.active {
     font-weight: 700;
 }
 
+.world-name-row .world-card-level[hidden] {
+    display: none !important;
+}
+
 .world-card-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     flex: 0 0 auto;
-    width: auto !important;
+    width: 32px !important;
+    height: 32px;
     margin: 0 !important;
-    padding: 4px 8px !important;
-    white-space: nowrap;
+    padding: 0 !important;
+    border: 0;
+    background: transparent;
+    font-size: 24px;
+    line-height: 1;
+}
+
+.world-card-toggle:hover {
+    background: var(--surface-active);
+}
+
+.world-card-toggle-arrow {
+    display: inline-block;
+    transform: rotate(0deg);
+    transition: transform 0.15s ease;
+}
+
+.world-card:not(.collapsed) .world-card-toggle-arrow {
+    transform: rotate(90deg);
 }
 
 .world-card.collapsed .world-name-row {
@@ -180,6 +205,10 @@ nav button.active {
 
 .world-card.collapsed .world-card-title {
     margin-bottom: 0;
+}
+
+.world-card.collapsed .world-card-toggle {
+    margin-left: auto !important;
 }
 
 .world-card h3,
