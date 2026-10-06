@@ -137,6 +137,7 @@ nav button.active {
 
 /* World */
 .world-card {
+
     padding: 16px;
     border: 1px solid var(--border);
     cursor: pointer;
@@ -144,6 +145,41 @@ nav button.active {
 
 .world-card.active {
     border-width: 2px;
+}
+
+.world-card-details {
+    display: block;
+}
+
+.world-name-row {
+    width: 100%;
+}
+
+.world-name-row .world-card-title {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.world-name-row .world-card-level {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-weight: 700;
+}
+
+.world-card-toggle {
+    flex: 0 0 auto;
+    width: auto !important;
+    margin: 0 !important;
+    padding: 4px 8px !important;
+    white-space: nowrap;
+}
+
+.world-card.collapsed .world-name-row {
+    margin-bottom: 0;
+}
+
+.world-card.collapsed .world-card-title {
+    margin-bottom: 0;
 }
 
 .world-card h3,
