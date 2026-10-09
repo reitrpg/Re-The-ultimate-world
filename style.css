@@ -191,6 +191,8 @@ nav button.active {
 
 .world-card-toggle-arrow {
     display: inline-block;
+    flex: 0 0 auto;
+    min-width: 0;
     transform: rotate(0deg);
     transition: transform 0.15s ease;
 }
@@ -223,7 +225,7 @@ nav button.active {
     margin-bottom: 12px;
 }
 
-.world-name-row span {
+.world-name-row > .world-card-level {
     flex: 1;
     min-width: 0;
     font-size: 20px;
