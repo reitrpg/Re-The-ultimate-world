@@ -202,7 +202,7 @@ nav button.active {
 }
 
 .world-card:not(.collapsed) .world-card-toggle-arrow {
-    transform: none;
+    transform: rotate(90deg);
 }
 
 .world-card.collapsed .world-name-row {
