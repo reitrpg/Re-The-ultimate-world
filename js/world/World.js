@@ -188,7 +188,18 @@ class World {
             requiredExperienceRate = 1;
         }
 
-        return BigNumber.from(baseRequiredExperience * requiredExperienceRate);
+        // Lv60からコスト上昇を強め、Lv70以降はさらに急増させる。
+        let highLevelCostMultiplier = 1;
+        if (level >= 60) {
+            highLevelCostMultiplier = Math.pow(1.08, level - 59);
+        }
+        if (level >= 70) {
+            highLevelCostMultiplier *= Math.pow(1.15, level - 69);
+        }
+
+        return BigNumber.from(
+            baseRequiredExperience * requiredExperienceRate * highLevelCostMultiplier
+        );
     }
 
     getNewBirthMultiplier() {
