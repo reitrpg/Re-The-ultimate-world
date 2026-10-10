@@ -177,7 +177,18 @@ class World {
     }
 
     getRequiredExperience() {
-        return BigNumber.from(this.level * this.level * 100);
+        const level = Math.max(1, Math.floor(Number(this.level) || 1));
+        const baseRequiredExperience = level * level * 100;
+
+        // Lv1〜10は従来の20%。Lv11〜20で段階的に通常値へ戻す。
+        let requiredExperienceRate = 0.2;
+        if (level > 10 && level < 20) {
+            requiredExperienceRate += (level - 10) * 0.08;
+        } else if (level >= 20) {
+            requiredExperienceRate = 1;
+        }
+
+        return BigNumber.from(baseRequiredExperience * requiredExperienceRate);
     }
 
     getNewBirthMultiplier() {
