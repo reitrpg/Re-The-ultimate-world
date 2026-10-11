@@ -1,4 +1,4 @@
-const CACHE_NAME = "world-creator-v127";
+const CACHE_NAME = "world-creator-v128";
 
 const FILES_TO_CACHE = [
     "./",
@@ -68,38 +68,20 @@ async function putInCache(request, response) {
 
 async function cacheFirst(request) {
     const cached = await caches.match(request);
-
-    if (cached) {
-        return cached;
-    }
-
+    if (cached) return cached;
     const response = await fetch(request);
-
-    if (response && response.ok) {
-        await putInCache(request, response);
-    }
-
+    if (response && response.ok) await putInCache(request, response);
     return response;
 }
 
 async function networkFirst(request) {
     try {
-        const response = await fetch(request, {
-            cache: "no-store"
-        });
-
-        if (response && response.ok) {
-            await putInCache(request, response);
-        }
-
+        const response = await fetch(request, { cache: "no-store" });
+        if (response && response.ok) await putInCache(request, response);
         return response;
     } catch (error) {
         const cached = await caches.match(request);
-
-        if (cached) {
-            return cached;
-        }
-
+        if (cached) return cached;
         throw error;
     }
 }
@@ -107,59 +89,39 @@ async function networkFirst(request) {
 self.addEventListener("install", event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then(cache =>
-                Promise.allSettled(
-                    FILES_TO_CACHE.map(file => cache.add(file))
-                )
-            )
+            .then(cache => Promise.allSettled(FILES_TO_CACHE.map(file => cache.add(file))))
             .then(() => self.skipWaiting())
     );
 });
 
 self.addEventListener("message", event => {
-    if (event.data?.type === "SKIP_WAITING") {
-        self.skipWaiting();
-    }
+    if (event.data?.type === "SKIP_WAITING") self.skipWaiting();
 });
 
 self.addEventListener("activate", event => {
     event.waitUntil(
         caches.keys()
-            .then(keys =>
-                Promise.all(
-                    keys
-                        .filter(key => key !== CACHE_NAME)
-                        .map(key => caches.delete(key))
-                )
-            )
+            .then(keys => Promise.all(
+                keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+            ))
             .then(() => self.clients.claim())
     );
 });
 
 self.addEventListener("fetch", event => {
     const request = event.request;
-
     if (request.method !== "GET") return;
 
     const url = new URL(request.url);
-
     if (url.origin !== self.location.origin) return;
 
     const isJavaScript = url.pathname.endsWith(".js");
-
-    const strategy =
-        request.mode === "navigate"
-            ? networkFirst
-            : isJavaScript
-                ? networkFirst
-                : cacheFirst;
+    const strategy = request.mode === "navigate" ? networkFirst : isJavaScript ? networkFirst : cacheFirst;
 
     event.respondWith(
-        strategy(request).catch(() =>
-            new Response("World Creator: resource unavailable", {
-                status: 503,
-                headers: { "Content-Type": "text/plain; charset=utf-8" }
-            })
-        )
+        strategy(request).catch(() => new Response("World Creator: resource unavailable", {
+            status: 503,
+            headers: { "Content-Type": "text/plain; charset=utf-8" }
+        }))
     );
 });
