@@ -1,8 +1,8 @@
 import ErrorHandler from "./errorHandler.js";
 import BootProfiler from "./BootProfiler.js";
 
-const APP_VERSION = "0.0.133";
-const SERVICE_WORKER_VERSION = "124";
+const APP_VERSION = "0.0.134";
+const SERVICE_WORKER_VERSION = "125";
 
 async function loadModule(path) {
     try {
@@ -32,7 +32,6 @@ async function registerServiceWorker() {
 
     try {
         const hadController = Boolean(navigator.serviceWorker.controller);
-
         if (hadController) {
             navigator.serviceWorker.addEventListener(
                 "controllerchange",
@@ -44,10 +43,7 @@ async function registerServiceWorker() {
         const registration = await navigator.serviceWorker.register(
             "./service-worker.js?v=" + SERVICE_WORKER_VERSION
         );
-
-        if (registration.waiting) {
-            registration.waiting.postMessage({ type: "SKIP_WAITING" });
-        }
+        if (registration.waiting) registration.waiting.postMessage({ type: "SKIP_WAITING" });
     } catch (error) {
         console.warn("Service Worker registration failed:", error);
         ErrorHandler.record(error);
@@ -59,7 +55,6 @@ const runtime = {};
 async function initializeGame() {
     try {
         BootProfiler.mark("DOMContentLoaded / initializeGame");
-
         ErrorHandler.initialize();
         setBootVersion();
         BootProfiler.mark("ErrorHandler + version");
@@ -90,9 +85,7 @@ async function initializeGame() {
             throw new Error("World Creator: core module initialization failed");
         }
 
-        const resetPending =
-            localStorage.getItem("world_creator_reset_pending") === "true";
-
+        const resetPending = localStorage.getItem("world_creator_reset_pending") === "true";
         if (resetPending) {
             localStorage.removeItem("world_creator_save");
             localStorage.removeItem("world_creator_last_time");
@@ -102,21 +95,13 @@ async function initializeGame() {
         SaveManager.load();
         BootProfiler.mark("SaveManager.load");
 
-        if (
-            !ResourceManager.exists("plant") ||
-            !ResourceManager.exists("metal") ||
-            !ResourceManager.exists("magic")
-        ) {
+        if (!ResourceManager.exists("plant") || !ResourceManager.exists("metal") || !ResourceManager.exists("magic")) {
             ResourceManager.createDefaultResources();
         }
 
-        if (resetPending) {
-            localStorage.removeItem("world_creator_reset_pending");
-        }
+        if (resetPending) localStorage.removeItem("world_creator_reset_pending");
 
-        const skipOffline =
-            sessionStorage.getItem("world_creator_skip_offline_once") === "true";
-
+        const skipOffline = sessionStorage.getItem("world_creator_skip_offline_once") === "true";
         if (skipOffline) {
             sessionStorage.removeItem("world_creator_skip_offline_once");
         } else if (OfflineProgress) {
@@ -124,21 +109,18 @@ async function initializeGame() {
         }
 
         BootProfiler.mark("Offline progress + resource initialization");
-
         InputManager.initialize();
         InputActionController.initialize();
         BootProfiler.mark("Input initialization");
 
         await UI.initialize();
         BootProfiler.mark("UI.initialize");
-
         SaveManager.startAutoSave();
         Game.start();
         BootProfiler.mark("Game.start");
 
         document.documentElement.dataset.appReady = "true";
         BootProfiler.finish();
-
         registerServiceWorker();
     } catch (error) {
         ErrorHandler.record(error);
@@ -159,16 +141,11 @@ window.addEventListener("beforeunload", async () => {
     const clearing =
         sessionStorage.getItem("world_creator_skip_offline_once") === "true" ||
         localStorage.getItem("world_creator_reset_pending") === "true";
-
     if (clearing) return;
 
     try {
-        if (runtime.OfflineProgress) {
-            runtime.OfflineProgress.saveTimestamp();
-        }
-        if (runtime.SaveManager) {
-            runtime.SaveManager.save();
-        }
+        if (runtime.OfflineProgress) runtime.OfflineProgress.saveTimestamp();
+        if (runtime.SaveManager) runtime.SaveManager.save();
     } catch (error) {
         console.error("World Creator shutdown save failed:", error);
     }
