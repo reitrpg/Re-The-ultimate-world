@@ -14,7 +14,7 @@
 <link rel="modulepreload" href="./js/core/InputManager.js">
 <link rel="modulepreload" href="./js/core/InputActionController.js">
 <link rel="modulepreload" href="./js/ui/UI.js">
-<link rel="stylesheet" href="./style.css?v=0.0.133">
+<link rel="stylesheet" href="./style.css?v=0.0.134">
 <title>World Creator</title>
 </head>
 <body>
@@ -42,38 +42,27 @@
 <div id="world-category-world" class="world-category-panel" data-world-category-panel="world">
 <div id="world-list"></div>
 <div id="next-world"><p class="next-world-cost">必要EP: 1e100 EP</p><button id="unlock-world" type="button" data-action="world:create:request">世界作成</button></div>
-
-
 </div>
 <div id="world-category-converter" class="world-category-panel" data-world-category-panel="converter" hidden>
 <div id="converter-list"></div>
 </div>
-
 <section id="upgrade-panel" aria-label="強化">
 <h3>強化</h3>
 <div class="upgrade-subtabs" role="tablist" aria-label="強化カテゴリ">
 <button type="button" data-upgrade-category="infinite" class="upgrade-category-button active" aria-selected="true">無限強化</button>
 <button type="button" data-upgrade-category="limited" class="upgrade-category-button" aria-selected="false">回数制強化</button>
 </div>
-<div id="upgrade-infinite-panel" data-upgrade-category-panel="infinite">
-<div id="upgrade-infinite-list"></div>
-</div>
-<div id="upgrade-limited-panel" data-upgrade-category-panel="limited" hidden>
-<div id="upgrade-limited-list"></div>
-</div>
+<div id="upgrade-infinite-panel" data-upgrade-category-panel="infinite"><div id="upgrade-infinite-list"></div></div>
+<div id="upgrade-limited-panel" data-upgrade-category-panel="limited" hidden><div id="upgrade-limited-list"></div></div>
 </section>
 </section>
 <section id="automation-tab" class="tab-content" data-tab-panel="automation" hidden>
-<h2>自動化</h2>
-<div id="automation-content"></div>
+<h2>自動化</h2><div id="automation-content"></div>
 </section>
 <section id="achievements-tab" class="tab-content" data-tab-panel="achievements" hidden>
-<h2>実績</h2>
-<div id="achievement-content"></div>
+<h2>実績</h2><div id="achievement-content"></div>
 </section>
-<section id="statistics-tab" class="tab-content" data-tab-panel="statistics" hidden>
-<div id="statistics-content"></div>
-</section>
+<section id="statistics-tab" class="tab-content" data-tab-panel="statistics" hidden><div id="statistics-content"></div></section>
 <section id="settings-tab" class="tab-content" data-tab-panel="settings" hidden>
 <h2>設定</h2>
 <label>数値表示:
@@ -100,6 +89,15 @@
 </div>
 <div id="debug-panel" hidden>
 <h3>デバッグ</h3>
+<label>ゲーム速度:
+<select id="settings-debug-speed">
+<option value="1">通常（1倍）</option>
+<option value="10">10倍</option>
+<option value="100">100倍</option>
+<option value="1000">1000倍</option>
+</select>
+</label>
+<p>※デバッグモード中のみ適用。統計のオンライン時間は実時間のままです。</p>
 <button id="debug-add-ep" type="button">EP +1000</button>
 <button id="debug-add-material" type="button">素材 +1000</button>
 <label>世界Lv: <input id="debug-world-level" type="number" min="1" step="1" value="1"></label>
@@ -110,7 +108,7 @@
 </section>
 </main>
 <div id="notification-container" aria-live="polite"></div>
-<footer id="app-version">World Creator v0.0.133</footer>
-<script type="module" src="./js/core/main.js?v=0.0.133"></script>
+<footer id="app-version">World Creator v0.0.134</footer>
+<script type="module" src="./js/core/main.js?v=0.0.134"></script>
 </body>
 </html>
