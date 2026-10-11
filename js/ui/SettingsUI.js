@@ -26,9 +26,7 @@ class SettingsUI {
 
         const t = this.getElement("settings-tick-speed");
         if (t) t.addEventListener("change", e => {
-            if (!SettingsManager.set("tickSpeed", e.target.value)) {
-                this.render();
-            }
+            if (!SettingsManager.set("tickSpeed", e.target.value)) this.render();
         });
 
         const a = this.getElement("settings-autosave");
@@ -39,6 +37,11 @@ class SettingsUI {
 
         const d = this.getElement("settings-debug");
         if (d) d.addEventListener("change", e => SettingsManager.set("debugMode", e.target.checked));
+
+        const speed = this.getElement("settings-debug-speed");
+        if (speed) speed.addEventListener("change", e => {
+            if (!SettingsManager.set("debugSpeedMultiplier", e.target.value)) this.render();
+        });
 
         const s = this.getElement("settings-speedrun");
         if (s) s.addEventListener("change", e => SettingsManager.set("speedRunMode", e.target.checked));
@@ -57,17 +60,12 @@ class SettingsUI {
         if (seed) seed.addEventListener("change", e => SettingsManager.set("seed", e.target.value));
 
         const seedOutput = this.getElement("settings-seed-output");
-        if (seedOutput) {
-            seedOutput.dataset.action = "settings:seed-output";
-        }
+        if (seedOutput) seedOutput.dataset.action = "settings:seed-output";
     }
 
     registerEvents() {
         eventBus.on("settings:update", () => this.render());
-
-        eventBus.on("action:settings:seed-output", () => {
-            this.outputSeed();
-        });
+        eventBus.on("action:settings:seed-output", () => this.outputSeed());
     }
 
     async outputSeed() {
@@ -76,9 +74,7 @@ class SettingsUI {
 
         const value = world.seed;
         const input = this.getElement("settings-seed");
-
         if (input) input.value = value;
-
         SettingsManager.set("seed", value);
 
         try {
@@ -95,11 +91,11 @@ class SettingsUI {
 
     render() {
         const s = SettingsManager.getAll();
-
         const n = this.getElement("settings-number-format");
         const t = this.getElement("settings-tick-speed");
         const a = this.getElement("settings-autosave");
         const d = this.getElement("settings-debug");
+        const speed = this.getElement("settings-debug-speed");
         const sr = this.getElement("settings-speedrun");
         const l = this.getElement("settings-language");
         const seed = this.getElement("settings-seed");
@@ -108,6 +104,10 @@ class SettingsUI {
         if (t) t.value = s.tickSpeed;
         if (a) a.value = s.autoSaveInterval;
         if (d) d.checked = Boolean(s.debugMode);
+        if (speed) {
+            speed.value = String(s.debugSpeedMultiplier);
+            speed.disabled = !s.debugMode;
+        }
         if (sr) sr.checked = Boolean(s.speedRunMode);
         if (l) l.value = s.language;
         if (seed && document.activeElement !== seed) seed.value = s.seed || "";
