@@ -50,11 +50,11 @@ class UpgradeUI {
         });
 
         eventBus.on("ep:update", () => {
-            this.render();
+            this.refreshAffordability();
         });
 
         eventBus.on("resource:update", () => {
-            this.render();
+            this.refreshAffordability();
         });
     }
 
@@ -92,6 +92,7 @@ class UpgradeUI {
     createUpgradeElement(upgrade) {
         const item = document.createElement("div");
         item.className = "upgrade-item";
+        item.dataset.upgradeId = upgrade.id;
 
         const title = document.createElement("h3");
         title.textContent = upgrade.name;
@@ -181,6 +182,19 @@ class UpgradeUI {
             container.appendChild(
                 this.createUpgradeElement(upgrade)
             );
+        });
+    }
+
+    refreshAffordability() {
+        document.querySelectorAll(".upgrade-item[data-upgrade-id]").forEach(item => {
+            const upgrade = UpgradeManager.get(item.dataset.upgradeId);
+            const button = item.querySelector("[data-action='upgrade:buy']");
+            if (!upgrade || !button) return;
+
+            button.disabled =
+                !upgrade.isUnlocked() ||
+                upgrade.isMaxed() ||
+                !upgrade.canBuy();
         });
     }
 
