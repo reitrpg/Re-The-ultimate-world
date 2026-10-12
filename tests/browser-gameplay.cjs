@@ -318,7 +318,9 @@ function check(name, ok, details = {}) {
         worldCount: worldModule.default.getAll().length,
         level: worldModule.default.getActive()?.level ?? null,
         plant: resourceModule.default.get("plant")?.amount?.toString?.() ?? "0",
-        ep: epModule.default.getAmount?.()?.toString?.() ?? null,
+        ep: epModule.default.get()?.toString?.() ?? null,
+        upgradeLevel: (await import("./js/upgrades/Manager.js")).default.get("creator_will")?.level ?? 0,
+        researchLevel: (await import("./js/research/Manager.js")).default.get("agriculture")?.level ?? 0,
         saved: Boolean(localStorage.getItem("world_creator_save"))
       };
     });
@@ -340,24 +342,24 @@ function check(name, ok, details = {}) {
         worldCount: worldModule.default.getAll().length,
         level: worldModule.default.getActive()?.level ?? null,
         plant: resourceModule.default.get("plant")?.amount?.toString?.() ?? "0",
-        ep: epModule.default.getAmount?.()?.toString?.() ?? null
+        ep: epModule.default.get()?.toString?.() ?? null,
+        upgradeLevel: (await import("./js/upgrades/Manager.js")).default.get("creator_will")?.level ?? 0,
+        researchLevel: (await import("./js/research/Manager.js")).default.get("agriculture")?.level ?? 0
       };
     });
     check("Saved world and resources restore after page reload",
       afterReload.worldCount === beforeReload.worldCount &&
-      afterReload.level !== null &&
+      afterReload.level === beforeReload.level &&
+      afterReload.upgradeLevel === beforeReload.upgradeLevel &&
+      afterReload.researchLevel === beforeReload.researchLevel &&
       afterReload.plant !== "0",
       { before: beforeReload, after: afterReload }
     );
 
     // Offline progression uses a synthetic last-play timestamp, while the
     // calculation itself runs during normal app initialization.
-    const offlineBefore = afterReload.plant;
-    await page.waitForTimeout(100);
-    const offlineAfter = await page.evaluate(async () => {
-      const resourceModule = await import("./js/resource/Manager.js");
-      return resourceModule.default.get("plant")?.amount?.toString?.() ?? "0";
-    });
+    const offlineBefore = beforeReload.plant;
+    const offlineAfter = afterReload.plant;
     const offlineIncreased = await page.evaluate(async ({ before, after }) => {
       const module = await import("./js/number/BigNumber.js");
       const BigNumber = module.default;
