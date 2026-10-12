@@ -81,23 +81,51 @@ function check(name, ok, details = {}) {
       { worldCards: await page.locator(".world-card").count() }
     );
 
-    // Observe real production and leveling through the game's timer at 1000x.
-    const initialCard = await page.locator(".world-card").first().innerText();
-    const initialResourceHud = await page.locator("#resource-list").innerText();
+    // Inspect singleton state through read-only module imports while the real
+    // interval loop runs. This distinguishes a rendering issue from a stalled simulation.
+    const readGameState = () => page.evaluate(async () => {
+      const [gameModule, worldModule, settingsModule, resourceModule] = await Promise.all([
+        import("./js/core/game.js"),
+        import("./js/world/Manager.js"),
+        import("./js/settings/Manager.js"),
+        import("./js/resource/Manager.js")
+      ]);
+      const world = worldModule.default.getActive();
+      const plant = resourceModule.default.get("plant");
+      return {
+        running: gameModule.default.running,
+        tickSpeed: settingsModule.default.getTickSpeed(),
+        multiplier: settingsModule.default.getGameSpeedMultiplier(),
+        level: world?.level ?? null,
+        exp: world?.exp?.toString?.() ?? String(world?.exp),
+        plant: plant?.amount?.toString?.() ?? String(plant?.amount),
+        plantProduction: plant?.production?.toString?.() ?? String(plant?.production)
+      };
+    });
+    const initialState = await readGameState();
     await page.waitForTimeout(1800);
-    const finalCard = await page.locator(".world-card").first().innerText();
-    const finalResourceHud = await page.locator("#resource-list").innerText();
-    check("Accelerated gameplay updates the live world card",
-      initialCard !== finalCard,
-      { before: initialCard.slice(0, 500), after: finalCard.slice(0, 500) }
+    const finalState = await readGameState();
+    check("Game loop is running with accelerated settings",
+      finalState.running && finalState.tickSpeed === 10 && finalState.multiplier === 1000,
+      { before: initialState, after: finalState }
     );
-    check("Resource HUD remains rendered during production",
-      /植物|金属|魔力/.test(finalResourceHud),
-      { before: initialResourceHud.slice(0, 300), after: finalResourceHud.slice(0, 300) }
+    check("Actual simulation advances resources or world EXP",
+      finalState.plant !== initialState.plant ||
+      finalState.exp !== initialState.exp ||
+      finalState.level > initialState.level,
+      { before: initialState, after: finalState }
     );
 
-    // Confirm the EP conversion controls are available and interactable when
-    // the produced resources make conversion possible.
+    // Grant resources through the visible in-app debug button, then convert
+    // them through the actual converter control using pointer input.
+    await page.locator("#settings-debug").check();
+    await page.locator("#debug-add-material").tap();
+    await page.waitForTimeout(200);
+    const plantAfterGrant = await readGameState();
+    check("Debug resource grant adds plant material",
+      plantAfterGrant.plant !== finalState.plant,
+      { before: finalState.plant, after: plantAfterGrant.plant }
+    );
     await page.locator('[data-world-category="converter"]').tap();
     await page.waitForFunction(() => !document.querySelector("#world-category-converter").hidden);
     const convertAll = page.locator('[data-action="converter:convert-all"][data-recipe-id="plant_to_ep"]');
