@@ -127,6 +127,8 @@ function check(name, ok, details = {}) {
       plantAfterGrant.plant !== finalState.plant,
       { before: finalState.plant, after: plantAfterGrant.plant }
     );
+    await page.locator('[data-tab="world"]').tap();
+    await page.waitForFunction(() => !document.querySelector("#world-tab").hidden);
     await page.locator('[data-world-category="converter"]').tap();
     await page.waitForFunction(() => !document.querySelector("#world-category-converter").hidden);
     const convertAll = page.locator('[data-action="converter:convert-all"][data-recipe-id="plant_to_ep"]');
