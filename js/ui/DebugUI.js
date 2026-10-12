@@ -99,7 +99,7 @@ class DebugUI {
         });
 
         eventBus.on("action:debug:add-material", () => {
-            DebugManager.addResource("material", 1000);
+            DebugManager.addResource("plant", 1000);
         });
 
         eventBus.on("action:debug:set-world-level", () => {
