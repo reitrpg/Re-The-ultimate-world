@@ -156,6 +156,23 @@ function check(name, ok, details = {}) {
       acceleratedResult
     );
 
+    // Rebirth is performed through the visible world-card control.
+    await page.locator('[data-tab="world"]').tap();
+    await page.waitForFunction(() => !document.querySelector("#world-tab").hidden);
+    const rebirthButton = page.locator('[data-action="newbirth:request"]').first();
+    check("Rebirth control is rendered at a qualifying level", await rebirthButton.count() === 1);
+    await rebirthButton.tap();
+    await page.waitForTimeout(250);
+    const postRebirth = await page.evaluate(async () => {
+      const worldModule = await import("./js/world/Manager.js");
+      const world = worldModule.default.getActive();
+      return { level: world?.level ?? null, newBirthCount: world?.newBirthCount ?? null };
+    });
+    check("Rebirth executes through the actual UI action",
+      postRebirth.newBirthCount >= 1 && postRebirth.level === 1,
+      postRebirth
+    );
+
     // Grant resources through the visible in-app debug button, then convert
     // them through the actual converter control using pointer input.
     await page.locator('[data-tab="settings"]').tap();
