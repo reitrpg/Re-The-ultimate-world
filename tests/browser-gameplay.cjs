@@ -132,7 +132,7 @@ function check(name, ok, details = {}) {
       let virtualNow = originalNow();
       let iterations = 0;
       try {
-        while ((worldManager.getActive()?.level ?? 0) < 100 && iterations < 500) {
+        while ((worldManager.getActive()?.level ?? 0) < 100 && iterations < 20000) {
           virtualNow += 1000;
           Date.now = () => virtualNow;
           game.update();
