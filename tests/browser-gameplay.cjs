@@ -227,6 +227,145 @@ function check(name, ok, details = {}) {
       check("EP converter accepts a touch action", epAfter !== epBefore, { epBefore, epAfter });
     }
 
+
+    // 1) Measure real elapsed-time progression. This does not patch Date.now()
+    // and does not invoke game.update() manually.
+    const timeSeries = [];
+    const seriesStart = Date.now();
+    const seriesInitial = await readGameState();
+    for (const targetSeconds of [1, 5, 15, 30]) {
+      const targetAt = seriesStart + targetSeconds * 1000;
+      while (Date.now() < targetAt) {
+        await page.waitForTimeout(Math.min(250, Math.max(10, targetAt - Date.now())));
+      }
+      const state = await readGameState();
+      timeSeries.push({
+        elapsedSeconds: Number(((Date.now() - seriesStart) / 1000).toFixed(2)),
+        level: state.level,
+        exp: state.exp,
+        plant: state.plant,
+        metal: (await page.evaluate(async () => {
+          const m = await import("./js/resource/Manager.js");
+          return m.default.get("metal")?.amount?.toString?.() ?? "0";
+        })),
+        magic: (await page.evaluate(async () => {
+          const m = await import("./js/resource/Manager.js");
+          return m.default.get("magic")?.amount?.toString?.() ?? "0";
+        }))
+      });
+    }
+    const seriesFinal = await readGameState();
+    check("Real-time progression sampled at 1/5/15/30 seconds",
+      seriesFinal.level >= seriesInitial.level &&
+      seriesFinal.plant !== seriesInitial.plant &&
+      timeSeries.length === 4,
+      { samples: timeSeries, initial: seriesInitial, final: seriesFinal }
+    );
+    report.realTimeProgression = { samples: timeSeries, durationSeconds: 30 };
+
+    // 2) Exercise actual purchase controls and independently validate research
+    // calculations through the game's manager. Research has no visible purchase
+    // panel in the current UI, so it is explicitly reported as a subsystem test.
+    const creatorWillButton = page.locator('[data-action="upgrade:buy"][data-upgrade-id="creator_will"]');
+    if (await creatorWillButton.count() === 1) {
+      const beforeUpgrade = await page.evaluate(async () => {
+        const m = await import("./js/upgrades/Manager.js");
+        return m.default.get("creator_will")?.level ?? 0;
+      });
+      if (await creatorWillButton.isEnabled()) await creatorWillButton.tap();
+      await page.waitForTimeout(100);
+      const afterUpgrade = await page.evaluate(async () => {
+        const m = await import("./js/upgrades/Manager.js");
+        return m.default.get("creator_will")?.level ?? 0;
+      });
+      check("Upgrade purchase through visible UI changes its level",
+        afterUpgrade > beforeUpgrade,
+        { before: beforeUpgrade, after: afterUpgrade }
+      );
+    } else {
+      check("Upgrade purchase control is present", false, { selector: '[data-action="upgrade:buy"][data-upgrade-id="creator_will"]' });
+    }
+
+    const researchResult = await page.evaluate(async () => {
+      const [epModule, researchModule] = await Promise.all([
+        import("./js/ep/Manager.js"),
+        import("./js/research/Manager.js")
+      ]);
+      const research = researchModule.default.get("agriculture");
+      const before = research?.level ?? 0;
+      epModule.default.add?.(1000000);
+      const bought = researchModule.default.buy("agriculture");
+      return {
+        bought,
+        before,
+        after: research?.level ?? 0,
+        multiplier: researchModule.default.getTotalMultiplier()
+      };
+    });
+    check("Research purchase and multiplier calculation work at subsystem level",
+      researchResult.bought && researchResult.after === researchResult.before + 1 &&
+      researchResult.multiplier > 1,
+      researchResult
+    );
+
+    // 3) Save/reload/restore through the actual SaveManager and page lifecycle.
+    await page.locator("#save-button").tap().catch(() => {});
+    const beforeReload = await page.evaluate(async () => {
+      const [saveModule, worldModule, resourceModule, epModule] = await Promise.all([
+        import("./js/core/save.js"),
+        import("./js/world/Manager.js"),
+        import("./js/resource/Manager.js"),
+        import("./js/ep/Manager.js")
+      ]);
+      saveModule.default.save();
+      return {
+        worldCount: worldModule.default.getAll().length,
+        level: worldModule.default.getActive()?.level ?? null,
+        plant: resourceModule.default.get("plant")?.amount?.toString?.() ?? "0",
+        ep: epModule.default.getAmount?.()?.toString?.() ?? null,
+        saved: Boolean(localStorage.getItem("world_creator_save"))
+      };
+    });
+    check("SaveManager writes a restorable save", beforeReload.saved && beforeReload.worldCount > 0, beforeReload);
+    await page.evaluate(() => {
+      localStorage.setItem("world_creator_last_time", String(Date.now() - 60000));
+    });
+    await page.reload({ waitUntil: "networkidle" });
+    await page.waitForFunction(() => document.documentElement.dataset.appReady === "true", null, { timeout: 20000 });
+    const afterReload = await page.evaluate(async () => {
+      const [worldModule, resourceModule, epModule] = await Promise.all([
+        import("./js/world/Manager.js"),
+        import("./js/resource/Manager.js"),
+        import("./js/ep/Manager.js")
+      ]);
+      return {
+        worldCount: worldModule.default.getAll().length,
+        level: worldModule.default.getActive()?.level ?? null,
+        plant: resourceModule.default.get("plant")?.amount?.toString?.() ?? "0",
+        ep: epModule.default.getAmount?.()?.toString?.() ?? null
+      };
+    });
+    check("Saved world and resources restore after page reload",
+      afterReload.worldCount === beforeReload.worldCount &&
+      afterReload.level !== null &&
+      afterReload.plant !== "0",
+      { before: beforeReload, after: afterReload }
+    );
+
+    // Offline progression uses a synthetic last-play timestamp, while the
+    // calculation itself runs during normal app initialization.
+    const offlineBefore = afterReload.plant;
+    await page.waitForTimeout(100);
+    const offlineAfter = await page.evaluate(async () => {
+      const resourceModule = await import("./js/resource/Manager.js");
+      return resourceModule.default.get("plant")?.amount?.toString?.() ?? "0";
+    });
+    check("Offline progress initialization completes without losing resources",
+      offlineAfter !== "0",
+      { before: offlineBefore, after: offlineAfter, elapsedSyntheticMs: 60000 }
+    );
+    report.persistence = { beforeReload, afterReload, offlineBefore, offlineAfter, syntheticOfflineMs: 60000 };
+
     check("No uncaught JavaScript exceptions", report.pageErrors.length === 0, { errors: report.pageErrors });
     check("No console errors", report.consoleErrors.length === 0, { errors: report.consoleErrors });
     check("No failed network requests", report.browserErrors.length === 0, { errors: report.browserErrors });
