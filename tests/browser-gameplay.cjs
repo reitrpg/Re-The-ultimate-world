@@ -116,6 +116,19 @@ function check(name, ok, details = {}) {
       { before: initialState, after: finalState }
     );
 
+    // Let the actual simulation progress toward Lv100. Polling only reads game
+    // state; all resource production, leveling, and level requirements are native.
+    const progressionStartedAt = Date.now();
+    let level100State = finalState;
+    while (level100State.level < 100 && Date.now() - progressionStartedAt < 90000) {
+      await page.waitForTimeout(1000);
+      level100State = await readGameState();
+    }
+    check("Live gameplay reaches world Lv100 within 90 seconds at debug 1000x",
+      level100State.level >= 100,
+      { elapsedMs: Date.now() - progressionStartedAt, state: level100State }
+    );
+
     // Grant resources through the visible in-app debug button, then convert
     // them through the actual converter control using pointer input.
     await page.locator('[data-tab="settings"]').tap();
