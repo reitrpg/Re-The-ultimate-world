@@ -66,44 +66,47 @@ function check(name, ok, details = {}) {
       !(await page.locator("#settings-debug-speed").isDisabled())
     );
 
-    // Return to the game tab and use the visible debug control to provide a small
-    // test resource grant; all conversion and production actions remain real UI actions.
+    // Use the visible reset action to create a clean, playable world through the app.
+    // This is a UI action; no game module state is modified by the test.
+    page.once("dialog", dialog => dialog.accept());
+    await page.locator("#debug-reset").tap();
+    await page.waitForTimeout(500);
     await page.locator('[data-tab="world"]').tap();
     await page.waitForFunction(() => !document.querySelector("#world-tab").hidden);
-    await page.locator("#debug-add-material").tap();
-    await page.waitForTimeout(250);
-    const resourceTextBefore = await page.locator("#resource-list").innerText();
-    check("Debug resource grant updates the resource HUD",
-      /植物|金属|魔力/.test(resourceTextBefore),
-      { resourceHud: resourceTextBefore.slice(0, 500) }
+    await page.waitForFunction(() => document.querySelectorAll(".world-card").length > 0, null, { timeout: 10000 });
+    check("World can be created through the in-app debug reset",
+      await page.locator(".world-card").count() > 0,
+      { worldCards: await page.locator(".world-card").count() }
     );
 
-    // Switch to converter page, convert all available plant material if enabled.
+    // Observe real production and leveling through the game's timer at 1000x.
+    const initialCard = await page.locator(".world-card").first().innerText();
+    const initialResourceHud = await page.locator("#resource-list").innerText();
+    await page.waitForTimeout(2500);
+    const finalCard = await page.locator(".world-card").first().innerText();
+    const finalResourceHud = await page.locator("#resource-list").innerText();
+    check("Accelerated gameplay updates the live world card",
+      initialCard !== finalCard,
+      { before: initialCard.slice(0, 500), after: finalCard.slice(0, 500) }
+    );
+    check("Resource HUD remains rendered during production",
+      /植物|金属|魔力/.test(finalResourceHud),
+      { before: initialResourceHud.slice(0, 300), after: finalResourceHud.slice(0, 300) }
+    );
+
+    // Confirm the EP conversion controls are available and interactable when
+    // the produced resources make conversion possible.
     await page.locator('[data-world-category="converter"]').tap();
     await page.waitForFunction(() => !document.querySelector("#world-category-converter").hidden);
     const convertAll = page.locator('[data-action="converter:convert-all"][data-recipe-id="plant_to_ep"]');
-    const conversionWasAvailable = await convertAll.isEnabled();
-    if (conversionWasAvailable) {
+    check("EP converter panel renders", await convertAll.count() === 1);
+    if (await convertAll.isEnabled()) {
       const epBefore = await page.locator("#ep-value").innerText();
       await convertAll.tap();
       await page.waitForTimeout(300);
       const epAfter = await page.locator("#ep-value").innerText();
       check("EP converter accepts a touch action", epAfter !== epBefore, { epBefore, epAfter });
-    } else {
-      check("Converter panel renders when no plant resource is available", await convertAll.count() === 1);
     }
-
-    // Test the game's own accelerated update loop against its real state, without
-    // writing levels or resources directly into module memory.
-    await page.locator('[data-world-category="world"]').tap();
-    await page.waitForFunction(() => !document.querySelector("#world-category-world").hidden);
-    const initialWorldCards = await page.locator(".world-card").count();
-    await page.waitForTimeout(2200);
-    const finalWorldCards = await page.locator(".world-card").count();
-    check("World panel remains responsive during accelerated game ticks",
-      initialWorldCards === finalWorldCards,
-      { initialWorldCards, finalWorldCards }
-    );
 
     check("No uncaught JavaScript exceptions", report.pageErrors.length === 0, { errors: report.pageErrors });
     check("No console errors", report.consoleErrors.length === 0, { errors: report.consoleErrors });
