@@ -161,7 +161,8 @@ function check(name, ok, details = {}) {
     await page.waitForFunction(() => !document.querySelector("#world-tab").hidden);
     const rebirthButton = page.locator('[data-action="newbirth:request"]').first();
     check("Rebirth control is rendered at a qualifying level", await rebirthButton.count() === 1);
-    await rebirthButton.tap();
+    await rebirthButton.scrollIntoViewIfNeeded();
+    await rebirthButton.tap({ timeout: 10000 });
     await page.waitForTimeout(250);
     const postRebirth = await page.evaluate(async () => {
       const worldModule = await import("./js/world/Manager.js");
