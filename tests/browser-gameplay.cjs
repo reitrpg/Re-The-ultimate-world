@@ -159,6 +159,8 @@ function check(name, ok, details = {}) {
     // Rebirth is performed through the visible world-card control.
     await page.locator('[data-tab="world"]').tap();
     await page.waitForFunction(() => !document.querySelector("#world-tab").hidden);
+    const worldToggle = page.locator(".world-card-toggle").first();
+    if (await worldToggle.count()) await worldToggle.tap();
     const rebirthButton = page.locator('[data-action="newbirth:request"]').first();
     check("Rebirth control is rendered at a qualifying level", await rebirthButton.count() === 1);
     await rebirthButton.scrollIntoViewIfNeeded();
