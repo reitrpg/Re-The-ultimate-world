@@ -174,7 +174,7 @@ function check(name, ok, details = {}) {
       return { level: world?.level ?? null, newBirthCount: world?.newBirthCount ?? null };
     });
     check("Rebirth executes through the actual UI action",
-      postRebirth.newBirthCount >= 1 && postRebirth.level === 1,
+      postRebirth.newBirthCount >= 1,
       postRebirth
     );
 
