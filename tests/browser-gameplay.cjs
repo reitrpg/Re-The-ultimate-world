@@ -116,44 +116,26 @@ function check(name, ok, details = {}) {
       { before: initialState, after: finalState }
     );
 
-    // Deterministic virtual-time play: stop wall-clock ticks, advance Date.now
-    // in bounded steps, and call the game's own update loop. This keeps native
-    // production, leveling, achievements, automation and event handling active
-    // without waiting real minutes for an idle-game balance test.
-    const acceleratedResult = await page.evaluate(async () => {
-      const [gameModule, worldModule] = await Promise.all([
-        import("./js/core/game.js"),
-        import("./js/world/Manager.js")
-      ]);
-      const game = gameModule.default;
-      const worldManager = worldModule.default;
-      game.stop();
-      const originalNow = Date.now;
-      let virtualNow = originalNow();
-      let iterations = 0;
-      try {
-        while ((worldManager.getActive()?.level ?? 0) < 100 && iterations < 20000) {
-          virtualNow += 1000;
-          Date.now = () => virtualNow;
-          game.update();
-          iterations += 1;
-        }
-      } finally {
-        Date.now = originalNow;
-        game.start();
+    // Real-time accelerated play only: do not patch Date.now or invoke game.update()
+    // manually. The regular setInterval loop must reach Lv100 by itself.
+    const liveProgressStartedAt = Date.now();
+    let liveState = finalState;
+    while (liveState.level < 100 && Date.now() - liveProgressStartedAt < 90000) {
+      await page.waitForTimeout(250);
+      liveState = await readGameState();
+    }
+    check("Regular accelerated game loop reaches world Lv100 within 90 seconds",
+      liveState.level >= 100,
+      {
+        elapsedMs: Date.now() - liveProgressStartedAt,
+        before: finalState,
+        after: liveState
       }
-      const world = worldManager.getActive();
-      return {
-        iterations,
-        level: world?.level ?? null,
-        exp: world?.exp?.toString?.() ?? String(world?.exp),
-        totalExperience: world?.totalExperience?.toString?.() ?? String(world?.totalExperience),
-        newBirthCount: world?.newBirthCount ?? null
-      };
-    });
-    check("Native game loop reaches world Lv100 in virtual-time simulation",
-      acceleratedResult.level >= 100,
-      acceleratedResult
+    );
+    const renderedLevel = await page.locator(".world-card-level").first().innerText();
+    check("World card level display follows live simulation",
+      renderedLevel.includes(String(liveState.level)),
+      { renderedLevel, liveLevel: liveState.level }
     );
 
     // Rebirth is performed through the visible world-card control.
