@@ -61,7 +61,7 @@ function check(name, ok, details = {}) {
     await page.locator("#settings-debug").check();
     await page.waitForFunction(() => !document.querySelector("#debug-panel").hidden);
     await page.locator("#settings-debug-speed").selectOption("1000");
-    await page.locator("#settings-tick-speed").fill("10");
+    await page.locator("#settings-tick-speed").fill("1");
     await page.locator("#settings-tick-speed").dispatchEvent("change");
     check("Debug speed selector enables at 1000x",
       await page.locator("#settings-debug-speed").inputValue() === "1000" &&
@@ -106,7 +106,7 @@ function check(name, ok, details = {}) {
     await page.waitForTimeout(1800);
     const finalState = await readGameState();
     check("Game loop is running with accelerated settings",
-      finalState.running && finalState.tickSpeed === 10 && finalState.multiplier === 1000,
+      finalState.running && finalState.tickSpeed === 1 && finalState.multiplier === 1000,
       { before: initialState, after: finalState }
     );
     check("Actual simulation advances resources or world EXP",
@@ -124,7 +124,7 @@ function check(name, ok, details = {}) {
       await page.waitForTimeout(1000);
       level100State = await readGameState();
     }
-    check("Live gameplay reaches world Lv100 within 90 seconds at debug 1000x",
+    check("Live gameplay reaches world Lv100 within 90 seconds at debug 1000x and 1ms ticks",
       level100State.level >= 100,
       { elapsedMs: Date.now() - progressionStartedAt, state: level100State }
     );
