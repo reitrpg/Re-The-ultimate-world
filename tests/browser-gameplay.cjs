@@ -116,17 +116,44 @@ function check(name, ok, details = {}) {
       { before: initialState, after: finalState }
     );
 
-    // Let the actual simulation progress toward Lv100. Polling only reads game
-    // state; all resource production, leveling, and level requirements are native.
-    const progressionStartedAt = Date.now();
-    let level100State = finalState;
-    while (level100State.level < 100 && Date.now() - progressionStartedAt < 300000) {
-      await page.waitForTimeout(1000);
-      level100State = await readGameState();
-    }
-    check("Live gameplay reaches world Lv100 within 5 minutes at debug 1000x and 1ms ticks",
-      level100State.level >= 100,
-      { elapsedMs: Date.now() - progressionStartedAt, state: level100State }
+    // Deterministic virtual-time play: stop wall-clock ticks, advance Date.now
+    // in bounded steps, and call the game's own update loop. This keeps native
+    // production, leveling, achievements, automation and event handling active
+    // without waiting real minutes for an idle-game balance test.
+    const acceleratedResult = await page.evaluate(async () => {
+      const [gameModule, worldModule] = await Promise.all([
+        import("./js/core/game.js"),
+        import("./js/world/Manager.js")
+      ]);
+      const game = gameModule.default;
+      const worldManager = worldModule.default;
+      game.stop();
+      const originalNow = Date.now;
+      let virtualNow = originalNow();
+      let iterations = 0;
+      try {
+        while ((worldManager.getActive()?.level ?? 0) < 100 && iterations < 500) {
+          virtualNow += 1000;
+          Date.now = () => virtualNow;
+          game.update();
+          iterations += 1;
+        }
+      } finally {
+        Date.now = originalNow;
+        game.start();
+      }
+      const world = worldManager.getActive();
+      return {
+        iterations,
+        level: world?.level ?? null,
+        exp: world?.exp?.toString?.() ?? String(world?.exp),
+        totalExperience: world?.totalExperience?.toString?.() ?? String(world?.totalExperience),
+        newBirthCount: world?.newBirthCount ?? null
+      };
+    });
+    check("Native game loop reaches world Lv100 in virtual-time simulation",
+      acceleratedResult.level >= 100,
+      acceleratedResult
     );
 
     // Grant resources through the visible in-app debug button, then convert
