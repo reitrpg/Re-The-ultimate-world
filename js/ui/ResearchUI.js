@@ -39,7 +39,8 @@ class ResearchUI {
         cost.textContent = `Cost: ${Formatter.format(research.getCost())} EP`;
         const button = document.createElement("button");
         button.type = "button";
-        button.textContent = "研究";
+        button.textContent = research.canBuy() ? "研究" : "EP不足";
+        button.disabled = !research.canBuy();
         button.dataset.action = "research:buy";
         button.dataset.researchId = research.id;
         wrapper.appendChild(title);
