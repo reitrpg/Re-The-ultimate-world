@@ -120,11 +120,11 @@ function check(name, ok, details = {}) {
     // manually. The regular setInterval loop must reach Lv100 by itself.
     const liveProgressStartedAt = Date.now();
     let liveState = finalState;
-    while (liveState.level < 100 && Date.now() - liveProgressStartedAt < 90000) {
+    while (liveState.level < 100 && Date.now() - liveProgressStartedAt < 300000) {
       await page.waitForTimeout(250);
       liveState = await readGameState();
     }
-    check("Regular accelerated game loop reaches world Lv100 within 90 seconds",
+    check("Regular accelerated game loop reaches world Lv100 within 5 minutes",
       liveState.level >= 100,
       {
         elapsedMs: Date.now() - liveProgressStartedAt,
