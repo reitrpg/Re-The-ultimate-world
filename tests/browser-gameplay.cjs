@@ -358,8 +358,13 @@ function check(name, ok, details = {}) {
       const resourceModule = await import("./js/resource/Manager.js");
       return resourceModule.default.get("plant")?.amount?.toString?.() ?? "0";
     });
+    const offlineIncreased = await page.evaluate(async ({ before, after }) => {
+      const module = await import("./js/number/BigNumber.js");
+      const BigNumber = module.default;
+      return BigNumber.from(after).greater(BigNumber.from(before));
+    }, { before: offlineBefore, after: offlineAfter });
     check("Offline progress applies the synthetic 60-second closed interval",
-      Number(offlineAfter) > Number(offlineBefore),
+      offlineIncreased,
       { before: offlineBefore, after: offlineAfter, elapsedSyntheticMs: 60000 }
     );
     report.persistence = { beforeReload, afterReload, offlineBefore, offlineAfter, syntheticOfflineMs: 60000 };
