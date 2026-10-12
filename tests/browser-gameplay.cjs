@@ -160,7 +160,9 @@ function check(name, ok, details = {}) {
     await page.locator('[data-tab="world"]').tap();
     await page.waitForFunction(() => !document.querySelector("#world-tab").hidden);
     const worldToggle = page.locator(".world-card-toggle").first();
-    if (await worldToggle.count()) await worldToggle.tap();
+    if (await worldToggle.count() && await worldToggle.getAttribute("aria-expanded") === "false") {
+      await worldToggle.tap();
+    }
     const rebirthButton = page.locator('[data-action="newbirth:request"]').first();
     check("Rebirth control is rendered at a qualifying level", await rebirthButton.count() === 1);
     await rebirthButton.scrollIntoViewIfNeeded();
