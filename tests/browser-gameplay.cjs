@@ -61,6 +61,8 @@ function check(name, ok, details = {}) {
     await page.locator("#settings-debug").check();
     await page.waitForFunction(() => !document.querySelector("#debug-panel").hidden);
     await page.locator("#settings-debug-speed").selectOption("1000");
+    await page.locator("#settings-tick-speed").fill("10");
+    await page.locator("#settings-tick-speed").dispatchEvent("change");
     check("Debug speed selector enables at 1000x",
       await page.locator("#settings-debug-speed").inputValue() === "1000" &&
       !(await page.locator("#settings-debug-speed").isDisabled())
@@ -82,7 +84,7 @@ function check(name, ok, details = {}) {
     // Observe real production and leveling through the game's timer at 1000x.
     const initialCard = await page.locator(".world-card").first().innerText();
     const initialResourceHud = await page.locator("#resource-list").innerText();
-    await page.waitForTimeout(2500);
+    await page.waitForTimeout(1800);
     const finalCard = await page.locator(".world-card").first().innerText();
     const finalResourceHud = await page.locator("#resource-list").innerText();
     check("Accelerated gameplay updates the live world card",
