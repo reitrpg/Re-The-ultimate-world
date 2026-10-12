@@ -118,7 +118,8 @@ function check(name, ok, details = {}) {
 
     // Grant resources through the visible in-app debug button, then convert
     // them through the actual converter control using pointer input.
-    await page.locator("#settings-debug").check();
+    await page.locator('[data-tab="settings"]').tap();
+    await page.waitForFunction(() => !document.querySelector("#settings-tab").hidden);
     await page.locator("#debug-add-material").tap();
     await page.waitForTimeout(200);
     const plantAfterGrant = await readGameState();
