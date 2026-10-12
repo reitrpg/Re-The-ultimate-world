@@ -255,7 +255,7 @@ function check(name, ok, details = {}) {
       });
     }
     const seriesFinal = await readGameState();
-    check("Real-time progression sampled at 1/5/15/30 seconds",
+    check("Real-time progression sampled at 1/5/15/30/60 seconds",
       seriesFinal.level >= seriesInitial.level &&
       seriesFinal.plant !== seriesInitial.plant &&
       timeSeries.length === 5,
@@ -305,7 +305,6 @@ function check(name, ok, details = {}) {
     );
 
     // 3) Save/reload/restore through the actual SaveManager and page lifecycle.
-    await page.locator("#save-button").tap().catch(() => {});
     const beforeReload = await page.evaluate(async () => {
       const [saveModule, worldModule, resourceModule, epModule] = await Promise.all([
         import("./js/core/save.js"),
