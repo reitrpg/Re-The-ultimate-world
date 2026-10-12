@@ -327,7 +327,9 @@ function check(name, ok, details = {}) {
       };
     });
     check("SaveManager writes a restorable save", beforeReload.saved && beforeReload.worldCount > 0, beforeReload);
-    await page.evaluate(() => {
+    await page.addInitScript(() => {
+      // beforeunload updates the timestamp on the old document; set the
+      // synthetic closed duration again before the new app initializes.
       localStorage.setItem("world_creator_last_time", String(Date.now() - 60000));
     });
     await page.reload({ waitUntil: "networkidle" });
@@ -360,8 +362,8 @@ function check(name, ok, details = {}) {
       const resourceModule = await import("./js/resource/Manager.js");
       return resourceModule.default.get("plant")?.amount?.toString?.() ?? "0";
     });
-    check("Offline progress initialization completes without losing resources",
-      offlineAfter !== "0",
+    check("Offline progress applies the synthetic 60-second closed interval",
+      Number(offlineAfter) > Number(offlineBefore),
       { before: offlineBefore, after: offlineAfter, elapsedSyntheticMs: 60000 }
     );
     report.persistence = { beforeReload, afterReload, offlineBefore, offlineAfter, syntheticOfflineMs: 60000 };
