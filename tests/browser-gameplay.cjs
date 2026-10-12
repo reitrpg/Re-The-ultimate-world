@@ -233,7 +233,7 @@ function check(name, ok, details = {}) {
     const timeSeries = [];
     const seriesStart = Date.now();
     const seriesInitial = await readGameState();
-    for (const targetSeconds of [1, 5, 15, 30]) {
+    for (const targetSeconds of [1, 5, 15, 30, 60]) {
       const targetAt = seriesStart + targetSeconds * 1000;
       while (Date.now() < targetAt) {
         await page.waitForTimeout(Math.min(250, Math.max(10, targetAt - Date.now())));
@@ -258,10 +258,10 @@ function check(name, ok, details = {}) {
     check("Real-time progression sampled at 1/5/15/30 seconds",
       seriesFinal.level >= seriesInitial.level &&
       seriesFinal.plant !== seriesInitial.plant &&
-      timeSeries.length === 4,
+      timeSeries.length === 5,
       { samples: timeSeries, initial: seriesInitial, final: seriesFinal }
     );
-    report.realTimeProgression = { samples: timeSeries, durationSeconds: 30 };
+    report.realTimeProgression = { samples: timeSeries, durationSeconds: 60 };
 
     // 2) Exercise actual purchase controls and independently validate research
     // calculations through the game's manager. Research has no visible purchase
@@ -286,26 +286,22 @@ function check(name, ok, details = {}) {
       check("Upgrade purchase control is present", false, { selector: '[data-action="upgrade:buy"][data-upgrade-id="creator_will"]' });
     }
 
-    const researchResult = await page.evaluate(async () => {
-      const [epModule, researchModule] = await Promise.all([
-        import("./js/ep/Manager.js"),
-        import("./js/research/Manager.js")
-      ]);
-      const research = researchModule.default.get("agriculture");
-      const before = research?.level ?? 0;
-      epModule.default.add?.(1000000);
-      const bought = researchModule.default.buy("agriculture");
-      return {
-        bought,
-        before,
-        after: research?.level ?? 0,
-        multiplier: researchModule.default.getTotalMultiplier()
-      };
+    const researchButton = page.locator('[data-action="research:buy"][data-research-id="agriculture"]');
+    check("Research purchase control is visible and affordable", await researchButton.count() === 1 && await researchButton.isEnabled());
+    const researchBefore = await page.evaluate(async () => {
+      const m = await import("./js/research/Manager.js");
+      return { level: m.default.get("agriculture")?.level ?? 0, multiplier: m.default.getTotalMultiplier() };
     });
-    check("Research purchase and multiplier calculation work at subsystem level",
-      researchResult.bought && researchResult.after === researchResult.before + 1 &&
-      researchResult.multiplier > 1,
-      researchResult
+    await researchButton.tap();
+    await page.waitForTimeout(100);
+    const researchAfter = await page.evaluate(async () => {
+      const m = await import("./js/research/Manager.js");
+      return { level: m.default.get("agriculture")?.level ?? 0, multiplier: m.default.getTotalMultiplier() };
+    });
+    check("Research purchase through visible UI changes level and multiplier",
+      researchAfter.level === researchBefore.level + 1 &&
+      researchAfter.multiplier > researchBefore.multiplier,
+      { before: researchBefore, after: researchAfter }
     );
 
     // 3) Save/reload/restore through the actual SaveManager and page lifecycle.
