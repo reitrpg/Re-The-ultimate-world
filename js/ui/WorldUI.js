@@ -443,16 +443,49 @@ class WorldUI {
     }
 
     refreshExperience() {
-        const value = document.getElementById("world-exp-value");
         const world = WorldManager.getActive();
+        const index = WorldManager.getActiveIndex();
 
-        if (!value || !world) return;
+        if (!world) return;
 
-        value.textContent =
-            "EXP: " +
-            Formatter.format(world.exp) +
-            " / " +
-            Formatter.format(world.getRequiredExperience());
+        const card = document.querySelector(
+            ".world-card[data-world-index='" + CSS.escape(String(index)) + "']"
+        );
+
+        if (!card) return;
+
+        const levelSummary = card.querySelector(".world-card-level");
+        if (levelSummary) {
+            levelSummary.textContent = "Lv " + world.level;
+        }
+
+        const infoRows = card.querySelectorAll(".world-card-info .world-card-row");
+        infoRows.forEach(row => {
+            if (row.textContent.startsWith("Lv:")) {
+                row.textContent = "Lv: " + world.level;
+            } else if (row.textContent.startsWith("EXP:")) {
+                row.textContent =
+                    "EXP: " +
+                    Formatter.format(world.exp) +
+                    "/" +
+                    Formatter.format(world.getRequiredExperience());
+            }
+        });
+
+        const newBirthRows = card.querySelectorAll(".world-newbirth .world-card-row");
+        if (newBirthRows[0]) {
+            newBirthRows[0].textContent =
+                "新生倍率: ×" + Formatter.format(world.newBirthMultiplier);
+        }
+        if (newBirthRows[1]) {
+            newBirthRows[1].textContent =
+                "新生増加倍率: ×" + Formatter.format(world.getNewBirthMultiplier());
+        }
+
+        const newBirthButton = card.querySelector("[data-action='newbirth:request']");
+        if (newBirthButton) {
+            newBirthButton.disabled = !world.canNewBirth();
+        }
     }
 
     render() {
