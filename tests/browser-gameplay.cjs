@@ -228,7 +228,7 @@ function check(name, ok, details = {}) {
     }
 
 
-    // 1) Measure real elapsed-time progression. This does not patch Date.now()
+    // 1) Measure five minutes of real-time progression at 1000x. This does not patch Date.now()
     // and does not invoke game.update() manually.
     await page.evaluate(async () => {
       const game = (await import("./js/core/game.js")).default;
@@ -248,7 +248,7 @@ function check(name, ok, details = {}) {
     const timeSeries = [];
     const seriesStart = Date.now();
     const seriesInitial = await readGameState();
-    for (const targetSeconds of [1, 5, 15, 30, 60]) {
+    for (const targetSeconds of [1, 5, 15, 30, 60, 120, 180, 240, 300]) {
       const targetAt = seriesStart + targetSeconds * 1000;
       while (Date.now() < targetAt) {
         await page.waitForTimeout(Math.min(250, Math.max(10, targetAt - Date.now())));
@@ -290,17 +290,17 @@ function check(name, ok, details = {}) {
     check("Real-time progression sampled through 300 seconds",
       seriesFinal.level >= seriesInitial.level &&
       seriesFinal.plant !== seriesInitial.plant &&
-      timeSeries.length === 5,
+      timeSeries.length === 9,
       { samples: timeSeries, initial: seriesInitial, final: seriesFinal }
     );
-    check("Real interval loop remains active during 60-second load",
-      cadence.updateCount >= 100 &&
+    check("Real interval loop remains active during five-minute accelerated load",
+      cadence.updateCount >= 1000 &&
       cadence.medianIntervalMs !== null &&
       cadence.p95IntervalMs !== null &&
       cadence.maxIntervalMs !== null,
       cadence
     );
-    report.realTimeProgression = { samples: timeSeries, durationSeconds: 60, cadence };
+    report.realTimeProgression = { samples: timeSeries, durationSeconds: 300, cadence };
 
     // 2) Exercise real upgrade purchase controls. The research subsystem is sealed
     // and deliberately excluded from this test suite.
@@ -353,7 +353,7 @@ function check(name, ok, details = {}) {
     const normalSeriesStart = Date.now();
     const normalSeriesInitial = await readGameState();
     const normalTimeSeries = [];
-    for (const targetSeconds of [1, 5, 15, 30]) {
+    for (const targetSeconds of [1, 5, 15, 30, 60]) {
       const targetAt = normalSeriesStart + targetSeconds * 1000;
       while (Date.now() < targetAt) {
         await page.waitForTimeout(Math.min(250, Math.max(10, targetAt - Date.now())));
@@ -373,7 +373,7 @@ function check(name, ok, details = {}) {
       const BigNumber = module.default;
       return BigNumber.from(after).greater(BigNumber.from(before));
     }, { before: normalSeriesInitial.plant, after: normalSeriesFinal.plant });
-    check("Normal 1x game loop progresses over 30 real seconds",
+    check("Normal 1x game loop progresses over 60 real seconds",
       normalSpeedState.speedMultiplier === 1 &&
       normalTimeSeries.length === 5 &&
       (normalSeriesFinal.level > normalSeriesInitial.level || normalSeriesIncreased),
@@ -381,7 +381,7 @@ function check(name, ok, details = {}) {
     );
     report.normalSpeedProgression = {
       samples: normalTimeSeries,
-      durationSeconds: 30,
+      durationSeconds: 60,
       initial: normalSeriesInitial,
       final: normalSeriesFinal
     };
@@ -427,7 +427,6 @@ function check(name, ok, details = {}) {
         plant: resourceModule.default.get("plant")?.amount?.toString?.() ?? "0",
         ep: epModule.default.get()?.toString?.() ?? null,
         upgradeLevel: (await import("./js/upgrades/Manager.js")).default.get("creator_will")?.level ?? 0,
-        researchLevel: (await import("./js/research/Manager.js")).default.get("agriculture")?.level ?? 0,
         offlineTime: statisticsModule.default.getOfflineTime()
       };
     });
