@@ -179,14 +179,15 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
         creatorWillLevel: UpgradeManager.get("creator_will")?.level ?? 0,
         purchasesCount: purchases.length,
         conversionFallbackCount,
-        purchases,
+        purchaseLog: purchases.slice(0, 200),
         snapshots
       };
     }, { speed, maxRealSeconds: MAX_REAL_SECONDS });
 
     results.push(result);
     await context.close();
-    console.log("SPEED_STUDY_RESULT " + JSON.stringify(result));
+    console.log("SPEED_STUDY_SUMMARY " + JSON.stringify({ speed: result.speed, status: result.status, realSeconds: result.realSeconds, simulatedSeconds: result.simulatedSeconds, worldLevel: result.worldLevel, averageUpgradeLevel: result.averageUpgradeLevel, upgradeLevels: result.upgradeLevels, creatorWillLevel: result.creatorWillLevel, purchasesCount: result.purchasesCount }));
+    console.log("SPEED_STUDY_SERIES " + JSON.stringify(result.snapshots.map(s => [s.realSeconds, s.averageUpgradeLevel, s.worldLevel])));
     if (result.status !== "reached-level-100") {
       throw new Error("Speed " + speed + "x did not reach World Lv100 within " + MAX_REAL_SECONDS + " simulated real seconds");
     }
@@ -228,6 +229,10 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
   })), null, 2));
 
   await browser.close();
+  if (results.some(r => r.status !== "reached-level-100")) {
+    console.error("At least one speed failed to reach World Lv100 within the test horizon.");
+    process.exitCode = 1;
+  }
   if (errors.length) {
     console.error("Browser errors during speed study:", JSON.stringify(errors));
     process.exitCode = 1;
