@@ -88,10 +88,12 @@ function check(name, ok, details = {}) {
         import("./js/core/game.js"),
         import("./js/world/Manager.js"),
         import("./js/settings/Manager.js"),
-        import("./js/resource/Manager.js")
+        import("./js/resource/Manager.js"),
+        import("./js/ep/Manager.js")
       ]);
       const world = worldModule.default.getActive();
       const plant = resourceModule.default.get("plant");
+      const ep = epModule.default.get();
       return {
         running: gameModule.default.running,
         tickSpeed: settingsModule.default.getTickSpeed(),
@@ -99,7 +101,8 @@ function check(name, ok, details = {}) {
         level: world?.level ?? null,
         exp: world?.exp?.toString?.() ?? String(world?.exp),
         plant: plant?.amount?.toString?.() ?? String(plant?.amount),
-        plantProduction: plant?.production?.toString?.() ?? String(plant?.production)
+        plantProduction: plant?.production?.toString?.() ?? String(plant?.production),
+        ep: ep?.toString?.() ?? String(ep)
       };
     });
     const initialState = await readGameState();
@@ -228,6 +231,81 @@ function check(name, ok, details = {}) {
     }
 
 
+    // Start a test-only 5-second autosave interval before the five-minute load run.
+    const autosaveStress = await page.evaluate(async () => {
+      const [saveModule, settingsModule] = await Promise.all([
+        import("./js/core/save.js"),
+        import("./js/settings/Manager.js")
+      ]);
+      const save = saveModule.default;
+      const settings = settingsModule.default;
+      const previousInterval = settings.getAutoSaveInterval();
+      settings.set("autoSaveInterval", 5000);
+      save.restartAutoSave();
+      return { previousInterval, activeInterval: settings.getAutoSaveInterval() };
+    });
+
+    // Compare 10x and 100x using the real interval loop and real elapsed wall time.
+    // 1x is measured below for 60 seconds; 1000x is measured below for 300 seconds.
+    const speedComparison = [];
+    await page.locator('[data-tab="settings"]').tap();
+    await page.waitForFunction(() => !document.querySelector("#settings-tab").hidden);
+    if (!(await page.locator("#settings-debug").isChecked())) {
+      await page.locator("#settings-debug").check();
+      await page.waitForFunction(() => !document.querySelector("#debug-panel").hidden);
+    }
+    for (const multiplier of [10, 100]) {
+      await page.locator("#settings-debug-speed").selectOption(String(multiplier));
+      const speedState = await readGameState();
+      check(`Debug speed set to ${multiplier}x for real-time measurement`,
+        speedState.multiplier === multiplier,
+        speedState
+      );
+      const startedAt = Date.now();
+      const initial = await readGameState();
+      const samples = [];
+      for (const targetSeconds of [1, 5, 15, 30]) {
+        const targetAt = startedAt + targetSeconds * 1000;
+        while (Date.now() < targetAt) {
+          await page.waitForTimeout(Math.min(250, Math.max(10, targetAt - Date.now())));
+        }
+        const state = await readGameState();
+        samples.push({
+          elapsedSeconds: Number(((Date.now() - startedAt) / 1000).toFixed(2)),
+          level: state.level,
+          exp: state.exp,
+          plant: state.plant,
+          plantProduction: state.plantProduction,
+          ep: state.ep
+        });
+      }
+      const final = await readGameState();
+      const plantIncreased = await page.evaluate(async ({ before, after }) => {
+        const BigNumber = (await import("./js/number/BigNumber.js")).default;
+        return BigNumber.from(after).greater(BigNumber.from(before));
+      }, { before: initial.plant, after: final.plant });
+      check(`Real-time ${multiplier}x simulation progresses for 30 seconds`,
+        final.multiplier === multiplier && (final.level > initial.level || plantIncreased),
+        { multiplier, durationSeconds: Date.now() - startedAt, initial, final, samples }
+      );
+      speedComparison.push({
+        multiplier,
+        durationSeconds: Number(((Date.now() - startedAt) / 1000).toFixed(2)),
+        initial,
+        samples,
+        final,
+        plantIncreased
+      });
+    }
+    report.speedComparison = {
+      testedMultipliers: [1, 10, 100, 1000],
+      note: "1x: 60 seconds; 10x and 100x: 30 seconds each; 1000x: 300 seconds. These are independent wall-clock measurements, not virtual-time results.",
+      measurements: speedComparison
+    };
+    await page.locator("#settings-debug-speed").selectOption("1000");
+    await page.locator('[data-tab="world"]').tap();
+    await page.waitForFunction(() => !document.querySelector("#world-tab").hidden);
+
     // 1) Measure five minutes of real-time progression at 1000x. This does not patch Date.now()
     // and does not invoke game.update() manually.
     await page.evaluate(async () => {
@@ -259,6 +337,8 @@ function check(name, ok, details = {}) {
         level: state.level,
         exp: state.exp,
         plant: state.plant,
+        ep: state.ep,
+        heapUsedBytes: await page.evaluate(() => performance.memory?.usedJSHeapSize ?? null),
         metal: (await page.evaluate(async () => {
           const m = await import("./js/resource/Manager.js");
           return m.default.get("metal")?.amount?.toString?.() ?? "0";
@@ -301,6 +381,36 @@ function check(name, ok, details = {}) {
       cadence
     );
     report.realTimeProgression = { samples: timeSeries, durationSeconds: 300, cadence };
+
+    const autosaveResult = await page.evaluate(async () => {
+      const save = (await import("./js/core/save.js")).default;
+      const raw = localStorage.getItem("world_creator_save");
+      let parsed = null;
+      try { parsed = raw ? JSON.parse(raw) : null; } catch (_) {}
+      save.stopAutoSave();
+      const settings = (await import("./js/settings/Manager.js")).default;
+      settings.set("autoSaveInterval", 30000);
+      save.restartAutoSave();
+      return {
+        exists: Boolean(raw),
+        validJson: Boolean(parsed && typeof parsed === "object"),
+        version: parsed?.version ?? null,
+        timestamp: parsed?.timestamp ?? null
+      };
+    });
+    check("Autosave remains valid during the accelerated long-run test",
+      autosaveResult.exists && autosaveResult.validJson && autosaveResult.version === 8,
+      { configuration: autosaveStress, result: autosaveResult }
+    );
+    report.stress = {
+      durationSeconds: 300,
+      cadence,
+      heapSamples: timeSeries.map(sample => ({
+        elapsedSeconds: sample.elapsedSeconds,
+        heapUsedBytes: sample.heapUsedBytes
+      })),
+      autosave: autosaveResult
+    };
 
     // 2) Exercise real upgrade purchase controls. The research subsystem is sealed
     // and deliberately excluded from this test suite.
@@ -364,7 +474,8 @@ function check(name, ok, details = {}) {
         level: state.level,
         exp: state.exp,
         plant: state.plant,
-        plantProduction: state.plantProduction
+        plantProduction: state.plantProduction,
+        ep: state.ep
       });
     }
     const normalSeriesFinal = await readGameState();
@@ -459,6 +570,54 @@ function check(name, ok, details = {}) {
       }
     );
     report.persistence = { beforeReload, afterReload, offlineBefore, offlineAfter, syntheticOfflineMs: 60000 };
+
+    // Malformed-save recovery is isolated in a separate browser context.
+    const malformedContext = await browser.newContext({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true });
+    const malformedPage = await malformedContext.newPage();
+    await malformedPage.addInitScript(() => localStorage.setItem("world_creator_save", "{ definitely not valid JSON"));
+    await malformedPage.goto(BASE_URL, { waitUntil: "networkidle", timeout: 30000 });
+    await malformedPage.waitForFunction(() => document.documentElement.dataset.appReady === "true", null, { timeout: 20000 });
+    const malformedResult = await malformedPage.evaluate(() => ({
+      appReady: document.documentElement.dataset.appReady === "true",
+      saveRemoved: localStorage.getItem("world_creator_save") === null,
+      worldCards: document.querySelectorAll(".world-card").length
+    }));
+    check("Malformed save is rejected and removed without preventing app startup",
+      malformedResult.appReady && malformedResult.saveRemoved,
+      malformedResult
+    );
+    await malformedContext.close();
+
+    // Change only the version marker in an otherwise valid serialized save.
+    const legacyRaw = await page.evaluate(() => {
+      const raw = localStorage.getItem("world_creator_save");
+      return raw ? raw.replace(/"version"\\s*:\\s*8/, '"version":1') : null;
+    });
+    const legacyContext = await browser.newContext({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true });
+    const legacyPage = await legacyContext.newPage();
+    await legacyPage.addInitScript(raw => {
+      if (raw) localStorage.setItem("world_creator_save", raw);
+      localStorage.setItem("world_creator_last_time", String(Date.now()));
+    }, legacyRaw);
+    await legacyPage.goto(BASE_URL, { waitUntil: "networkidle", timeout: 30000 });
+    await legacyPage.waitForFunction(() => document.documentElement.dataset.appReady === "true", null, { timeout: 20000 });
+    const legacyResult = await legacyPage.evaluate(() => {
+      const raw = localStorage.getItem("world_creator_save");
+      let parsed = null;
+      try { parsed = raw ? JSON.parse(raw) : null; } catch (_) {}
+      return {
+        appReady: document.documentElement.dataset.appReady === "true",
+        saveRetained: Boolean(raw),
+        version: parsed?.version ?? null,
+        worldCards: document.querySelectorAll(".world-card").length
+      };
+    });
+    check("Legacy version save loads without crashing and remains available",
+      Boolean(legacyRaw) && legacyResult.appReady && legacyResult.saveRetained && legacyResult.version === 1,
+      { legacyResult }
+    );
+    report.saveRecovery = { malformed: malformedResult, legacy: legacyResult };
+    await legacyContext.close();
 
     check("No uncaught JavaScript exceptions", report.pageErrors.length === 0, { errors: report.pageErrors });
     check("No console errors", report.consoleErrors.length === 0, { errors: report.consoleErrors });
