@@ -50,7 +50,7 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
     const result = await page.evaluate(async ({ speed, maxRealSeconds }) => {
       const [
         gameModule, worldModule, settingsModule, resourceModule, epModule,
-        upgradeModule, converterModule, achievementModule, eventBusModule
+        upgradeModule, converterModule, achievementModule, eventBusModule, numberModule
       ] = await Promise.all([
         import("./js/core/game.js"),
         import("./js/world/Manager.js"),
@@ -60,7 +60,8 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
         import("./js/upgrades/Manager.js"),
         import("./js/converter/Converter.js"),
         import("./js/achievements/Manager.js"),
-        import("./js/core/eventBus.js")
+        import("./js/core/eventBus.js"),
+        import("./js/number/BigNumber.js")
       ]);
 
       const Game = gameModule.default;
@@ -72,6 +73,7 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
       const Converter = converterModule.default;
       const AchievementManager = achievementModule.default;
       const eventBus = eventBusModule.default;
+      const BigNumber = numberModule.default;
 
       Game.stop();
       SettingsManager.set("debugMode", true);
@@ -89,6 +91,7 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
       const avgLevel = () => upgradeList.reduce((sum, u) => sum + u.level, 0) / Math.max(1, upgradeList.length);
       const snapshots = [];
       const purchases = [];
+      let conversionFallbackCount = 0;
       let realSeconds = 0;
       let simSeconds = 0;
       let previousAverage = avgLevel();
@@ -114,7 +117,27 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
       }
 
       function convertResources() {
-        for (const id of ["plant", "metal", "magic"]) converter.convertAll(id);
+        for (const id of ["plant", "metal", "magic"]) {
+          let guard = 0;
+          while (converter.canConvert(id) && guard < 10000) {
+            if (!converter.convert(id)) break;
+            guard++;
+          }
+          if (converter.canConvert(id)) {
+            // Bulk fallback preserves the 10 resource -> 1 EP rule if the
+            // converter's bulk/whole-count path cannot represent the count.
+            const resource = ResourceManager.get(id);
+            const amount = resource?.amount?.toNumber?.();
+            if (Number.isFinite(amount) && amount >= 10) {
+              const count = Math.floor(amount / 10);
+              if (count > 0) {
+                ResourceManager.consume(id, BigNumber.from(count * 10));
+                EPManager.add(BigNumber.from(count).multiply(AchievementManager.getTotalMultiplier()));
+                conversionFallbackCount++;
+              }
+            }
+          }
+        }
       }
 
       function capture(force = false) {
@@ -168,6 +191,7 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
         upgradeLevels: Object.fromEntries(upgradeList.map(u => [u.id, u.level])),
         creatorWillLevel: UpgradeManager.get("creator_will")?.level ?? 0,
         purchasesCount: purchases.length,
+        conversionFallbackCount,
         purchases,
         snapshots
       };
@@ -212,7 +236,8 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
     averageUpgradeLevel: r.averageUpgradeLevel,
     upgradeLevels: r.upgradeLevels,
     creatorWillLevel: r.creatorWillLevel,
-    purchasesCount: r.purchasesCount
+    purchasesCount: r.purchasesCount,
+    conversionFallbackCount: r.conversionFallbackCount
   })), null, 2));
 
   await browser.close();
