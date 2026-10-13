@@ -80,7 +80,7 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
 
       const originalEmit = eventBus.emit;
       eventBus.emit = () => {};
-      const converter = new Converter();
+      const converter = Converter;
       const upgradeList = UpgradeManager.getByType("infinite").filter(u => u.id !== "creator_will");
       const allInfinite = UpgradeManager.getByType("infinite");
       const world = WorldManager.getActive();
