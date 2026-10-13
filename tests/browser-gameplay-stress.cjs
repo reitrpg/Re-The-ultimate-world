@@ -174,7 +174,7 @@ function check(name, ok, details = {}) {
         updateCount: samples.length,
         medianIntervalMs: percentile(0.5),
         p95IntervalMs: percentile(0.95),
-        maxIntervalMs: samples.length ? Math.max(...samples) : null
+        maxIntervalMs: samples.length ? samples.reduce((max, value) => Math.max(max, value), -Infinity) : null
       };
     });
 
