@@ -230,6 +230,21 @@ function check(name, ok, details = {}) {
 
     // 1) Measure real elapsed-time progression. This does not patch Date.now()
     // and does not invoke game.update() manually.
+    await page.evaluate(async () => {
+      const game = (await import("./js/core/game.js")).default;
+      if (game.__wcOriginalUpdate) throw new Error("Game cadence instrumentation already active");
+      const originalUpdate = game.update;
+      const samples = [];
+      let previous = performance.now();
+      game.__wcOriginalUpdate = originalUpdate;
+      game.__wcCadenceSamples = samples;
+      game.update = function (...args) {
+        const now = performance.now();
+        if (samples.length < 100000) samples.push(now - previous);
+        previous = now;
+        return originalUpdate.apply(this, args);
+      };
+    });
     const timeSeries = [];
     const seriesStart = Date.now();
     const seriesInitial = await readGameState();
@@ -255,13 +270,37 @@ function check(name, ok, details = {}) {
       });
     }
     const seriesFinal = await readGameState();
+    const cadence = await page.evaluate(async () => {
+      const game = (await import("./js/core/game.js")).default;
+      const samples = game.__wcCadenceSamples || [];
+      game.update = game.__wcOriginalUpdate || game.update;
+      delete game.__wcOriginalUpdate;
+      delete game.__wcCadenceSamples;
+      const sorted = [...samples].sort((a, b) => a - b);
+      const percentile = p => sorted.length
+        ? sorted[Math.min(sorted.length - 1, Math.floor((sorted.length - 1) * p))]
+        : null;
+      return {
+        updateCount: samples.length,
+        medianIntervalMs: percentile(0.5),
+        p95IntervalMs: percentile(0.95),
+        maxIntervalMs: samples.length ? Math.max(...samples) : null
+      };
+    });
     check("Real-time progression sampled at 1/5/15/30/60 seconds",
       seriesFinal.level >= seriesInitial.level &&
       seriesFinal.plant !== seriesInitial.plant &&
       timeSeries.length === 5,
       { samples: timeSeries, initial: seriesInitial, final: seriesFinal }
     );
-    report.realTimeProgression = { samples: timeSeries, durationSeconds: 60 };
+    check("Real interval loop remains active during 60-second load",
+      cadence.updateCount >= 100 &&
+      cadence.medianIntervalMs !== null &&
+      cadence.p95IntervalMs !== null &&
+      cadence.maxIntervalMs !== null,
+      cadence
+    );
+    report.realTimeProgression = { samples: timeSeries, durationSeconds: 60, cadence };
 
     // 2) Exercise actual purchase controls and independently validate research
     // calculations through the game's manager. Research has no visible purchase
@@ -304,13 +343,38 @@ function check(name, ok, details = {}) {
       { before: researchBefore, after: researchAfter }
     );
 
+    await page.locator('[data-tab="settings"]').tap();
+    await page.waitForFunction(() => !document.querySelector("#settings-tab").hidden);
+    if (await page.locator("#settings-debug").isChecked()) await page.locator("#settings-debug").uncheck();
+    await page.locator("#settings-tick-speed").fill("1000");
+    await page.locator("#settings-tick-speed").dispatchEvent("change");
+    await page.waitForTimeout(100);
+    const normalSpeedState = await page.evaluate(async () => {
+      const [settingsModule, gameModule] = await Promise.all([
+        import("./js/settings/Manager.js"),
+        import("./js/core/game.js")
+      ]);
+      return {
+        debugMode: settingsModule.default.isDebugMode(),
+        speedMultiplier: settingsModule.default.getGameSpeedMultiplier(),
+        tickSpeed: settingsModule.default.getTickSpeed(),
+        running: gameModule.default.running
+      };
+    });
+    check("Persistence tests run at normal game speed",
+      !normalSpeedState.debugMode && normalSpeedState.speedMultiplier === 1 &&
+      normalSpeedState.tickSpeed === 1000 && normalSpeedState.running,
+      normalSpeedState
+    );
+
     // 3) Save/reload/restore through the actual SaveManager and page lifecycle.
     const beforeReload = await page.evaluate(async () => {
-      const [saveModule, worldModule, resourceModule, epModule] = await Promise.all([
+      const [saveModule, worldModule, resourceModule, epModule, statisticsModule] = await Promise.all([
         import("./js/core/save.js"),
         import("./js/world/Manager.js"),
         import("./js/resource/Manager.js"),
-        import("./js/ep/Manager.js")
+        import("./js/ep/Manager.js"),
+        import("./js/statistics/Manager.js")
       ]);
       saveModule.default.save();
       return {
@@ -332,10 +396,11 @@ function check(name, ok, details = {}) {
     await page.reload({ waitUntil: "networkidle" });
     await page.waitForFunction(() => document.documentElement.dataset.appReady === "true", null, { timeout: 20000 });
     const afterReload = await page.evaluate(async () => {
-      const [worldModule, resourceModule, epModule] = await Promise.all([
+      const [worldModule, resourceModule, epModule, statisticsModule] = await Promise.all([
         import("./js/world/Manager.js"),
         import("./js/resource/Manager.js"),
-        import("./js/ep/Manager.js")
+        import("./js/ep/Manager.js"),
+        import("./js/statistics/Manager.js")
       ]);
       return {
         worldCount: worldModule.default.getAll().length,
@@ -343,7 +408,8 @@ function check(name, ok, details = {}) {
         plant: resourceModule.default.get("plant")?.amount?.toString?.() ?? "0",
         ep: epModule.default.get()?.toString?.() ?? null,
         upgradeLevel: (await import("./js/upgrades/Manager.js")).default.get("creator_will")?.level ?? 0,
-        researchLevel: (await import("./js/research/Manager.js")).default.get("agriculture")?.level ?? 0
+        researchLevel: (await import("./js/research/Manager.js")).default.get("agriculture")?.level ?? 0,
+        offlineTime: statisticsModule.default.getOfflineTime()
       };
     });
     check("Saved world and resources restore after page reload",
@@ -365,8 +431,15 @@ function check(name, ok, details = {}) {
       return BigNumber.from(after).greater(BigNumber.from(before));
     }, { before: offlineBefore, after: offlineAfter });
     check("Offline progress applies the synthetic 60-second closed interval",
-      offlineIncreased,
-      { before: offlineBefore, after: offlineAfter, elapsedSyntheticMs: 60000 }
+      offlineIncreased &&
+      afterReload.offlineTime >= beforeReload.offlineTime + 60,
+      {
+        before: offlineBefore,
+        after: offlineAfter,
+        offlineTimeBefore: beforeReload.offlineTime,
+        offlineTimeAfter: afterReload.offlineTime,
+        elapsedSyntheticMs: 60000
+      }
     );
     report.persistence = { beforeReload, afterReload, offlineBefore, offlineAfter, syntheticOfflineMs: 60000 };
 
