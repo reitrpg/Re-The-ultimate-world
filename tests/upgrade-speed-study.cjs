@@ -50,7 +50,7 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
     const result = await page.evaluate(async ({ speed, maxRealSeconds }) => {
       const [
         gameModule, worldModule, settingsModule, resourceModule, epModule,
-        upgradeModule, converterModule, achievementModule, eventBusModule, researchModule
+        upgradeModule, converterModule, achievementModule, eventBusModule
       ] = await Promise.all([
         import("./js/core/game.js"),
         import("./js/world/Manager.js"),
@@ -60,8 +60,7 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
         import("./js/upgrades/Manager.js"),
         import("./js/converter/Converter.js"),
         import("./js/achievements/Manager.js"),
-        import("./js/core/eventBus.js"),
-        import("./js/research/Manager.js")
+        import("./js/core/eventBus.js")
       ]);
 
       const Game = gameModule.default;
@@ -142,7 +141,7 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
         AchievementManager.update({
           worldManager: WorldManager,
           upgradeManager: UpgradeManager,
-          researchManager: researchModule.default
+          researchManager: undefined
         });
         convertResources();
         realSeconds = tick;
