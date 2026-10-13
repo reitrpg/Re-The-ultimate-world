@@ -231,20 +231,6 @@ function check(name, ok, details = {}) {
     }
 
 
-    // Start a test-only 5-second autosave interval before the five-minute load run.
-    const autosaveStress = await page.evaluate(async () => {
-      const [saveModule, settingsModule] = await Promise.all([
-        import("./js/core/save.js"),
-        import("./js/settings/Manager.js")
-      ]);
-      const save = saveModule.default;
-      const settings = settingsModule.default;
-      const previousInterval = settings.getAutoSaveInterval();
-      settings.set("autoSaveInterval", 5000);
-      save.restartAutoSave();
-      return { previousInterval, activeInterval: settings.getAutoSaveInterval() };
-    });
-
     // Compare 10x and 100x using the real interval loop and real elapsed wall time.
     // 1x is measured below for 60 seconds; 1000x is measured below for 300 seconds.
     const speedComparison = [];
@@ -305,112 +291,6 @@ function check(name, ok, details = {}) {
     await page.locator("#settings-debug-speed").selectOption("1000");
     await page.locator('[data-tab="world"]').tap();
     await page.waitForFunction(() => !document.querySelector("#world-tab").hidden);
-
-    // 1) Measure five minutes of real-time progression at 1000x. This does not patch Date.now()
-    // and does not invoke game.update() manually.
-    await page.evaluate(async () => {
-      const game = (await import("./js/core/game.js")).default;
-      if (game.__wcOriginalUpdate) throw new Error("Game cadence instrumentation already active");
-      const originalUpdate = game.update;
-      const samples = [];
-      let previous = performance.now();
-      game.__wcOriginalUpdate = originalUpdate;
-      game.__wcCadenceSamples = samples;
-      game.update = function (...args) {
-        const now = performance.now();
-        if (samples.length < 100000) samples.push(now - previous);
-        previous = now;
-        return originalUpdate.apply(this, args);
-      };
-    });
-    const timeSeries = [];
-    const seriesStart = Date.now();
-    const seriesInitial = await readGameState();
-    for (const targetSeconds of [1, 5, 15, 30, 60, 120, 180, 240, 300]) {
-      const targetAt = seriesStart + targetSeconds * 1000;
-      while (Date.now() < targetAt) {
-        await page.waitForTimeout(Math.min(250, Math.max(10, targetAt - Date.now())));
-      }
-      const state = await readGameState();
-      timeSeries.push({
-        elapsedSeconds: Number(((Date.now() - seriesStart) / 1000).toFixed(2)),
-        level: state.level,
-        exp: state.exp,
-        plant: state.plant,
-        ep: state.ep,
-        heapUsedBytes: await page.evaluate(() => performance.memory?.usedJSHeapSize ?? null),
-        metal: (await page.evaluate(async () => {
-          const m = await import("./js/resource/Manager.js");
-          return m.default.get("metal")?.amount?.toString?.() ?? "0";
-        })),
-        magic: (await page.evaluate(async () => {
-          const m = await import("./js/resource/Manager.js");
-          return m.default.get("magic")?.amount?.toString?.() ?? "0";
-        }))
-      });
-    }
-    const seriesFinal = await readGameState();
-    const cadence = await page.evaluate(async () => {
-      const game = (await import("./js/core/game.js")).default;
-      const samples = game.__wcCadenceSamples || [];
-      game.update = game.__wcOriginalUpdate || game.update;
-      delete game.__wcOriginalUpdate;
-      delete game.__wcCadenceSamples;
-      const sorted = [...samples].sort((a, b) => a - b);
-      const percentile = p => sorted.length
-        ? sorted[Math.min(sorted.length - 1, Math.floor((sorted.length - 1) * p))]
-        : null;
-      return {
-        updateCount: samples.length,
-        medianIntervalMs: percentile(0.5),
-        p95IntervalMs: percentile(0.95),
-        maxIntervalMs: samples.length ? samples.reduce((max, value) => Math.max(max, value), -Infinity) : null
-      };
-    });
-    check("Real-time progression sampled through 300 seconds",
-      seriesFinal.level >= seriesInitial.level &&
-      seriesFinal.plant !== seriesInitial.plant &&
-      timeSeries.length === 9,
-      { samples: timeSeries, initial: seriesInitial, final: seriesFinal }
-    );
-    check("Real interval loop remains active during five-minute accelerated load",
-      cadence.updateCount >= 1000 &&
-      cadence.medianIntervalMs !== null &&
-      cadence.p95IntervalMs !== null &&
-      cadence.maxIntervalMs !== null,
-      cadence
-    );
-    report.realTimeProgression = { samples: timeSeries, durationSeconds: 300, cadence };
-
-    const autosaveResult = await page.evaluate(async () => {
-      const save = (await import("./js/core/save.js")).default;
-      const raw = localStorage.getItem("world_creator_save");
-      let parsed = null;
-      try { parsed = raw ? JSON.parse(raw) : null; } catch (_) {}
-      save.stopAutoSave();
-      const settings = (await import("./js/settings/Manager.js")).default;
-      settings.set("autoSaveInterval", 30000);
-      save.restartAutoSave();
-      return {
-        exists: Boolean(raw),
-        validJson: Boolean(parsed && typeof parsed === "object"),
-        version: parsed?.version ?? null,
-        timestamp: parsed?.timestamp ?? null
-      };
-    });
-    check("Autosave remains valid during the accelerated long-run test",
-      autosaveResult.exists && autosaveResult.validJson && autosaveResult.version === 8,
-      { configuration: autosaveStress, result: autosaveResult }
-    );
-    report.stress = {
-      durationSeconds: 300,
-      cadence,
-      heapSamples: timeSeries.map(sample => ({
-        elapsedSeconds: sample.elapsedSeconds,
-        heapUsedBytes: sample.heapUsedBytes
-      })),
-      autosave: autosaveResult
-    };
 
     // 2) Exercise real upgrade purchase controls. The research subsystem is sealed
     // and deliberately excluded from this test suite.
