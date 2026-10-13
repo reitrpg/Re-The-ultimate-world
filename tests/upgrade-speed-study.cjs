@@ -50,7 +50,7 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
     const result = await page.evaluate(async ({ speed, maxRealSeconds }) => {
       const [
         gameModule, worldModule, settingsModule, resourceModule, epModule,
-        upgradeModule, converterModule, achievementModule, eventBusModule, numberModule
+        upgradeModule, achievementModule, eventBusModule, numberModule
       ] = await Promise.all([
         import("./js/core/game.js"),
         import("./js/world/Manager.js"),
@@ -58,7 +58,6 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
         import("./js/resource/Manager.js"),
         import("./js/ep/Manager.js"),
         import("./js/upgrades/Manager.js"),
-        import("./js/converter/Converter.js"),
         import("./js/achievements/Manager.js"),
         import("./js/core/eventBus.js"),
         import("./js/number/BigNumber.js")
@@ -70,7 +69,6 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
       const ResourceManager = resourceModule.default;
       const EPManager = epModule.default;
       const UpgradeManager = upgradeModule.default;
-      const Converter = converterModule.default;
       const AchievementManager = achievementModule.default;
       const eventBus = eventBusModule.default;
       const BigNumber = numberModule.default;
@@ -82,7 +80,6 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
 
       const originalEmit = eventBus.emit;
       eventBus.emit = () => {};
-      const converter = Converter;
       const upgradeList = UpgradeManager.getByType("infinite").filter(u => u.id !== "creator_will");
       const allInfinite = UpgradeManager.getByType("infinite");
       const world = WorldManager.getActive();
@@ -117,26 +114,16 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
       }
 
       function convertResources() {
+        // Match the current recipes: 10 units of any material yield 1 EP.
+        // Bulk conversion avoids making millions of individual UI conversions.
         for (const id of ["plant", "metal", "magic"]) {
-          let guard = 0;
-          while (converter.canConvert(id) && guard < 10000) {
-            if (!converter.convert(id)) break;
-            guard++;
-          }
-          {
-            // Bulk fallback preserves the 10 resource -> 1 EP rule if the
-            // converter's bulk/whole-count path cannot represent the count.
-            const resource = ResourceManager.get(id);
-            const amount = resource?.amount?.toNumber?.();
-            if (Number.isFinite(amount) && amount >= 10) {
-              const count = Math.floor(amount / 10);
-              if (count > 0) {
-                ResourceManager.consume(id, BigNumber.from(count * 10));
-                EPManager.add(BigNumber.from(count).multiply(AchievementManager.getTotalMultiplier()));
-                conversionFallbackCount++;
-              }
-            }
-          }
+          const resource = ResourceManager.get(id);
+          const amount = resource?.amount?.toNumber?.();
+          if (!Number.isFinite(amount) || amount < 10) continue;
+          const count = Math.floor(amount / 10);
+          if (count <= 0) continue;
+          ResourceManager.consume(id, BigNumber.from(count * 10));
+          EPManager.add(BigNumber.from(count).multiply(AchievementManager.getTotalMultiplier()));
         }
       }
 
@@ -172,7 +159,7 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
         buyCheapestAffordable();
 
         const avg = avgLevel();
-        if (tick % 5 === 0 || world.level >= 100 || avg !== previousAverage) capture(true);
+        if (tick % 30 === 0 || world.level >= 100 || avg !== previousAverage) capture(true);
         if (world.level >= 100) {
           capture(true);
           break;
@@ -213,7 +200,7 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
       purchaseRule: "Each tick converts all plant/metal/magic to EP, then repeatedly buys the currently cheapest affordable infinite upgrade. Creator's Will participates in purchasing but is excluded from the average.",
       averageDefinition: "Arithmetic mean of levels for divine_revelation, heavenly_blessing, and world_tree.",
       timeDefinition: "realSeconds = 1000 ms game-loop ticks; simulatedSeconds = realSeconds multiplied by the speed multiplier.",
-      caveat: "Deterministic browser simulation using production World.update, Converter, UpgradeManager and AchievementManager logic. UI event emissions are muted during the loop for speed; research is not purchased or tested."
+      caveat: "Deterministic browser simulation using production World.update, UpgradeManager and AchievementManager logic, with the current material-to-EP rate (10:1) applied in bulk. UI event emissions are muted during the loop for speed; research is not purchased or tested."
     },
     results,
     errors
