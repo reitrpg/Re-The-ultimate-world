@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: upgrade-speed-study-fast
+  group: upgrade-speed-study-v3
   cancel-in-progress: true
 
 jobs:
