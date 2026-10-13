@@ -591,7 +591,7 @@ function check(name, ok, details = {}) {
     // Change only the version marker in an otherwise valid serialized save.
     const legacyRaw = await page.evaluate(() => {
       const raw = localStorage.getItem("world_creator_save");
-      return raw ? raw.replace(/"version"\\s*:\\s*8/, '"version":1') : null;
+      return raw ? raw.replace(/"version"\s*:\s*8/, '"version":1') : null;
     });
     const legacyContext = await browser.newContext({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true });
     const legacyPage = await legacyContext.newPage();
