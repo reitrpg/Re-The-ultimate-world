@@ -84,7 +84,7 @@ function check(name, ok, details = {}) {
     // Inspect singleton state through read-only module imports while the real
     // interval loop runs. This distinguishes a rendering issue from a stalled simulation.
     const readGameState = () => page.evaluate(async () => {
-      const [gameModule, worldModule, settingsModule, resourceModule] = await Promise.all([
+      const [gameModule, worldModule, settingsModule, resourceModule, epModule] = await Promise.all([
         import("./js/core/game.js"),
         import("./js/world/Manager.js"),
         import("./js/settings/Manager.js"),
