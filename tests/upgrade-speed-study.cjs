@@ -123,7 +123,7 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
             if (!converter.convert(id)) break;
             guard++;
           }
-          if (converter.canConvert(id)) {
+          {
             // Bulk fallback preserves the 10 resource -> 1 EP rule if the
             // converter's bulk/whole-count path cannot represent the count.
             const resource = ResourceManager.get(id);
