@@ -1,0 +1,62 @@
+name: Browser Gameplay Stress Test
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'style.css'
+      - 'css/**'
+      - 'js/**'
+      - 'tests/browser-gameplay-stress.cjs'
+      - '.github/workflows/browser-gameplay-stress.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: browser-gameplay-stress-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  browser-gameplay-stress:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Start local web server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/world-creator-stress-http.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail http://127.0.0.1:4173/ > /dev/null
+
+      - name: Run five-minute real-time stress checks
+        run: node tests/browser-gameplay-stress.cjs
+
+      - name: Upload stress report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: world-creator-browser-gameplay-stress-report
+          path: |
+            test-results/
+            /tmp/world-creator-stress-http.log
+          if-no-files-found: warn
