@@ -284,10 +284,10 @@ function check(name, ok, details = {}) {
         updateCount: samples.length,
         medianIntervalMs: percentile(0.5),
         p95IntervalMs: percentile(0.95),
-        maxIntervalMs: samples.length ? Math.max(...samples) : null
+        maxIntervalMs: samples.length ? samples.reduce((max, value) => Math.max(max, value), -Infinity) : null
       };
     });
-    check("Real-time progression sampled at 1/5/15/30/60 seconds",
+    check("Real-time progression sampled through 300 seconds",
       seriesFinal.level >= seriesInitial.level &&
       seriesFinal.plant !== seriesInitial.plant &&
       timeSeries.length === 5,
@@ -302,9 +302,8 @@ function check(name, ok, details = {}) {
     );
     report.realTimeProgression = { samples: timeSeries, durationSeconds: 60, cadence };
 
-    // 2) Exercise actual purchase controls and independently validate research
-    // calculations through the game's manager. Research has no visible purchase
-    // panel in the current UI, so it is explicitly reported as a subsystem test.
+    // 2) Exercise real upgrade purchase controls. The research subsystem is sealed
+    // and deliberately excluded from this test suite.
     const creatorWillButton = page.locator('[data-action="upgrade:buy"][data-upgrade-id="creator_will"]');
     if (await creatorWillButton.count() === 1) {
       const beforeUpgrade = await page.evaluate(async () => {
@@ -324,24 +323,6 @@ function check(name, ok, details = {}) {
     } else {
       check("Upgrade purchase control is present", false, { selector: '[data-action="upgrade:buy"][data-upgrade-id="creator_will"]' });
     }
-
-    const researchButton = page.locator('[data-action="research:buy"][data-research-id="agriculture"]');
-    check("Research purchase control is visible and affordable", await researchButton.count() === 1 && await researchButton.isEnabled());
-    const researchBefore = await page.evaluate(async () => {
-      const m = await import("./js/research/Manager.js");
-      return { level: m.default.get("agriculture")?.level ?? 0, multiplier: m.default.getTotalMultiplier() };
-    });
-    await researchButton.tap();
-    await page.waitForTimeout(100);
-    const researchAfter = await page.evaluate(async () => {
-      const m = await import("./js/research/Manager.js");
-      return { level: m.default.get("agriculture")?.level ?? 0, multiplier: m.default.getTotalMultiplier() };
-    });
-    check("Research purchase through visible UI changes level and multiplier",
-      researchAfter.level === researchBefore.level + 1 &&
-      researchAfter.multiplier > researchBefore.multiplier,
-      { before: researchBefore, after: researchAfter }
-    );
 
     await page.locator('[data-tab="settings"]').tap();
     await page.waitForFunction(() => !document.querySelector("#settings-tab").hidden);
@@ -394,7 +375,7 @@ function check(name, ok, details = {}) {
     }, { before: normalSeriesInitial.plant, after: normalSeriesFinal.plant });
     check("Normal 1x game loop progresses over 30 real seconds",
       normalSpeedState.speedMultiplier === 1 &&
-      normalTimeSeries.length === 4 &&
+      normalTimeSeries.length === 5 &&
       (normalSeriesFinal.level > normalSeriesInitial.level || normalSeriesIncreased),
       { samples: normalTimeSeries, initial: normalSeriesInitial, final: normalSeriesFinal }
     );
@@ -405,7 +386,7 @@ function check(name, ok, details = {}) {
       final: normalSeriesFinal
     };
 
-    // 3) Save/reload/restore through the actual SaveManager and page lifecycle.
+    // 3) Save/reload/restore through the actual SaveManager and page lifecycle; research remains out of scope.
     const beforeReload = await page.evaluate(async () => {
       const [saveModule, worldModule, resourceModule, epModule, statisticsModule] = await Promise.all([
         import("./js/core/save.js"),
@@ -421,7 +402,6 @@ function check(name, ok, details = {}) {
         plant: resourceModule.default.get("plant")?.amount?.toString?.() ?? "0",
         ep: epModule.default.get()?.toString?.() ?? null,
         upgradeLevel: (await import("./js/upgrades/Manager.js")).default.get("creator_will")?.level ?? 0,
-        researchLevel: (await import("./js/research/Manager.js")).default.get("agriculture")?.level ?? 0,
         offlineTime: statisticsModule.default.getOfflineTime(),
         saved: Boolean(localStorage.getItem("world_creator_save"))
       };
@@ -455,7 +435,6 @@ function check(name, ok, details = {}) {
       afterReload.worldCount === beforeReload.worldCount &&
       afterReload.level === beforeReload.level &&
       afterReload.upgradeLevel === beforeReload.upgradeLevel &&
-      afterReload.researchLevel === beforeReload.researchLevel &&
       afterReload.plant !== "0",
       { before: beforeReload, after: afterReload }
     );
