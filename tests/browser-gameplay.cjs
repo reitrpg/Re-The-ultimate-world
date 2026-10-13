@@ -384,6 +384,7 @@ function check(name, ok, details = {}) {
         ep: epModule.default.get()?.toString?.() ?? null,
         upgradeLevel: (await import("./js/upgrades/Manager.js")).default.get("creator_will")?.level ?? 0,
         researchLevel: (await import("./js/research/Manager.js")).default.get("agriculture")?.level ?? 0,
+        offlineTime: statisticsModule.default.getOfflineTime(),
         saved: Boolean(localStorage.getItem("world_creator_save"))
       };
     });
