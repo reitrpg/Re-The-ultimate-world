@@ -95,7 +95,7 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
 
       function buyCheapestAffordable() {
         let guard = 0;
-        while (guard++ < 10000) {
+        while (guard++ < 1) {
           const candidates = allInfinite
             .filter(u => u.isUnlocked() && !u.isMaxed() && u.canBuy())
             .sort((a, b) => {
@@ -198,7 +198,7 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
     method: {
       tickSpeedMs: 1000,
       speeds: SPEEDS,
-      purchaseRule: "Each tick converts all plant/metal/magic to EP, then repeatedly buys the currently cheapest affordable infinite upgrade. Creator's Will participates in purchasing but is excluded from the average.",
+      purchaseRule: "Each tick converts all plant/metal/magic to EP, then buys one currently cheapest affordable infinite upgrade per game tick. Creator's Will participates in purchasing but is excluded from the average.",
       averageDefinition: "Arithmetic mean of levels for divine_revelation, heavenly_blessing, and world_tree.",
       timeDefinition: "realSeconds = 1000 ms game-loop ticks; simulatedSeconds = realSeconds multiplied by the speed multiplier.",
       caveat: "Deterministic browser simulation using production World.update, UpgradeManager and AchievementManager logic, with the current material-to-EP rate (10:1) applied in bulk. UI event emissions are muted during the loop for speed; research is not purchased or tested."
