@@ -367,6 +367,44 @@ function check(name, ok, details = {}) {
       normalSpeedState
     );
 
+    // Verify actual 1x progression separately from debug acceleration.
+    // This samples the normal browser interval loop over real elapsed time.
+    const normalSeriesStart = Date.now();
+    const normalSeriesInitial = await readGameState();
+    const normalTimeSeries = [];
+    for (const targetSeconds of [1, 5, 15, 30]) {
+      const targetAt = normalSeriesStart + targetSeconds * 1000;
+      while (Date.now() < targetAt) {
+        await page.waitForTimeout(Math.min(250, Math.max(10, targetAt - Date.now())));
+      }
+      const state = await readGameState();
+      normalTimeSeries.push({
+        elapsedSeconds: Number(((Date.now() - normalSeriesStart) / 1000).toFixed(2)),
+        level: state.level,
+        exp: state.exp,
+        plant: state.plant,
+        plantProduction: state.plantProduction
+      });
+    }
+    const normalSeriesFinal = await readGameState();
+    const normalSeriesIncreased = await page.evaluate(async ({ before, after }) => {
+      const module = await import("./js/number/BigNumber.js");
+      const BigNumber = module.default;
+      return BigNumber.from(after).greater(BigNumber.from(before));
+    }, { before: normalSeriesInitial.plant, after: normalSeriesFinal.plant });
+    check("Normal 1x game loop progresses over 30 real seconds",
+      normalSpeedState.speedMultiplier === 1 &&
+      normalTimeSeries.length === 4 &&
+      (normalSeriesFinal.level > normalSeriesInitial.level || normalSeriesIncreased),
+      { samples: normalTimeSeries, initial: normalSeriesInitial, final: normalSeriesFinal }
+    );
+    report.normalSpeedProgression = {
+      samples: normalTimeSeries,
+      durationSeconds: 30,
+      initial: normalSeriesInitial,
+      final: normalSeriesFinal
+    };
+
     // 3) Save/reload/restore through the actual SaveManager and page lifecycle.
     const beforeReload = await page.evaluate(async () => {
       const [saveModule, worldModule, resourceModule, epModule, statisticsModule] = await Promise.all([
