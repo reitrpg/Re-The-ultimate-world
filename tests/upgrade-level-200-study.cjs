@@ -202,6 +202,7 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
     capture(true);
     let status = "time-limit";
     for (let tick = 1; tick <= maxRealSeconds; tick++) {
+      realSeconds = tick;
       // 10x is only the measurement accelerator: 10 simulated seconds pass per real second.
       // Purchases/actions occur once per real-time tick and are never multiplied by 10.
       WorldManager.update(speed);
