@@ -53,24 +53,33 @@ class Upgrade {
 
             if (this.level <= 10) {
                 levelFactor = 1 + (1.5 * Math.pow(this.level, 2));
+                return this.baseCost.multiply(levelFactor);
+            }
+
+            let coefficient;
+            if (this.level >= 100) {
+                coefficient = 13;
+            } else if (this.level >= 51) {
+                coefficient = 10;
+            } else if (this.level >= 41) {
+                coefficient = 8.5;
+            } else if (this.level >= 31) {
+                coefficient = 7;
+            } else if (this.level >= 21) {
+                coefficient = 5;
             } else {
-                let coefficient;
+                coefficient = 3;
+            }
 
-                if (this.level >= 100) {
-                    coefficient = 13;
-                } else if (this.level >= 51) {
-                    coefficient = 10;
-                } else if (this.level >= 41) {
-                    coefficient = 8.5;
-                } else if (this.level >= 31) {
-                    coefficient = 7;
-                } else if (this.level >= 21) {
-                    coefficient = 5;
-                } else {
-                    coefficient = 3;
-                }
+            levelFactor = 1 + (coefficient * Math.pow(this.level, 3));
 
-                levelFactor = 1 + (coefficient * Math.pow(this.level, 3));
+            // From Lv150 onward, add a ×10 cost multiplier for every additional level.
+            // Lv150 costs 10× the old curve; Lv151 costs 100×, Lv152 costs 1,000×, etc.
+            if (this.level >= 150) {
+                const exponent = this.level - 149;
+                const largeMultiplier = BigNumber.fromLayered(1, Math.floor(exponent / 3), 0)
+                    .multiply(Math.pow(10, exponent % 3));
+                return this.baseCost.multiply(BigNumber.from(levelFactor).multiply(largeMultiplier));
             }
 
             return this.baseCost.multiply(levelFactor);
