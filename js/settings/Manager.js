@@ -7,6 +7,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
     debugMode: false,
     debugSpeedMultiplier: 1,
     speedRunMode: false,
+    showMaxedUpgrades: false,
     language: "ja",
     seed: ""
 });
@@ -44,7 +45,7 @@ class SettingsManager {
             if (!ALLOWED_DEBUG_SPEEDS.includes(n)) return false;
             value = n;
         }
-        if (key === "debugMode" || key === "speedRunMode") value = Boolean(value);
+        if (key === "debugMode" || key === "speedRunMode" || key === "showMaxedUpgrades") value = Boolean(value);
         if (key === "language" && !["ja", "en"].includes(value)) value = "ja";
         if (key === "seed") value = String(value ?? "");
 
