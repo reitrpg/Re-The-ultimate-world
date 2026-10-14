@@ -125,6 +125,7 @@ class UpgradeManager {
             plant_fivefold: { cost: 200, multiplier: 5.00, targetResource: "plant", costResource: "plant", prerequisiteId: "divine_revelation", effectText: "植物の生産量を5倍" },
             metal_fivefold: { cost: 200, multiplier: 5.00, targetResource: "metal", costResource: "metal", prerequisiteId: "heavenly_blessing", effectText: "金属の生産量を5倍" },
             magic_fivefold: { cost: 200, multiplier: 5.00, targetResource: "magic", costResource: "magic", prerequisiteId: "world_tree", effectText: "魔力の生産量を5倍" },
+            automation_unlock: { cost: 10000, multiplier: 1, targetResource: null, costResource: null, effectText: "自動化機能を解禁" },
             buy_max_divine_revelation: { name: "天啓：農業革命 全購入解禁", cost: 1000, multiplier: 1, targetResource: null, costResource: null, prerequisiteId: "divine_revelation", effectText: "天啓：農業革命に全購入ボタンを追加" },
             buy_max_heavenly_blessing: { name: "神域：亡霊鉱山 全購入解禁", cost: 1000, multiplier: 1, targetResource: null, costResource: null, prerequisiteId: "heavenly_blessing", effectText: "神域：亡霊鉱山に全購入ボタンを追加" },
             buy_max_world_tree: { name: "神秘：魔法技術 全購入解禁", cost: 1000, multiplier: 1, targetResource: null, costResource: null, prerequisiteId: "world_tree", effectText: "神秘：魔法技術に全購入ボタンを追加" },
