@@ -1,0 +1,61 @@
+name: Upgrade Level 200 Study
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'js/**'
+      - 'tests/upgrade-level-200-study.cjs'
+      - '.github/workflows/upgrade-level-200-study.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: upgrade-level-200-study
+  cancel-in-progress: true
+
+jobs:
+  level-200-study:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Start local web server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/world-creator-http.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail http://127.0.0.1:4173/ > /dev/null
+
+      - name: Run 10x level-200 study
+        run: node tests/upgrade-level-200-study.cjs
+
+      - name: Upload level-200 study report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: world-creator-upgrade-level-200-study
+          path: |
+            test-results/upgrade-level-200-study.json
+            test-results/upgrade-level-200-study-summary.json
+            test-results/upgrade-level-200-study.csv
+            /tmp/world-creator-http.log
+          if-no-files-found: warn
