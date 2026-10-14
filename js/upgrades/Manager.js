@@ -4,6 +4,7 @@
  */
 
 import Upgrade from "./Upgrade.js";
+import BigNumber from "../number/BigNumber.js";
 import eventBus from "../core/eventBus.js";
 
 class UpgradeManager {
@@ -133,7 +134,7 @@ class UpgradeManager {
             const upgrade = this.get(id);
             if (!upgrade) return;
             if (definition.name) upgrade.name = definition.name;
-            if (definition.cost !== undefined) upgrade.baseCost = upgrade.baseCost.constructor.from(definition.cost);
+            if (definition.cost !== undefined) upgrade.baseCost = BigNumber.from(definition.cost);
             upgrade.multiplier = definition.multiplier;
             upgrade.targetResource = definition.targetResource;
             upgrade.costResource = definition.costResource || null;
