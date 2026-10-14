@@ -181,7 +181,7 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
     function buyInfiniteUpgradesByAscendingCost() {
       // Purchase manually in ascending current cost order; this is not the game's automation feature.
       let guard = 0;
-      while (guard++ < 5000) {
+      while (guard++ < 5000 && averageLevel() < targetAverage) {
         const candidates = infiniteUpgrades
           .filter(u => u.isUnlocked() && !u.isMaxed() && u.canBuy())
           .sort((a, b) => {
@@ -196,6 +196,7 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
         if (!UpgradeManager.buy(selected.id)) break;
         if (selected.id !== "creator_will") purchaseCounts.infinite++;
         actionLog.push({ realSeconds, action: "infinite-upgrade", id: selected.id, level: selected.level });
+        if (averageLevel() >= targetAverage) break;
       }
     }
 
