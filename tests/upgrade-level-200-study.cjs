@@ -163,7 +163,7 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
       let guard = 0;
       while (guard++ < 1000 && averageLevel() < targetAverage) {
         const candidates = infiniteUpgrades
-          .filter(u => u.id !== "creator_will" && u.isUnlocked() && !u.isMaxed() && u.canBuy())
+          .filter(u => u.isUnlocked() && !u.isMaxed() && u.canBuy())
           .sort((a, b) => {
             const ca = a.getCost();
             const cb = b.getCost();
@@ -198,25 +198,6 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
       return totalLevelsBought;
     }
 
-    function buyInfiniteUpgradesByAscendingCost() {
-      // At most one infinite-upgrade purchase per real-time tick, sorted by current cost.
-      // This prevents the measurement multiplier from becoming a purchase-count multiplier.
-      if (averageLevel() >= targetAverage) return;
-      const candidates = infiniteUpgrades
-        .filter(u => u.isUnlocked() && !u.isMaxed() && u.canBuy())
-        .sort((a, b) => {
-          const ca = a.getCost();
-          const cb = b.getCost();
-          if (ca.less(cb)) return -1;
-          if (ca.greater(cb)) return 1;
-          return a.id.localeCompare(b.id);
-        });
-      if (!candidates.length) return;
-      const selected = candidates[0];
-      if (!UpgradeManager.buy(selected.id)) return;
-      if (selected.id !== "creator_will") purchaseCounts.infinite++;
-      actionLog.push({ realSeconds, action: "infinite-upgrade", id: selected.id, level: selected.level });
-    }
 
     capture(true);
     let status = "time-limit";
@@ -298,10 +279,12 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
       seed: FIXED_SEED,
       measurementRule: "Each 1000 ms real-time test tick advances the game by 10 simulated seconds. The speed multiplier is not applied to purchase/action count.",
       playStrategy: [
-        "No automation is unlocked or used.",
-        "At most one limited-upgrade purchase, one research purchase, and one infinite-upgrade purchase are performed per real-time tick; these action counts are not multiplied by 10.",
-        "Use the 10:1 in-game material-to-EP conversion whenever materials are available, after buying available non-automation limited upgrades.",
-        "Buy all affordable research, then buy infinite upgrades in ascending current cost order.",
+        "Automation is not unlocked or used.",
+        "Research is intentionally deferred until the second section; no research purchases or effects are used.",
+        "Buy affordable limited upgrades immediately, excluding the automation unlock upgrade.",
+        "Each buy-all unlock upgrade costs 1e3 EP and enables the matching infinite upgrade's buy-all button.",
+        "Use the game's 10:1 material-to-EP conversion whenever materials are available.",
+        "Repeated manual purchases are processed immediately; the 10x multiplier advances simulated game time only and does not multiply action counts.",
         "Use rebirth whenever the in-game condition is met.",
         "Achievements are evaluated using the production AchievementManager."
       ],
