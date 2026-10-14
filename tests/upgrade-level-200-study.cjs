@@ -118,22 +118,27 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
     }
 
     function buyAffordableLimitedUpgrades() {
-      // One manual limited-upgrade purchase per real-time tick; speed does not multiply action count.
-      const candidates = UpgradeManager.getByType("limited")
-        .filter(u => u.id !== "automation_unlock" && u.isUnlocked() && !u.isMaxed() && u.canBuy())
-        .sort((a, b) => {
-          const ca = a.getCost();
-          const cb = b.getCost();
-          if (ca.less(cb)) return -1;
-          if (ca.greater(cb)) return 1;
-          return a.id.localeCompare(b.id);
-        });
-      if (!candidates.length) return;
-      const selected = candidates[0];
-      if (UpgradeManager.buy(selected.id)) {
+      // Buy each available limited upgrade as soon as possible; automation itself remains unused.
+      let boughtThisPass = 0;
+      const maxPurchasesPerPass = 1000;
+      while (boughtThisPass < maxPurchasesPerPass) {
+        const candidates = UpgradeManager.getByType("limited")
+          .filter(u => u.id !== "automation_unlock" && u.isUnlocked() && !u.isMaxed() && u.canBuy())
+          .sort((a, b) => {
+            const ca = a.getCost();
+            const cb = b.getCost();
+            if (ca.less(cb)) return -1;
+            if (ca.greater(cb)) return 1;
+            return a.id.localeCompare(b.id);
+          });
+        if (!candidates.length) break;
+        const selected = candidates[0];
+        if (!UpgradeManager.buy(selected.id)) break;
+        boughtThisPass++;
         purchaseCounts.limited++;
         actionLog.push({ realSeconds, action: "limited-upgrade", id: selected.id, level: selected.level });
       }
+      return boughtThisPass;
     }
 
     function convertAllMaterials() {
@@ -152,22 +157,45 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
       }
     }
 
-    function buyAllAffordableResearch() {
-      // One manual research purchase per real-time tick; the 10x multiplier only advances game time.
-      const candidates = ResearchManager.getAll()
-        .filter(r => r.canBuy())
-        .sort((a, b) => {
-          const ca = a.getCost();
-          const cb = b.getCost();
-          if (ca.less(cb)) return -1;
-          if (ca.greater(cb)) return 1;
-          return a.id.localeCompare(b.id);
+    function buyInfiniteUpgradesByAscendingCost() {
+      if (averageLevel() >= targetAverage) return 0;
+      let totalLevelsBought = 0;
+      let guard = 0;
+      while (guard++ < 1000 && averageLevel() < targetAverage) {
+        const candidates = infiniteUpgrades
+          .filter(u => u.id !== "creator_will" && u.isUnlocked() && !u.isMaxed() && u.canBuy())
+          .sort((a, b) => {
+            const ca = a.getCost();
+            const cb = b.getCost();
+            if (ca.less(cb)) return -1;
+            if (ca.greater(cb)) return 1;
+            return a.id.localeCompare(b.id);
+          });
+        if (!candidates.length) break;
+
+        const selected = candidates[0];
+        const before = selected.level;
+        const buyMaxUpgrade = UpgradeManager.get("buy_max_" + selected.id);
+        let bought;
+        if (buyMaxUpgrade?.level >= 1) {
+          bought = UpgradeManager.buyAll(selected.id);
+        } else {
+          bought = UpgradeManager.buy(selected.id) ? 1 : 0;
+        }
+        if (!bought) break;
+
+        const gained = selected.level - before;
+        totalLevelsBought += gained;
+        purchaseCounts.infinite += gained;
+        if (gained > 0) actionLog.push({
+          realSeconds,
+          action: buyMaxUpgrade?.level >= 1 ? "buy-all-infinite" : "infinite-upgrade",
+          id: selected.id,
+          levelsBought: gained,
+          level: selected.level
         });
-      if (!candidates.length) return;
-      const selected = candidates[0];
-      if (!ResearchManager.buy(selected.id)) return;
-      purchaseCounts.research++;
-      actionLog.push({ realSeconds, action: "research", id: selected.id, level: selected.level });
+      }
+      return totalLevelsBought;
     }
 
     function buyInfiniteUpgradesByAscendingCost() {
@@ -210,11 +238,14 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
         actionLog.push({ realSeconds: tick, action: "rebirth", count: NewBirthManager.getCount() });
       }
 
-      buyAffordableLimitedUpgrades();
       convertAllMaterials();
-      buyAllAffordableResearch();
-      // Research/achievement changes can unlock Creator's Will; all infinite upgrades are then bought by cost.
-      buyInfiniteUpgradesByAscendingCost();
+      // Research is intentionally unavailable in this study; only currently implemented first-section systems are used.
+      // Repeated purchases are immediate manual actions, not actions multiplied by the 10x time accelerator.
+      for (let actionPass = 0; actionPass < 1000 && averageLevel() < targetAverage; actionPass++) {
+        const limitedBought = buyAffordableLimitedUpgrades() || 0;
+        const infiniteBought = buyInfiniteUpgradesByAscendingCost() || 0;
+        if (limitedBought === 0 && infiniteBought === 0) break;
+      }
       AchievementManager.update({
         worldManager: WorldManager,
         upgradeManager: UpgradeManager,
