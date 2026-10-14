@@ -118,27 +118,21 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
     }
 
     function buyAffordableLimitedUpgrades() {
-      // Use every available non-automation limited upgrade as soon as its resource cost is affordable.
-      let bought = true;
-      let guard = 0;
-      while (bought && guard++ < 20) {
-        bought = false;
-        const candidates = UpgradeManager.getByType("limited")
-          .filter(u => u.id !== "automation_unlock" && u.isUnlocked() && !u.isMaxed() && u.canBuy())
-          .sort((a, b) => {
-            const ca = a.getCost();
-            const cb = b.getCost();
-            if (ca.less(cb)) return -1;
-            if (ca.greater(cb)) return 1;
-            return a.id.localeCompare(b.id);
-          });
-        if (!candidates.length) break;
-        const selected = candidates[0];
-        if (UpgradeManager.buy(selected.id)) {
-          purchaseCounts.limited++;
-          actionLog.push({ realSeconds, action: "limited-upgrade", id: selected.id, level: selected.level });
-          bought = true;
-        }
+      // One manual limited-upgrade purchase per real-time tick; speed does not multiply action count.
+      const candidates = UpgradeManager.getByType("limited")
+        .filter(u => u.id !== "automation_unlock" && u.isUnlocked() && !u.isMaxed() && u.canBuy())
+        .sort((a, b) => {
+          const ca = a.getCost();
+          const cb = b.getCost();
+          if (ca.less(cb)) return -1;
+          if (ca.greater(cb)) return 1;
+          return a.id.localeCompare(b.id);
+        });
+      if (!candidates.length) return;
+      const selected = candidates[0];
+      if (UpgradeManager.buy(selected.id)) {
+        purchaseCounts.limited++;
+        actionLog.push({ realSeconds, action: "limited-upgrade", id: selected.id, level: selected.level });
       }
     }
 
@@ -159,45 +153,41 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
     }
 
     function buyAllAffordableResearch() {
-      let guard = 0;
-      while (guard++ < 1000) {
-        const candidates = ResearchManager.getAll()
-          .filter(r => r.canBuy())
-          .sort((a, b) => {
-            const ca = a.getCost();
-            const cb = b.getCost();
-            if (ca.less(cb)) return -1;
-            if (ca.greater(cb)) return 1;
-            return a.id.localeCompare(b.id);
-          });
-        if (!candidates.length) break;
-        const selected = candidates[0];
-        if (!ResearchManager.buy(selected.id)) break;
-        purchaseCounts.research++;
-        actionLog.push({ realSeconds, action: "research", id: selected.id, level: selected.level });
-      }
+      // One manual research purchase per real-time tick; the 10x multiplier only advances game time.
+      const candidates = ResearchManager.getAll()
+        .filter(r => r.canBuy())
+        .sort((a, b) => {
+          const ca = a.getCost();
+          const cb = b.getCost();
+          if (ca.less(cb)) return -1;
+          if (ca.greater(cb)) return 1;
+          return a.id.localeCompare(b.id);
+        });
+      if (!candidates.length) return;
+      const selected = candidates[0];
+      if (!ResearchManager.buy(selected.id)) return;
+      purchaseCounts.research++;
+      actionLog.push({ realSeconds, action: "research", id: selected.id, level: selected.level });
     }
 
     function buyInfiniteUpgradesByAscendingCost() {
-      // Purchase manually in ascending current cost order; this is not the game's automation feature.
-      let guard = 0;
-      while (guard++ < 5000 && averageLevel() < targetAverage) {
-        const candidates = infiniteUpgrades
-          .filter(u => u.isUnlocked() && !u.isMaxed() && u.canBuy())
-          .sort((a, b) => {
-            const ca = a.getCost();
-            const cb = b.getCost();
-            if (ca.less(cb)) return -1;
-            if (ca.greater(cb)) return 1;
-            return a.id.localeCompare(b.id);
-          });
-        if (!candidates.length) break;
-        const selected = candidates[0];
-        if (!UpgradeManager.buy(selected.id)) break;
-        if (selected.id !== "creator_will") purchaseCounts.infinite++;
-        actionLog.push({ realSeconds, action: "infinite-upgrade", id: selected.id, level: selected.level });
-        if (averageLevel() >= targetAverage) break;
-      }
+      // At most one infinite-upgrade purchase per real-time tick, sorted by current cost.
+      // This prevents the measurement multiplier from becoming a purchase-count multiplier.
+      if (averageLevel() >= targetAverage) return;
+      const candidates = infiniteUpgrades
+        .filter(u => u.isUnlocked() && !u.isMaxed() && u.canBuy())
+        .sort((a, b) => {
+          const ca = a.getCost();
+          const cb = b.getCost();
+          if (ca.less(cb)) return -1;
+          if (ca.greater(cb)) return 1;
+          return a.id.localeCompare(b.id);
+        });
+      if (!candidates.length) return;
+      const selected = candidates[0];
+      if (!UpgradeManager.buy(selected.id)) return;
+      if (selected.id !== "creator_will") purchaseCounts.infinite++;
+      actionLog.push({ realSeconds, action: "infinite-upgrade", id: selected.id, level: selected.level });
     }
 
     capture(true);
@@ -278,6 +268,7 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
       measurementRule: "Each 1000 ms real-time test tick advances the game by 10 simulated seconds. The speed multiplier is not applied to purchase/action count.",
       playStrategy: [
         "No automation is unlocked or used.",
+        "At most one limited-upgrade purchase, one research purchase, and one infinite-upgrade purchase are performed per real-time tick; these action counts are not multiplied by 10.",
         "Use the 10:1 in-game material-to-EP conversion whenever materials are available, after buying available non-automation limited upgrades.",
         "Buy all affordable research, then buy infinite upgrades in ascending current cost order.",
         "Use rebirth whenever the in-game condition is met.",
