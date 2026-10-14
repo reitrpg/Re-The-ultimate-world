@@ -46,6 +46,9 @@ class SettingsUI {
         const s = this.getElement("settings-speedrun");
         if (s) s.addEventListener("change", e => SettingsManager.set("speedRunMode", e.target.checked));
 
+        const maxed = this.getElement("settings-show-maxed-upgrades");
+        if (maxed) maxed.addEventListener("change", e => SettingsManager.set("showMaxedUpgrades", e.target.checked));
+
         const l = this.getElement("settings-language");
         if (l) l.addEventListener("change", e => {
             if (!SettingsManager.set("language", e.target.value)) {
@@ -97,6 +100,7 @@ class SettingsUI {
         const d = this.getElement("settings-debug");
         const speed = this.getElement("settings-debug-speed");
         const sr = this.getElement("settings-speedrun");
+        const maxed = this.getElement("settings-show-maxed-upgrades");
         const l = this.getElement("settings-language");
         const seed = this.getElement("settings-seed");
 
@@ -109,6 +113,7 @@ class SettingsUI {
             speed.disabled = !s.debugMode;
         }
         if (sr) sr.checked = Boolean(s.speedRunMode);
+        if (maxed) maxed.checked = Boolean(s.showMaxedUpgrades);
         if (l) l.value = s.language;
         if (seed && document.activeElement !== seed) seed.value = s.seed || "";
     }
