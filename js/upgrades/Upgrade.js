@@ -73,13 +73,14 @@ class Upgrade {
 
             levelFactor = 1 + (coefficient * Math.pow(this.level, 3));
 
-            // From Lv150 onward, add a ×10 cost multiplier for every additional level.
-            // Lv150 costs 10× the old curve; Lv151 costs 100×, Lv152 costs 1,000×, etc.
+            // From Lv150 onward, retain the existing cost curve and apply a quadratic multiplier.
+            // Extra multiplier: Lv150 = 100x, Lv151 = 400x, Lv152 = 900x, Lv160 = 12,100x.
             if (this.level >= 150) {
-                const exponent = this.level - 149;
-                const largeMultiplier = BigNumber.fromLayered(1, Math.floor(exponent / 3), 0)
-                    .multiply(Math.pow(10, exponent % 3));
-                return this.baseCost.multiply(BigNumber.from(levelFactor).multiply(largeMultiplier));
+                const levelsAfter149 = this.level - 149;
+                const quadraticMultiplier = 100 * Math.pow(levelsAfter149, 2);
+                return this.baseCost.multiply(
+                    BigNumber.from(levelFactor).multiply(quadraticMultiplier)
+                );
             }
 
             return this.baseCost.multiply(levelFactor);
