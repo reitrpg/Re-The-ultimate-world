@@ -203,20 +203,39 @@ class World {
     }
 
     getNewBirthMultiplier() {
-        // 新生倍率の計算には減衰処理を適用せず、累計EXPをそのまま使用する。
+        // 基本倍率は累計EXPを等倍で使用し、増加分だけをアップグレード平均Lvで減衰させる。
         const effectiveExperience = BigNumber.from(this.totalExperience);
         const baseMultiplier = BigNumber.one().add(
             effectiveExperience.divide(500000)
         );
 
-        // 新生増加倍率 = 基本倍率 ÷ 現在の新生倍率
         const currentMultiplier = BigNumber.from(this.newBirthMultiplier);
-
         if (currentMultiplier.lessOrEqual(0)) {
             return baseMultiplier;
         }
 
-        return baseMultiplier.divide(currentMultiplier);
+        const rawMultiplier = baseMultiplier.divide(currentMultiplier);
+        const trackedUpgradeIds = [
+            "divine_revelation",
+            "heavenly_blessing",
+            "world_tree"
+        ];
+        const averageUpgradeLevel = trackedUpgradeIds.reduce(
+            (sum, id) => sum + (UpgradeManager.get(id)?.level || 0),
+            0
+        ) / trackedUpgradeIds.length;
+
+        let growthRate = 1;
+        if (averageUpgradeLevel > 100 && averageUpgradeLevel <= 200) {
+            growthRate = 0.5;
+        } else if (averageUpgradeLevel > 200 && averageUpgradeLevel <= 300) {
+            growthRate = 0.25;
+        } else if (averageUpgradeLevel > 300) {
+            growthRate = 0.1;
+        }
+
+        // 新生倍率そのものではなく、1倍を超える増加分にだけ減衰を適用する。
+        return rawMultiplier.subtract(1).multiply(growthRate).add(1);
     }
 
     canNewBirth() {
