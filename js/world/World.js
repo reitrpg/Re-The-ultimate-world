@@ -203,13 +203,22 @@ class World {
     }
 
     getNewBirthMultiplier() {
-        // 累計EXPを基準に新生倍率の基準値を計算する。
+        // 新生倍率の減衰は強化Lvではなく、世界カードの累計EXPだけを参照する。
+        // 仮調整：平均強化Lv100前後に相当する累計EXP 1e14 から伸びを抑える。
+        // 閾値までは従来式を維持し、超過分の10分の1だけを倍率計算に反映する。
+        const softcapStartExperience = BigNumber.from("1e14");
+        const totalExperience = BigNumber.from(this.totalExperience);
+        const effectiveExperience = totalExperience.greater(softcapStartExperience)
+            ? softcapStartExperience.add(
+                totalExperience.subtract(softcapStartExperience).divide(10)
+            )
+            : totalExperience;
+
         const baseMultiplier = BigNumber.one().add(
-            this.totalExperience.divide(500000)
+            effectiveExperience.divide(500000)
         );
 
-        // 新生増加倍率 = 倍率計算式 ÷ 現在の新生倍率
-        // 最初は新生倍率1倍なので、そのまま倍率計算式になる。
+        // 新生増加倍率 = 減衰適用後の倍率計算式 ÷ 現在の新生倍率
         const currentMultiplier = BigNumber.from(this.newBirthMultiplier);
 
         if (currentMultiplier.lessOrEqual(0)) {
