@@ -230,7 +230,7 @@ class World {
                 );
             }
 
-            const attenuation = 1 + log10Ratio / 10;
+            const attenuation = 1 + log10Ratio / 3;
             effectiveExperience = totalExperience.divide(attenuation);
         }
 
