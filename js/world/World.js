@@ -203,9 +203,9 @@ class World {
     }
 
     getNewBirthMultiplier() {
-        // 新生倍率の減衰は強化Lvではなく、世界カードの累計EXPだけを参照する。
-        // 仮調整：累計EXP 1e14 から、EXP全体を対数ベースで緩やかに減衰させる。
-        // 減衰係数はEXPの桁数に応じて増えるが、実効EXP自体には上限を設けない。
+        // 新生倍率の減衰は世界カードの累計EXPだけを参照する。
+        // 累計EXP 1e14を境に、実効EXP = 閾値 × (累計EXP / 閾値)^(1 / 1.01) とする。
+        // これにより閾値以降の成長を1.01乗相当で緩やかに抑える。
         const softcapStartExperience = BigNumber.from("1e14");
         const totalExperience = BigNumber.from(this.totalExperience);
         let effectiveExperience = totalExperience;
@@ -221,7 +221,7 @@ class World {
                     ratio.exponent * Math.log10(1000)
                 );
             } else {
-                // 極端に大きな値では、層と指数から減衰係数を近似する。
+                // 極端に大きな値では、層と指数から対数を近似する。
                 log10Ratio = Math.max(
                     0,
                     ratio.layer === 1
@@ -230,8 +230,10 @@ class World {
                 );
             }
 
-            const attenuation = 1 + log10Ratio / 3;
-            effectiveExperience = totalExperience.divide(attenuation);
+            const effectiveLog10 = 14 + log10Ratio / 1.01;
+            const bigExponent = Math.floor(effectiveLog10 / 3);
+            const mantissa = Math.pow(10, effectiveLog10 - bigExponent * 3);
+            effectiveExperience = BigNumber.fromLayered(mantissa, bigExponent, 0);
         }
 
         const baseMultiplier = BigNumber.one().add(
