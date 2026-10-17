@@ -203,44 +203,13 @@ class World {
     }
 
     getNewBirthMultiplier() {
-        // 新生倍率の減衰は世界カードの累計EXPだけを参照する。
-        // 累計EXP 1e14を境に、実効EXP = 閾値 × (累計EXP / 閾値)^1.01 とする。
-        // 指定式どおり、閾値を超えた分の成長を1.01乗で計算する。
-        const softcapStartExperience = BigNumber.from("1e14");
-        const totalExperience = BigNumber.from(this.totalExperience);
-        let effectiveExperience = totalExperience;
-
-        if (totalExperience.greater(softcapStartExperience)) {
-            const ratio = totalExperience.divide(softcapStartExperience);
-            let log10Ratio;
-
-            if (ratio.layer === 0) {
-                log10Ratio = Math.max(
-                    0,
-                    Math.log10(Math.max(ratio.mantissa, Number.MIN_VALUE)) +
-                    ratio.exponent * Math.log10(1000)
-                );
-            } else {
-                // 極端に大きな値では、層と指数から対数を近似する。
-                log10Ratio = Math.max(
-                    0,
-                    ratio.layer === 1
-                        ? Number(ratio.exponent) * Math.log10(1000)
-                        : Math.max(1, Number(ratio.exponent))
-                );
-            }
-
-            const effectiveLog10 = 14 + log10Ratio * 1.01;
-            const bigExponent = Math.floor(effectiveLog10 / 3);
-            const mantissa = Math.pow(10, effectiveLog10 - bigExponent * 3);
-            effectiveExperience = BigNumber.fromLayered(mantissa, bigExponent, 0);
-        }
-
+        // 新生倍率の計算には減衰処理を適用せず、累計EXPをそのまま使用する。
+        const effectiveExperience = BigNumber.from(this.totalExperience);
         const baseMultiplier = BigNumber.one().add(
             effectiveExperience.divide(500000)
         );
 
-        // 新生増加倍率 = 減衰適用後の倍率計算式 ÷ 現在の新生倍率
+        // 新生増加倍率 = 基本倍率 ÷ 現在の新生倍率
         const currentMultiplier = BigNumber.from(this.newBirthMultiplier);
 
         if (currentMultiplier.lessOrEqual(0)) {
