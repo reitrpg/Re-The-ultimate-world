@@ -179,7 +179,9 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
         const before = selected.level;
         const buyMaxUpgrade = UpgradeManager.get("buy_max_" + selected.id);
         let bought;
-        if (buyMaxUpgrade?.level >= 1) {
+        // Bulk-buy is allowed during early progression, but disabled near the milestone
+        // so one purchase cannot jump from a low level to thousands of levels past the target.
+        if (buyMaxUpgrade?.level >= 1 && averageLevel() < 20) {
           bought = UpgradeManager.buyAll(selected.id);
         } else {
           bought = UpgradeManager.buy(selected.id) ? 1 : 0;
@@ -250,7 +252,7 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
 
     // 1時間以内にLv500へ到達できなければ、到達済みの平均Lvに合わせて目標を20ずつ下げる。
     if (status === "time-limit") {
-      while (completionTarget > averageLevel() && completionTarget > 20) {
+      while (completionTarget > averageLevel() && completionTarget > 0) {
         completionTarget -= 20;
         targetFallbackHistory.push(completionTarget);
       }
