@@ -204,8 +204,8 @@ class World {
 
     getNewBirthMultiplier() {
         // 新生倍率の減衰は世界カードの累計EXPだけを参照する。
-        // 累計EXP 1e14を境に、実効EXP = 閾値 × (累計EXP / 閾値)^(1 / 1.01) とする。
-        // これにより閾値以降の成長を1.01乗相当で緩やかに抑える。
+        // 累計EXP 1e14を境に、実効EXP = 閾値 × (累計EXP / 閾値)^1.01 とする。
+        // 指定式どおり、閾値を超えた分の成長を1.01乗で計算する。
         const softcapStartExperience = BigNumber.from("1e14");
         const totalExperience = BigNumber.from(this.totalExperience);
         let effectiveExperience = totalExperience;
@@ -230,7 +230,7 @@ class World {
                 );
             }
 
-            const effectiveLog10 = 14 + log10Ratio / 1.01;
+            const effectiveLog10 = 14 + log10Ratio * 1.01;
             const bigExponent = Math.floor(effectiveLog10 / 3);
             const mantissa = Math.pow(10, effectiveLog10 - bigExponent * 3);
             effectiveExperience = BigNumber.fromLayered(mantissa, bigExponent, 0);
