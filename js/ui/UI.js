@@ -7,7 +7,6 @@ const MODULES = [
     ["ResourceUI", "./ResourceUI.js"],
     ["WorldUI", "./WorldUI.js"],
     ["UpgradeUI", "./UpgradeUI.js"],
-    ["ResearchUI", "./ResearchUI.js"],
     ["ConverterUI", "./ConverterUI.js?v=0.0.121"],
     ["SettingsUI", "./SettingsUI.js"],
     ["DebugUI", "./DebugUI.js"],
