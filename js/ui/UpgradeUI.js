@@ -96,13 +96,16 @@ class UpgradeUI {
 
         item.append(title, cost, level, effect);
 
+        const actions = document.createElement("div");
+        actions.className = "upgrade-actions";
+
         const button = document.createElement("button");
         button.type = "button";
         button.textContent = !upgrade.isUnlocked() ? "未解禁" : upgrade.isMaxed() ? "上限" : "購入";
         button.disabled = !upgrade.isUnlocked() || upgrade.isMaxed() || !upgrade.canBuy();
         button.dataset.action = "upgrade:buy";
         button.dataset.upgradeId = upgrade.id;
-        item.appendChild(button);
+        actions.appendChild(button);
 
         if (upgrade.type === "infinite" && UpgradeManager.get("buy_max_" + upgrade.id)?.level >= 1) {
             const buyAll = document.createElement("button");
@@ -111,8 +114,9 @@ class UpgradeUI {
             buyAll.dataset.action = "upgrade:buy-all";
             buyAll.dataset.upgradeId = upgrade.id;
             buyAll.disabled = !upgrade.isUnlocked() || !upgrade.canBuy();
-            item.appendChild(buyAll);
+            actions.appendChild(buyAll);
         }
+        item.appendChild(actions);
 
         return item;
     }
