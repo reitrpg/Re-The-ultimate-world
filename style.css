@@ -120,7 +120,6 @@ nav button.active {
 }
 
 #world-list > div,
-.research-item,
 .upgrade-item,
 .converter-item {
     padding: 12px;
@@ -379,7 +378,6 @@ nav button.active {
     }
 
     #world-list button,
-    .research-item button,
     .upgrade-item button,
     .converter-item button {
         width: 100%;
@@ -1172,4 +1170,20 @@ nav button.active {
 
 #converter-list .ep-converter-item button:last-child {
     margin-bottom: 0 !important;
+}
+
+
+/* Upgrade actions: side-by-side purchase buttons */
+.upgrade-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    margin-top: 4px;
+}
+
+.upgrade-actions button {
+    width: 100% !important;
+    min-width: 0;
+    margin: 0 !important;
 }
