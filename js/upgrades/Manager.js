@@ -92,21 +92,21 @@ class UpgradeManager {
     }
 
     getResourceMultiplier(id) {
-        let multiplier = 1;
+        let multiplier = BigNumber.one();
         this.getAll().forEach(upgrade => {
             if (!upgrade.isUnlocked()) return;
             if (upgrade.getTargetResource?.() !== id) return;
-            multiplier *= upgrade.getMultiplier();
+            multiplier = multiplier.multiply(upgrade.getMultiplier());
         });
         return multiplier;
     }
 
     getTotalMultiplier() {
-        let multiplier = 1;
+        let multiplier = BigNumber.one();
         this.getAll().forEach(upgrade => {
             if (!upgrade.isUnlocked()) return;
             if (upgrade.getTargetResource?.() !== null) return;
-            multiplier *= upgrade.getMultiplier();
+            multiplier = multiplier.multiply(upgrade.getMultiplier());
         });
         return multiplier;
     }
