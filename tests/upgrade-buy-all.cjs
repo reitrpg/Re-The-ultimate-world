@@ -40,7 +40,7 @@ const TARGET_LEVEL = 12050;
         throw new Error("デバッグモードを有効化できませんでした");
       }
 
-      DebugManager.addEP(BigNumber.fromLayered(1, 5000, 0));
+      DebugManager.addEP(BigNumber.fromLayered(1, 5000, 1));
       UpgradeManager.unlock("creator_will");
       DebugManager.setUpgradeLevel("buy_max_creator_will", 1);
 
@@ -54,7 +54,7 @@ const TARGET_LEVEL = 12050;
         return cost;
       })();
 
-      if (!EPManager.get().greaterOrEqual(BigNumber.fromLayered(1, 4018, 0))) {
+      if (EPManager.get().layer !== 1 || !EPManager.get().greaterOrEqual(BigNumber.fromLayered(1, 4018, 0))) {
         throw new Error("デバッグEPが必要量に達していません");
       }
 
@@ -65,7 +65,7 @@ const TARGET_LEVEL = 12050;
 
       return {
         debugMode: SettingsManager.isDebugMode(),
-        ep: EPManager.get().toString(),
+        ep: EPManager.get().toString(),\n        epLayer: EPManager.get().layer,
         finalLevelCost,
         expectedPurchases: targetLevel
       };
@@ -96,7 +96,7 @@ const TARGET_LEVEL = 12050;
     });
 
     if (result.purchased !== setup.expectedPurchases) {
-      throw new Error(`購入数が不正です: ${result.purchased}`);
+      throw new Error(`購入数が不正です: ${result.purchased} / EP初期値=${setup.ep} / 最終Lvコスト=${setup.finalLevelCost} / 残EP=${result.remainingEP}`);
     }
     if (result.yieldTicks < 2) {
       throw new Error(`購入中のイベントループ応答が不足しています: ${result.yieldTicks}`);
