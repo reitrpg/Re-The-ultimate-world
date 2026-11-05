@@ -45,6 +45,36 @@ const TARGET_LEVEL = 12050;
       DebugManager.setUpgradeLevel("buy_max_creator_will", 1);
 
       const upgrade = UpgradeManager.get("creator_will");
+      const originalCanBuy = upgrade.canBuy.bind(upgrade);
+      const originalBuy = upgrade.buy.bind(upgrade);
+      upgrade.canBuy = function () {
+        const canBuy = originalCanBuy();
+        if (!canBuy) {
+          window.__buyAllStopReason = {
+            level: this.level,
+            unlocked: this.unlocked,
+            isUnlocked: this.isUnlocked(),
+            maxLevel: this.maxLevel,
+            cost: this.getCost().toString(),
+            ep: EPManager.get().toString(),
+            epLayer: EPManager.get().layer,
+            hasEP: EPManager.has(this.getCost())
+          };
+        }
+        return canBuy;
+      };
+      upgrade.buy = function () {
+        const bought = originalBuy();
+        if (!bought) {
+          window.__buyAllBuyFailure = {
+            level: this.level,
+            cost: this.getCost().toString(),
+            ep: EPManager.get().toString(),
+            epLayer: EPManager.get().layer
+          };
+        }
+        return bought;
+      };
       upgrade.level = 0;
 
       const finalLevelCost = (() => {
@@ -92,7 +122,11 @@ const TARGET_LEVEL = 12050;
       return {
         purchased: manager.get("creator_will").level,
         remainingEP: epManager.get().toString(),
-        yieldTicks: window.__buyAllYieldTicks
+        yieldTicks: window.__buyAllYieldTicks,
+        stopReason: window.__buyAllStopReason || null,
+        buyFailure: window.__buyAllBuyFailure || null,
+        maxLevel: manager.get("creator_will").maxLevel,
+        unlocked: manager.get("creator_will").isUnlocked()
       };
     });
 
