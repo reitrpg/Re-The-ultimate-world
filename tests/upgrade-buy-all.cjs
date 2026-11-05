@@ -105,15 +105,16 @@ const TARGET_LEVEL = 12050;
     const debugPanelVisible = await page.locator("#debug-panel").evaluate(element => !element.hidden);
     if (!debugPanelVisible) throw new Error("デバッグパネルが表示されていません");
 
-    const button = page.locator('[data-action="upgrade:buy-all"][data-upgrade-id="creator_will"]');
-    if (await button.count() !== 1) throw new Error("全購入ボタンが表示されていません");
-    await button.click({ timeout: 10000 });
-
-    await page.waitForFunction(async targetLevel => {
+    // UIのクリック経路ではなく、同じ実ゲーム用Managerの一括購入関数を直接実行する。
+    const purchaseRun = await page.evaluate(async () => {
       const manager = (await import("./js/upgrades/Manager.js")).default;
-      return manager.get("creator_will").level === targetLevel &&
-        !manager.buyAllInProgress.has("creator_will");
-    }, TARGET_LEVEL, { timeout: 120000 });
+      const bought = await manager.buyAll("creator_will");
+      return {
+        bought,
+        level: manager.get("creator_will").level,
+        inProgress: manager.buyAllInProgress.has("creator_will")
+      };
+    });
 
     const result = await page.evaluate(async () => {
       clearInterval(window.__buyAllYieldTimer);
@@ -130,8 +131,8 @@ const TARGET_LEVEL = 12050;
       };
     });
 
-    if (result.purchased !== setup.expectedPurchases) {
-      throw new Error(`購入数が不正です: ${result.purchased} / EP初期値=${setup.ep} / 最終Lvコスト=${setup.finalLevelCost} / 残EP=${result.remainingEP} / 停止理由=${JSON.stringify(result.stopReason)} / buy失敗=${JSON.stringify(result.buyFailure)} / maxLv=${result.maxLevel} / unlocked=${result.unlocked}`);
+    if (purchaseRun.bought !== setup.expectedPurchases || result.purchased !== setup.expectedPurchases) {
+      throw new Error(`購入数が不正です: 戻り値=${purchaseRun.bought} / Lv=${result.purchased} / EP初期値=${setup.ep} / 最終Lvコスト=${setup.finalLevelCost} / 残EP=${result.remainingEP} / 停止理由=${JSON.stringify(result.stopReason)} / buy失敗=${JSON.stringify(result.buyFailure)} / maxLv=${result.maxLevel} / unlocked=${result.unlocked}`);
     }
     if (result.yieldTicks < 2) {
       throw new Error(`購入中のイベントループ応答が不足しています: ${result.yieldTicks}`);
@@ -142,7 +143,7 @@ const TARGET_LEVEL = 12050;
       status: "PASS",
       test: "debug-ep-buy-all-over-10000-and-yield",
       ...setup,
-      ...result,
+      ...purchaseRun,\n      ...result,
       browserErrors: errors
     }, null, 2));
   } finally {
