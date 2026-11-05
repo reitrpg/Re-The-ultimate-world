@@ -64,7 +64,16 @@ class AchievementUI {
             first_rebirth: "↻",
             ep_1000: "E",
             resource_10000: "◆",
-            world_level_10: "10"
+            world_level_10: "10",
+            ep_current_1e6: "E",
+            ep_current_1e12: "E",
+            ep_current_1e30: "E",
+            ep_current_1e100: "E",
+            ep_current_1e200: "E",
+            ep_current_1e300: "E",
+            ep_phase1_clear: "∞",
+            world_level_100: "100",
+            rebirth_100: "↻"
         };
 
         return icons[achievement.id] || String(index + 1);
