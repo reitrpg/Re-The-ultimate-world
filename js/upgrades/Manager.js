@@ -10,6 +10,7 @@ import eventBus from "../core/eventBus.js";
 class UpgradeManager {
     constructor() {
         this.upgrades = new Map();
+        this.buyAllInProgress = new Set();
         this.initialize();
     }
 
@@ -61,19 +62,37 @@ class UpgradeManager {
         return result;
     }
 
-    buyAll(id) {
+    async buyAll(id) {
         const upgrade = this.get(id);
         const unlockUpgrade = this.get("buy_max_" + id);
         if (!upgrade || upgrade.type !== "infinite" || !upgrade.isUnlocked() ||
-            !unlockUpgrade || unlockUpgrade.level < 1) return 0;
+            !unlockUpgrade || unlockUpgrade.level < 1 ||
+            this.buyAllInProgress.has(id)) return 0;
 
+        this.buyAllInProgress.add(id);
         let bought = 0;
-        const maxPurchasesPerAction = 10000;
-        while (bought < maxPurchasesPerAction && upgrade.canBuy()) {
-            if (!upgrade.buy()) break;
-            bought += 1;
+        const batchSize = 250;
+
+        try {
+            // 購入上限は設けず、250Lvごとにイベントループへ制御を返す。
+            // 大量購入中も入力・描画・ゲーム更新が停止しないようにする。
+            while (upgrade.canBuy()) {
+                let batchBought = 0;
+
+                while (batchBought < batchSize && upgrade.canBuy()) {
+                    if (!upgrade.buy()) break;
+                    bought += 1;
+                    batchBought += 1;
+                }
+
+                if (batchBought === 0 || batchBought < batchSize) break;
+                await new Promise(resolve => setTimeout(resolve, 0));
+            }
+        } finally {
+            this.buyAllInProgress.delete(id);
+            if (bought > 0) eventBus.emit("upgrade:update");
         }
-        if (bought > 0) eventBus.emit("upgrade:update");
+
         return bought;
     }
 
