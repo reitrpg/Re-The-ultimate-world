@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ep-threshold-study
+  group: ep-threshold-study-fixed
   cancel-in-progress: true
 
 jobs:
