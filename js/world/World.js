@@ -249,6 +249,10 @@ class World {
 
         this.newBirthMultiplier = this.newBirthMultiplier.multiply(sacrifice);
         this.newBirthCount += 1;
+
+        // 新生成立時、無限強化のLvをそれぞれ10分の1にする（小数点以下切り捨て）。
+        UpgradeManager.reduceInfiniteUpgradeLevels(0.1);
+
         this.exp = BigNumber.zero();
         this.level = 1;
         this.baseProduction = BigNumber.one();
