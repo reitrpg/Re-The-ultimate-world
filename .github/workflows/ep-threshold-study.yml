@@ -1,0 +1,61 @@
+name: EP 1.8e308 Progression Study
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'js/**'
+      - 'tests/ep-threshold-study.cjs'
+      - '.github/workflows/ep-threshold-study.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ep-threshold-study
+  cancel-in-progress: true
+
+jobs:
+  ep-threshold-study:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Start local web server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/world-creator-ep-study-http.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail http://127.0.0.1:4173/ > /dev/null
+
+      - name: Run progression to 1.8e308 EP
+        run: node tests/ep-threshold-study.cjs
+
+      - name: Upload EP progression report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: world-creator-ep-threshold-study
+          path: |
+            test-results/ep-threshold-study.json
+            test-results/ep-threshold-study-summary.json
+            test-results/ep-threshold-study.csv
+            /tmp/world-creator-ep-study-http.log
+          if-no-files-found: warn
