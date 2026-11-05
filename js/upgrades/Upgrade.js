@@ -74,13 +74,13 @@ class Upgrade {
             levelFactor = 1 + (coefficient * Math.pow(this.level, 3));
 
             if (this.level >= 150) {
-                // Lv150を従来式の基準点とし、それ以降は1Lvごとに1.1倍。
+                // Lv150を従来式の基準点とし、それ以降は1Lvごとに1.2倍。
                 // 強化効果のLv50以降の成長率（1.1倍）とコスト成長率を揃える。
                 const anchorLevel = 150;
                 const anchorFactor = 1 + (13 * Math.pow(anchorLevel, 3));
                 const anchorQuadraticMultiplier = 100;
                 const decimalExponent =
-                    (this.level - anchorLevel) * Math.log10(1.1);
+                    (this.level - anchorLevel) * Math.log10(1.2);
                 const layeredExponent = Math.floor(decimalExponent / 3);
                 const mantissa = Math.pow(
                     10,
