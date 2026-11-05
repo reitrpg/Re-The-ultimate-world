@@ -40,7 +40,7 @@ const TARGET_LEVEL = 12050;
         throw new Error("デバッグモードを有効化できませんでした");
       }
 
-      DebugManager.addEP(BigNumber.fromLayered(1, 5000, 1));
+      DebugManager.addEP(BigNumber.fromLayered(12, 4017, 0));
       UpgradeManager.unlock("creator_will");
       DebugManager.setUpgradeLevel("buy_max_creator_will", 1);
 
@@ -79,13 +79,13 @@ const TARGET_LEVEL = 12050;
 
       const finalLevelCost = (() => {
         upgrade.level = targetLevel - 1;
-        const cost = upgrade.getCost().toString();
+        const cost = upgrade.getCost();
         upgrade.level = 0;
         return cost;
       })();
 
-      if (EPManager.get().layer !== 1 || !EPManager.get().greaterOrEqual(BigNumber.fromLayered(1, 4018, 0))) {
-        throw new Error("デバッグEPが必要量に達していません");
+      if (!EPManager.get().greaterOrEqual(finalLevelCost)) {
+        throw new Error("デバッグEPが最終購入分に達していません");
       }
 
       window.__buyAllYieldTicks = 0;
@@ -97,7 +97,7 @@ const TARGET_LEVEL = 12050;
         debugMode: SettingsManager.isDebugMode(),
         ep: EPManager.get().toString(),
         epLayer: EPManager.get().layer,
-        finalLevelCost,
+        finalLevelCost: finalLevelCost.toString(),
         expectedPurchases: targetLevel
       };
     }, TARGET_LEVEL);
