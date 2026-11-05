@@ -31,7 +31,15 @@ class UpgradeUI {
 
         eventBus.on("action:upgrade:buy-all", payload => {
             const buyButton = payload?.target?.closest?.("[data-action='upgrade:buy-all']");
-            if (buyButton) UpgradeManager.buyAll(buyButton.dataset.upgradeId);
+            if (!buyButton || buyButton.disabled) return;
+
+            const upgradeId = buyButton.dataset.upgradeId;
+            buyButton.disabled = true;
+            buyButton.textContent = "購入中…";
+
+            UpgradeManager.buyAll(upgradeId)
+                .catch(error => console.error("全購入に失敗しました:", error))
+                .finally(() => this.render());
         });
 
         this.render();
