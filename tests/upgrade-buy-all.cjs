@@ -131,7 +131,7 @@ const TARGET_LEVEL = 12050;
     });
 
     if (result.purchased !== setup.expectedPurchases) {
-      throw new Error(`購入数が不正です: ${result.purchased} / EP初期値=${setup.ep} / 最終Lvコスト=${setup.finalLevelCost} / 残EP=${result.remainingEP}`);
+      throw new Error(`購入数が不正です: ${result.purchased} / EP初期値=${setup.ep} / 最終Lvコスト=${setup.finalLevelCost} / 残EP=${result.remainingEP} / 停止理由=${JSON.stringify(result.stopReason)} / buy失敗=${JSON.stringify(result.buyFailure)} / maxLv=${result.maxLevel} / unlocked=${result.unlocked}`);
     }
     if (result.yieldTicks < 2) {
       throw new Error(`購入中のイベントループ応答が不足しています: ${result.yieldTicks}`);
