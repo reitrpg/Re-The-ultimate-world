@@ -156,11 +156,16 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
     }
 
     function buyInfinite() {
-      // 1 tickにつき各無限強化へ全購入を最大1回だけ実行する。
-      // 連続クリックを大量に再現して進行を水増ししない。
+      // 買い過ぎによるEP枯渇を避け、各無限強化をLv100まで1回ずつ購入する。
+      // 新生後は1/10になったLvから再びLv100を目指す。
       let boughtLevels = 0;
       const candidates = Upgrades.getByType("infinite")
-        .filter(upgrade => upgrade.isUnlocked() && !upgrade.isMaxed() && upgrade.canBuy())
+        .filter(upgrade =>
+          upgrade.level < 100 &&
+          upgrade.isUnlocked() &&
+          !upgrade.isMaxed() &&
+          upgrade.canBuy()
+        )
         .sort((a, b) => {
           const ca = a.getCost();
           const cb = b.getCost();
@@ -170,22 +175,16 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
         });
 
       for (const selected of candidates) {
-        const before = selected.level;
-        const bulkUnlock = Upgrades.get("buy_max_" + selected.id);
-        const bought = bulkUnlock?.level >= 1
-          ? Upgrades.buyAll(selected.id)
-          : (Upgrades.buy(selected.id) ? 1 : 0);
-        if (!bought) continue;
+        if (selected.level >= 100) continue;
+        if (!Upgrades.buy(selected.id)) continue;
 
-        const gained = selected.level - before;
-        boughtLevels += gained;
-        actionCounts.infiniteUpgradeLevelsBought += gained;
+        boughtLevels++;
+        actionCounts.infiniteUpgradeLevelsBought++;
         if (actions.length < 10000) {
           actions.push({
             second: currentSecond,
-            type: bulkUnlock?.level >= 1 ? "infinite-buy-all" : "infinite",
+            type: "infinite-single",
             id: selected.id,
-            levelsBought: gained,
             level: selected.level
           });
         }
