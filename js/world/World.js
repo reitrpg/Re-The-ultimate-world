@@ -202,34 +202,26 @@ class World {
         );
     }
 
-    getSquareRoot(value) {
+    getPower(value, power) {
         const number = BigNumber.from(value);
 
         if (number.mantissa <= 0) {
             return BigNumber.zero();
         }
 
-        // layer 0 は mantissa × 1000^exponent のため、指数を偶数に揃えて平方根を取る。
+        // layer 0 は mantissa × 1000^exponent。指数部・仮数部の両方に累乗を適用する。
         if (number.layer === 0) {
-            let mantissa = number.mantissa;
-            let exponent = number.exponent;
-
-            if (Math.abs(exponent % 2) === 1) {
-                mantissa *= 1000;
-                exponent -= 1;
-            }
-
             return BigNumber.fromLayered(
-                Math.sqrt(mantissa),
-                exponent / 2,
+                Math.pow(number.mantissa, power),
+                number.exponent * power,
                 0
             );
         }
 
-        // 上位層では現行BigNumberに平方根演算がないため、指数を半分にして近似する。
+        // 上位層では指数部に累乗を適用して近似する。
         return BigNumber.fromLayered(
-            number.mantissa,
-            Math.max(0, Math.floor(number.exponent / 2)),
+            Math.pow(number.mantissa, power),
+            number.exponent * power,
             number.layer
         );
     }
@@ -240,7 +232,8 @@ class World {
         const scaledExperience = BigNumber.one().add(
             effectiveExperience.divide(500000)
         );
-        const baseMultiplier = this.getSquareRoot(scaledExperience);
+        // 平方根（0.5乗）から0.8乗へ変更し、新生倍率の減衰を緩和する。
+        const baseMultiplier = this.getPower(scaledExperience, 0.8);
 
         const currentMultiplier = BigNumber.from(this.newBirthMultiplier);
         if (currentMultiplier.lessOrEqual(0)) {
