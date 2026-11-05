@@ -197,17 +197,33 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
       for (const id of ["plant_to_ep", "metal_to_ep", "magic_to_ep"]) {
         const recipe = Converter.getRecipe(id);
         const resource = recipe && Resources.get(recipe.resourceId);
-        if (!resource || resource.amount.less(recipe.resourceCost)) continue;
-        const count = Converter.convertAll(id);
+        if (!recipe || !resource || resource.amount.less(recipe.resourceCost)) continue;
+
+        const deficit = target.subtract(EP.get());
+        if (deficit.lessOrEqual(0)) break;
+
+        const requiredResource = deficit
+          .multiply(recipe.resourceCost)
+          .divide(recipe.epReward);
+
+        let count;
+        if (resource.amount.greaterOrEqual(requiredResource)) {
+          // 閾値を超える余剰変換を避け、到達に必要な分だけ変換する。
+          count = Converter.convertByAmount(id, requiredResource);
+        } else {
+          count = Converter.convertAll(id);
+        }
+
         if (count > 0) {
           converted++;
           actionCounts.conversions++;
-          actions.push({ second: currentSecond, type: "convert-all", id, count });
+          if (actions.length < 10000) {
+            actions.push({ second: currentSecond, type: "convert-to-threshold", id, count });
+          }
         }
       }
       return converted;
     }
-
     let currentSecond = 0;
     capture(0, true);
     for (let second = 1; second <= maxRealSeconds; second++) {
@@ -261,6 +277,7 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
       simulatedSeconds: currentSecond * speed,
       ep: EP.get().toString(),
       epReachedTarget: EP.get().greaterOrEqual(target),
+      epExcess: EP.get().subtract(target).toString(),
       totalEP: Statistics.getTotalEP().toString(),
       worldLevel: world?.level ?? null,
       worldTotalExperience: world?.totalExperience?.toString?.() ?? "0",
