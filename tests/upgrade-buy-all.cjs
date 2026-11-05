@@ -143,7 +143,8 @@ const TARGET_LEVEL = 12050;
       status: "PASS",
       test: "debug-ep-buy-all-over-10000-and-yield",
       ...setup,
-      ...purchaseRun,\n      ...result,
+      ...purchaseRun,
+      ...result,
       browserErrors: errors
     }, null, 2));
   } finally {
