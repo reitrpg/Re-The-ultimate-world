@@ -65,7 +65,8 @@ const TARGET_LEVEL = 12050;
 
       return {
         debugMode: SettingsManager.isDebugMode(),
-        ep: EPManager.get().toString(),\n        epLayer: EPManager.get().layer,
+        ep: EPManager.get().toString(),
+        epLayer: EPManager.get().layer,
         finalLevelCost,
         expectedPurchases: targetLevel
       };
