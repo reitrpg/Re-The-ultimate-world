@@ -354,7 +354,7 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
     newBirthCount: result.newBirthCount,
     newBirthMultiplier: result.newBirthMultiplier,
     trackedUpgradeLevels: result.trackedUpgradeLevels,
-    actionCounts,
+    actionCounts: result.actionCounts,
     browserErrors: errors
   }));
   if (!result.epReachedTarget || errors.length) process.exitCode = 1;
