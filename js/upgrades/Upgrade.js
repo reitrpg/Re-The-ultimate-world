@@ -175,15 +175,22 @@ class Upgrade {
 
     getMultiplier() {
         if (this.type !== "infinite") {
-            return Math.pow(this.multiplier, this.level);
+            return BigNumber.from(Math.pow(this.multiplier, this.level));
         }
 
         if (this.level <= 50) {
-            return Math.pow(this.multiplier, this.level);
+            return BigNumber.from(Math.pow(this.multiplier, this.level));
         }
 
+        // 高LvでもInfinityにならないよう、倍率を対数からBigNumberへ変換する。
         const baseAt50 = Math.pow(this.multiplier, 50);
-        return baseAt50 * Math.pow(1.1, this.level - 50);
+        const decimalExponent =
+            Math.log10(baseAt50) +
+            (this.level - 50) * Math.log10(1.1);
+        const exponent = Math.floor(decimalExponent / 3);
+        const mantissa = Math.pow(10, decimalExponent - exponent * 3);
+
+        return BigNumber.fromLayered(mantissa, exponent, 0);
     }
 
     getEffectText() {
