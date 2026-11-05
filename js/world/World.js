@@ -232,7 +232,7 @@ class World {
         const scaledExperience = BigNumber.one().add(
             effectiveExperience.divide(500000)
         );
-        // 0.8乗から0.9乗へ変更し、新生倍率の減衰をさらに緩和する。
+        // 0.9乗の新生倍率設定。EP到達テストの対象。
         const baseMultiplier = this.getPower(scaledExperience, 0.9);
 
         const currentMultiplier = BigNumber.from(this.newBirthMultiplier);
