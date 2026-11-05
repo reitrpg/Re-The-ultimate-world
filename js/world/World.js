@@ -202,12 +202,45 @@ class World {
         );
     }
 
+    getSquareRoot(value) {
+        const number = BigNumber.from(value);
+
+        if (number.mantissa <= 0) {
+            return BigNumber.zero();
+        }
+
+        // layer 0 は mantissa × 1000^exponent のため、指数を偶数に揃えて平方根を取る。
+        if (number.layer === 0) {
+            let mantissa = number.mantissa;
+            let exponent = number.exponent;
+
+            if (Math.abs(exponent % 2) === 1) {
+                mantissa *= 1000;
+                exponent -= 1;
+            }
+
+            return BigNumber.fromLayered(
+                Math.sqrt(mantissa),
+                exponent / 2,
+                0
+            );
+        }
+
+        // 上位層では現行BigNumberに平方根演算がないため、指数を半分にして近似する。
+        return BigNumber.fromLayered(
+            number.mantissa,
+            Math.max(0, Math.floor(number.exponent / 2)),
+            number.layer
+        );
+    }
+
     getNewBirthMultiplier() {
         // 基本倍率は累計EXPを等倍で使用し、増加分だけをアップグレード平均Lvで減衰させる。
         const effectiveExperience = BigNumber.from(this.totalExperience);
-        const baseMultiplier = BigNumber.one().add(
+        const scaledExperience = BigNumber.one().add(
             effectiveExperience.divide(500000)
         );
+        const baseMultiplier = this.getSquareRoot(scaledExperience);
 
         const currentMultiplier = BigNumber.from(this.newBirthMultiplier);
         if (currentMultiplier.lessOrEqual(0)) {
