@@ -232,8 +232,8 @@ class World {
         const scaledExperience = BigNumber.one().add(
             effectiveExperience.divide(500000)
         );
-        // 平方根（0.5乗）から0.8乗へ変更し、新生倍率の減衰を緩和する。
-        const baseMultiplier = this.getPower(scaledExperience, 0.8);
+        // 0.8乗から0.9乗へ変更し、新生倍率の減衰をさらに緩和する。
+        const baseMultiplier = this.getPower(scaledExperience, 0.9);
 
         const currentMultiplier = BigNumber.from(this.newBirthMultiplier);
         if (currentMultiplier.lessOrEqual(0)) {
