@@ -77,6 +77,20 @@ class UpgradeManager {
         return bought;
     }
 
+    reduceInfiniteUpgradeLevels(rate = 0.1) {
+        const reductionRate = Number(rate);
+        if (!Number.isFinite(reductionRate) || reductionRate < 0 || reductionRate > 1) {
+            return false;
+        }
+
+        this.getByType("infinite").forEach(upgrade => {
+            upgrade.level = Math.floor(Math.max(0, Number(upgrade.level) || 0) * reductionRate);
+        });
+
+        eventBus.emit("upgrade:update");
+        return true;
+    }
+
     getResourceMultiplier(id) {
         let multiplier = 1;
         this.getAll().forEach(upgrade => {
