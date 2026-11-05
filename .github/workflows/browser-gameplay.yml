@@ -52,6 +52,9 @@ jobs:
       - name: Run browser gameplay checks
         run: node tests/browser-gameplay.cjs
 
+      - name: Verify unlimited responsive upgrade purchases
+        run: node tests/upgrade-buy-all.cjs
+
       - name: Upload browser test report
         if: always()
         uses: actions/upload-artifact@v4
