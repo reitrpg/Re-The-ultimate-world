@@ -156,41 +156,42 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
     }
 
     function buyInfinite() {
+      // 1 tickにつき各無限強化へ全購入を最大1回だけ実行する。
+      // 連続クリックを大量に再現して進行を水増ししない。
       let boughtLevels = 0;
-      for (let guard = 0; guard < 1000; guard++) {
-        const candidates = Upgrades.getByType("infinite")
-          .filter(upgrade => upgrade.isUnlocked() && !upgrade.isMaxed() && upgrade.canBuy())
-          .sort((a, b) => {
-            const ca = a.getCost();
-            const cb = b.getCost();
-            if (ca.less(cb)) return -1;
-            if (ca.greater(cb)) return 1;
-            return a.id.localeCompare(b.id);
-          });
-        if (!candidates.length) break;
+      const candidates = Upgrades.getByType("infinite")
+        .filter(upgrade => upgrade.isUnlocked() && !upgrade.isMaxed() && upgrade.canBuy())
+        .sort((a, b) => {
+          const ca = a.getCost();
+          const cb = b.getCost();
+          if (ca.less(cb)) return -1;
+          if (ca.greater(cb)) return 1;
+          return a.id.localeCompare(b.id);
+        });
 
-        const selected = candidates[0];
+      for (const selected of candidates) {
         const before = selected.level;
         const bulkUnlock = Upgrades.get("buy_max_" + selected.id);
         const bought = bulkUnlock?.level >= 1
           ? Upgrades.buyAll(selected.id)
           : (Upgrades.buy(selected.id) ? 1 : 0);
-        if (!bought) break;
+        if (!bought) continue;
 
         const gained = selected.level - before;
         boughtLevels += gained;
         actionCounts.infiniteUpgradeLevelsBought += gained;
-        actions.push({
-          second: currentSecond,
-          type: bulkUnlock?.level >= 1 ? "infinite-buy-all" : "infinite",
-          id: selected.id,
-          levelsBought: gained,
-          level: selected.level
-        });
+        if (actions.length < 10000) {
+          actions.push({
+            second: currentSecond,
+            type: bulkUnlock?.level >= 1 ? "infinite-buy-all" : "infinite",
+            id: selected.id,
+            levelsBought: gained,
+            level: selected.level
+          });
+        }
       }
       return boughtLevels;
     }
-
     function convertMaterials() {
       let converted = 0;
       for (const id of ["plant_to_ep", "metal_to_ep", "magic_to_ep"]) {
@@ -230,11 +231,8 @@ fs.mkdirSync(REPORT_DIR, { recursive: true });
       }
 
       convertMaterials();
-      for (let pass = 0; pass < 1000; pass++) {
-        const limited = buyLimited();
-        const infinite = buyInfinite();
-        if (limited === 0 && infinite === 0) break;
-      }
+      buyLimited();
+      buyInfinite();
 
       Achievements.update({
         worldManager: WorldManager,
