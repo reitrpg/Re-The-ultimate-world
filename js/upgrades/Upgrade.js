@@ -73,14 +73,28 @@ class Upgrade {
 
             levelFactor = 1 + (coefficient * Math.pow(this.level, 3));
 
-            // From Lv150 onward, retain the existing cost curve and apply a quadratic multiplier.
-            // Extra multiplier: Lv150 = 100x, Lv151 = 400x, Lv152 = 900x, Lv160 = 12,100x.
             if (this.level >= 150) {
-                const levelsAfter149 = this.level - 149;
-                const quadraticMultiplier = 100 * Math.pow(levelsAfter149, 2);
-                return this.baseCost.multiply(
-                    BigNumber.from(levelFactor).multiply(quadraticMultiplier)
+                // Lv150を従来式の基準点とし、それ以降は1Lvごとに1.1倍。
+                // 強化効果のLv50以降の成長率（1.1倍）とコスト成長率を揃える。
+                const anchorLevel = 150;
+                const anchorFactor = 1 + (13 * Math.pow(anchorLevel, 3));
+                const anchorQuadraticMultiplier = 100;
+                const decimalExponent =
+                    (this.level - anchorLevel) * Math.log10(1.1);
+                const layeredExponent = Math.floor(decimalExponent / 3);
+                const mantissa = Math.pow(
+                    10,
+                    decimalExponent - layeredExponent * 3
                 );
+                const growthMultiplier = BigNumber.fromLayered(
+                    mantissa,
+                    layeredExponent,
+                    0
+                );
+
+                return this.baseCost
+                    .multiply(anchorFactor * anchorQuadraticMultiplier)
+                    .multiply(growthMultiplier);
             }
 
             return this.baseCost.multiply(levelFactor);
