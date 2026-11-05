@@ -40,6 +40,7 @@ const BASE_URL = "http://127.0.0.1:4173/";
         }
         if (this.level === 12050) {
           timerRanAtCompletion = window.__buyAllTimerRan === true;
+          window.__buyAllTimerRanAtCompletion = timerRanAtCompletion;
         }
         return true;
       };
@@ -65,7 +66,7 @@ const BASE_URL = "http://127.0.0.1:4173/";
       const manager = (await import("./js/upgrades/Manager.js")).default;
       return {
         purchased: manager.get("creator_will").level,
-        timerRanAtCompletion: window.__buyAllTimerRan === true
+        timerRanAtCompletion: window.__buyAllTimerRanAtCompletion === true
       };
     });
 
