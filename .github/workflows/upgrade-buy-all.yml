@@ -9,6 +9,8 @@ on:
       - 'js/rebirth/**'
       - 'js/resource/**'
       - 'js/ep/**'
+      - 'js/world/**'
+      - 'tests/world-level-exp.cjs'
       - 'tests/upgrade-buy-all.cjs'
       - 'tests/newbirth-reset.cjs'
       - '.github/workflows/upgrade-buy-all.yml'
@@ -55,3 +57,6 @@ jobs:
 
       - name: Verify new-birth resource resets
         run: node tests/newbirth-reset.cjs
+
+      - name: Verify multi-level world EXP progression
+        run: node tests/world-level-exp.cjs
