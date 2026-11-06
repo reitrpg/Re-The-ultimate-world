@@ -1,19 +1,23 @@
 const { chromium } = require("playwright");
 
 const BASE_URL = "http://127.0.0.1:4173/";
-const TARGET_LEVEL = 12050;
+const DEBUG_EP = { mantissa: 1, exponent: 1000 / 3, layer: 0 };
+const EP_LIMIT = { mantissa: 180, exponent: 102, layer: 0 };
 
 (async () => {
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 412, height: 915 } });
   const errors = [];
   page.on("pageerror", error => errors.push(String(error)));
+  page.on("console", message => {
+    if (message.type() === "error") errors.push(message.text());
+  });
 
   try {
     await page.goto(BASE_URL, { waitUntil: "networkidle", timeout: 30000 });
     await page.waitForFunction(() => document.documentElement.dataset.appReady === "true");
 
-    const setup = await page.evaluate(async targetLevel => {
+    const setup = await page.evaluate(async ({ debugEP, epLimit }) => {
       const [
         settingsModule,
         debugModule,
@@ -28,65 +32,41 @@ const TARGET_LEVEL = 12050;
         import("./js/ep/Manager.js")
       ]);
 
-      const SettingsManager = settingsModule.default;
-      const DebugManager = debugModule.default;
+      const Settings = settingsModule.default;
+      const Debug = debugModule.default;
       const BigNumber = bigNumberModule.default;
-      const UpgradeManager = upgradeModule.default;
-      const EPManager = epModule.default;
+      const Upgrades = upgradeModule.default;
+      const EP = epModule.default;
 
-      // 実際のデバッグモード経由で、購入総額を十分に上回るEPを付与する。
-      SettingsManager.set("debugMode", true);
-      if (!SettingsManager.isDebugMode()) {
-        throw new Error("デバッグモードを有効化できませんでした");
+      Settings.set("debugMode", true);
+      if (!Settings.isDebugMode()) throw new Error("デバッグモードを有効化できませんでした");
+
+      EP.reset();
+      Debug.addEP(BigNumber.from(debugEP));
+      const initialEP = EP.get();
+      const limit = BigNumber.from(epLimit);
+      if (!initialEP.greater(limit)) {
+        throw new Error("デバッグモードで1e1000 EPを付与できず、1.8e308の閾値を超えられません");
       }
 
-      DebugManager.addEP(BigNumber.fromLayered(12, 4017, 0));
-      UpgradeManager.unlock("creator_will");
-      DebugManager.setUpgradeLevel("buy_max_creator_will", 1);
-
-      const upgrade = UpgradeManager.get("creator_will");
-      const originalCanBuy = upgrade.canBuy.bind(upgrade);
-      const originalBuy = upgrade.buy.bind(upgrade);
-      upgrade.canBuy = function () {
-        const canBuy = originalCanBuy();
-        if (!canBuy) {
-          window.__buyAllStopReason = {
-            level: this.level,
-            unlocked: this.unlocked,
-            isUnlocked: this.isUnlocked(),
-            maxLevel: this.maxLevel,
-            cost: this.getCost().toString(),
-            ep: EPManager.get().toString(),
-            epLayer: EPManager.get().layer,
-            hasEP: EPManager.has(this.getCost())
-          };
-        }
-        return canBuy;
-      };
-      upgrade.buy = function () {
-        const bought = originalBuy();
-        if (!bought) {
-          window.__buyAllBuyFailure = {
-            level: this.level,
-            cost: this.getCost().toString(),
-            ep: EPManager.get().toString(),
-            epLayer: EPManager.get().layer
-          };
-        }
-        return bought;
-      };
+      Upgrades.unlock("creator_will");
+      Debug.setUpgradeLevel("buy_max_creator_will", 1);
+      const upgrade = Upgrades.get("creator_will");
       upgrade.level = 0;
 
-      const finalLevelCost = (() => {
-        upgrade.level = targetLevel - 1;
+      // 1e1000 EPで購入可能な最大Lvを、購入処理とは独立して事前計算する。
+      let remaining = initialEP.clone();
+      let expectedPurchases = 0;
+      while (true) {
         const cost = upgrade.getCost();
-        upgrade.level = 0;
-        return cost;
-      })();
-
-      if (!EPManager.get().greaterOrEqual(finalLevelCost)) {
-        throw new Error("デバッグEPが最終購入分に達していません");
+        if (remaining.less(cost)) break;
+        remaining = remaining.subtract(cost);
+        upgrade.level += 1;
+        expectedPurchases += 1;
       }
+      const expectedLevel = upgrade.level;
+      const expectedRemainingEP = remaining.toString();
+      upgrade.level = 0;
 
       window.__buyAllYieldTicks = 0;
       window.__buyAllYieldTimer = setInterval(() => {
@@ -94,24 +74,27 @@ const TARGET_LEVEL = 12050;
       }, 0);
 
       return {
-        debugMode: SettingsManager.isDebugMode(),
-        ep: EPManager.get().toString(),
-        epLayer: EPManager.get().layer,
-        finalLevelCost: finalLevelCost.toString(),
-        expectedPurchases: targetLevel
+        debugMode: Settings.isDebugMode(),
+        initialEP: initialEP.toString(),
+        initialEPLayer: initialEP.layer,
+        exceedsEPThreshold: initialEP.greater(limit),
+        expectedPurchases,
+        expectedLevel,
+        expectedRemainingEP
       };
-    }, TARGET_LEVEL);
+    }, { debugEP: DEBUG_EP, epLimit: EP_LIMIT });
 
     const debugPanelVisible = await page.locator("#debug-panel").evaluate(element => !element.hidden);
     if (!debugPanelVisible) throw new Error("デバッグパネルが表示されていません");
 
-    // UIのクリック経路ではなく、同じ実ゲーム用Managerの一括購入関数を直接実行する。
     const purchaseRun = await page.evaluate(async () => {
       const manager = (await import("./js/upgrades/Manager.js")).default;
+      const startedAt = performance.now();
       const bought = await manager.buyAll("creator_will");
       return {
         bought,
         level: manager.get("creator_will").level,
+        durationMs: Number((performance.now() - startedAt).toFixed(2)),
         inProgress: manager.buyAllInProgress.has("creator_will")
       };
     });
@@ -124,24 +107,28 @@ const TARGET_LEVEL = 12050;
         purchased: manager.get("creator_will").level,
         remainingEP: epManager.get().toString(),
         yieldTicks: window.__buyAllYieldTicks,
-        stopReason: window.__buyAllStopReason || null,
-        buyFailure: window.__buyAllBuyFailure || null,
-        maxLevel: manager.get("creator_will").maxLevel,
-        unlocked: manager.get("creator_will").isUnlocked()
+        nextCost: manager.get("creator_will").getCost().toString(),
+        nextCostUnaffordable: !epManager.has(manager.get("creator_will").getCost())
       };
     });
 
-    if (purchaseRun.bought !== setup.expectedPurchases || result.purchased !== setup.expectedPurchases) {
-      throw new Error(`購入数が不正です: 戻り値=${purchaseRun.bought} / Lv=${result.purchased} / EP初期値=${setup.ep} / 最終Lvコスト=${setup.finalLevelCost} / 残EP=${result.remainingEP} / 停止理由=${JSON.stringify(result.stopReason)} / buy失敗=${JSON.stringify(result.buyFailure)} / maxLv=${result.maxLevel} / unlocked=${result.unlocked}`);
+    if (purchaseRun.bought !== setup.expectedPurchases ||
+        result.purchased !== setup.expectedLevel) {
+      throw new Error("購入可能最大数まで到達しませんでした: " + JSON.stringify({
+        setup, purchaseRun, result
+      }));
     }
-    if (result.yieldTicks < 2) {
-      throw new Error(`購入中のイベントループ応答が不足しています: ${result.yieldTicks}`);
+    if (!result.nextCostUnaffordable) {
+      throw new Error("購入終了時点で次のLvを購入できるEPが残っています");
+    }
+    if (result.yieldTicks < Math.floor(setup.expectedPurchases / 250)) {
+      throw new Error("大量購入中にイベントループへ制御が返っていません: " + JSON.stringify(result));
     }
     if (errors.length) throw new Error(errors.join("\\n"));
 
     console.log(JSON.stringify({
       status: "PASS",
-      test: "debug-ep-buy-all-over-10000-and-yield",
+      test: "debug-1e1000-ep-unlimited-buy-all-load",
       ...setup,
       ...purchaseRun,
       ...result,
