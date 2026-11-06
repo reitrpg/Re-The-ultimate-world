@@ -73,11 +73,20 @@ class UpgradeManager {
         let bought = 0;
 
         try {
-            // 購入可能なEP/素材が尽きるか、強化上限に達するまで一度に購入する。
-            // 固定バッチ数・固定Lv数による購入打ち切りは設けない。
+            // 250回ごとに描画・入力へ制御を返す。これは処理分割であり購入上限ではない。
+            // EP/素材が尽きるか、強化上限に達するまで最後まで購入を続ける。
+            const yieldInterval = 250;
+            let batchCount = 0;
+
             while (upgrade.canBuy()) {
                 if (!upgrade.buy()) break;
                 bought += 1;
+                batchCount += 1;
+
+                if (batchCount >= yieldInterval) {
+                    batchCount = 0;
+                    await new Promise(resolve => setTimeout(resolve, 0));
+                }
             }
         } finally {
             this.buyAllInProgress.delete(id);
