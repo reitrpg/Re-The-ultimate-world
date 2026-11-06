@@ -93,8 +93,8 @@ const BASE_URL = "http://127.0.0.1:4173/";
       if (result.after.resources[id].amount !== "0") {
         throw new Error(id + "の所持量がリセットされていません");
       }
-      if (result.after.resources[id].production !== "0") {
-        throw new Error(id + "の生産量表示がリセットされていません");
+      if (result.after.resources[id].production !== result.before.resources[id].production) {
+        throw new Error(id + "の生産量が不必要に変更されています");
       }
     }
     if (result.after.newBirthCount !== 1) throw new Error("新生回数が正しく増加していません");
@@ -105,7 +105,7 @@ const BASE_URL = "http://127.0.0.1:4173/";
 
     console.log(JSON.stringify({
       status: "PASS",
-      test: "new-birth-resets-ep-and-three-materials",
+      test: "new-birth-resets-ep-and-three-material-amounts",
       ...result,
       browserErrors: errors
     }, null, 2));
