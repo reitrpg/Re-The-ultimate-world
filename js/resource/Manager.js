@@ -4,42 +4,22 @@
  */
 
 import Resource from "./Resource.js";
-
 import BigNumber from "../number/BigNumber.js";
-
 import eventBus from "../core/eventBus.js";
 import StatisticsManager from "../statistics/Manager.js";
 
 class ResourceManager {
-
     constructor() {
-
         this.resources = new Map();
-
     }
 
     create(resource) {
-
-        this.resources.set(
-
-            resource.id,
-
-            resource
-
-        );
-
-        eventBus.emit(
-
-            "resource:update"
-
-        );
-
+        this.resources.set(resource.id, resource);
+        eventBus.emit("resource:update");
         return resource;
-
     }
 
     createDefaultResources() {
-
         const defaults = [
             ["plant", "植物"],
             ["metal", "金属"],
@@ -48,217 +28,95 @@ class ResourceManager {
 
         defaults.forEach(([id, name]) => {
             if (!this.exists(id)) {
-                this.create(
-                    new Resource(id, name, 0, 0)
-                );
+                this.create(new Resource(id, name, 0, 0));
             }
         });
-
     }
 
     get(id) {
-
-        return this.resources.get(
-            id
-        );
-
+        return this.resources.get(id);
     }
 
     getAll() {
-
-        return Array.from(
-
-            this.resources.values()
-
-        );
-
+        return Array.from(this.resources.values());
     }
 
     exists(id) {
-
-        return this.resources.has(
-            id
-        );
-
+        return this.resources.has(id);
     }
 
-    add(
-        id,
-        amount
-    ) {
-
-        const resource =
-            this.get(id);
-
-        if (!resource) {
-
-            return false;
-
-        }
+    add(id, amount) {
+        const resource = this.get(id);
+        if (!resource) return false;
 
         const gain = BigNumber.from(amount);
-
-        resource.amount =
-
-            resource.amount.add(
-                gain
-            );
-
+        resource.amount = resource.amount.add(gain);
         StatisticsManager.recordResource(id, gain);
-
-        eventBus.emit(
-
-            "resource:update"
-
-        );
-
+        eventBus.emit("resource:update");
         return true;
-
     }
 
-    consume(
-        id,
-        amount
-    ) {
+    consume(id, amount) {
+        const resource = this.get(id);
+        if (!resource) return false;
 
-        const resource =
-            this.get(id);
+        const cost = BigNumber.from(amount);
+        if (resource.amount.less(cost)) return false;
 
-        if (!resource) {
-
-            return false;
-
-        }
-
-        const cost =
-
-            BigNumber.from(
-                amount
-            );
-
-        if (
-
-            resource.amount.less(
-                cost
-            )
-
-        ) {
-
-            return false;
-
-        }
-
-        resource.amount =
-
-            resource.amount.subtract(
-                cost
-            );
-
-        eventBus.emit(
-
-            "resource:update"
-
-        );
-
+        resource.amount = resource.amount.subtract(cost);
+        eventBus.emit("resource:update");
         return true;
-
     }
 
-    has(
-        id,
-        amount
-    ) {
-
-        const resource =
-            this.get(id);
-
-        if (!resource) {
-
-            return false;
-
-        }
-
-        return resource.amount.greaterOrEqual(
-            amount
-        );
-
+    has(id, amount) {
+        const resource = this.get(id);
+        if (!resource) return false;
+        return resource.amount.greaterOrEqual(amount);
     }
 
-    produce(
-        id,
-        amount,
-        emitUpdate = true
-    ) {
-
-        const resource =
-            this.get(id);
-
-        if (!resource) {
-
-            return false;
-
-        }
+    produce(id, amount, emitUpdate = true) {
+        const resource = this.get(id);
+        if (!resource) return false;
 
         const gain = BigNumber.from(amount);
-
-        resource.amount =
-
-            resource.amount.add(
-                gain
-            );
-
+        resource.amount = resource.amount.add(gain);
         StatisticsManager.recordResource(id, gain);
 
-        if (emitUpdate) {
-            eventBus.emit("resource:update");
-        }
-
+        if (emitUpdate) eventBus.emit("resource:update");
         return true;
+    }
 
+    /**
+     * 新生時に素材の所持量と表示用生産量を初期化する。
+     * 累計統計や素材定義は維持する。
+     */
+    resetAmounts(ids = ["plant", "metal", "magic"]) {
+        ids.forEach(id => {
+            const resource = this.get(id);
+            if (!resource) return;
+            resource.amount = BigNumber.zero();
+            resource.production = BigNumber.zero();
+        });
+
+        eventBus.emit("resource:update");
     }
 
     clear() {
-
         this.resources.clear();
-
         this.createDefaultResources();
-
-        eventBus.emit(
-
-            "resource:update"
-
-        );
-
+        eventBus.emit("resource:update");
     }
 
     toJSON() {
-
-        return this.getAll().map(
-
-            resource =>
-
-                resource.toJSON()
-
-        );
-
+        return this.getAll().map(resource => resource.toJSON());
     }
 
     load(data) {
-
         this.resources.clear();
 
-        if (
-
-            !Array.isArray(
-                data
-            )
-
-        ) {
-
+        if (!Array.isArray(data)) {
             this.createDefaultResources();
-
             return;
-
         }
 
         data.forEach(resourceData => {
@@ -279,9 +137,7 @@ class ResourceManager {
                 resource.production = BigNumber.zero();
             }
         });
-
     }
-
 }
 
 export default new ResourceManager();
