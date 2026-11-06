@@ -232,8 +232,8 @@ class World {
         const scaledExperience = BigNumber.one().add(
             effectiveExperience.divide(500000)
         );
-        // 0.9乗の新生倍率設定。EP到達テストの対象。
-        const baseMultiplier = this.getPower(scaledExperience, 0.9);
+        // 仮設定：累計EXPの平方根を新生倍率の基礎値にする。
+        const baseMultiplier = this.getPower(scaledExperience, 0.5);
 
         const currentMultiplier = BigNumber.from(this.newBirthMultiplier);
         if (currentMultiplier.lessOrEqual(0)) {
