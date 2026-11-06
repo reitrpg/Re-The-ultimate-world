@@ -1,6 +1,8 @@
 import eventBus from "../core/eventBus.js";
 import WorldManager from "../world/Manager.js";
 import StatisticsManager from "../statistics/Manager.js";
+import EPManager from "../ep/Manager.js";
+import ResourceManager from "../resource/Manager.js";
 
 class NewBirthManager {
     getWorld() { return WorldManager.getActive(); }
@@ -31,6 +33,10 @@ class NewBirthManager {
 
         if (!world || !world.performNewBirth()) return false;
 
+        // 新生成立時、EPと3種類の素材をリセットする。
+        EPManager.reset();
+        ResourceManager.resetAmounts(["plant", "metal", "magic"]);
+
         StatisticsManager.recordRebirth();
         eventBus.emit("newbirth:update", { world });
         eventBus.emit("world:update");
@@ -38,7 +44,7 @@ class NewBirthManager {
     }
 
     reset() {
-        for(const world of WorldManager.getAll()) {
+        for (const world of WorldManager.getAll()) {
             world.newBirthCount = 0;
             world.newBirthMultiplier = world.newBirthMultiplier.constructor.one();
         }
@@ -46,7 +52,7 @@ class NewBirthManager {
         eventBus.emit("world:update");
     }
 
-    toJSON() { return {version:3}; }
+    toJSON() { return { version: 3 }; }
     load() { eventBus.emit("newbirth:update"); }
 }
 
