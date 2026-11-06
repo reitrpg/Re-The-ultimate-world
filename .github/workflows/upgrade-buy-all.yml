@@ -1,4 +1,4 @@
-name: Upgrade Buy-All Regression Test
+name: Upgrade Buy-All and New-Birth Regression Tests
 
 on:
   push:
@@ -6,7 +6,11 @@ on:
     paths:
       - 'js/upgrades/**'
       - 'js/ui/UpgradeUI.js'
+      - 'js/rebirth/**'
+      - 'js/resource/**'
+      - 'js/ep/**'
       - 'tests/upgrade-buy-all.cjs'
+      - 'tests/newbirth-reset.cjs'
       - '.github/workflows/upgrade-buy-all.yml'
   workflow_dispatch:
 
@@ -18,7 +22,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  buy-all:
+  regression:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -37,7 +41,7 @@ jobs:
 
       - name: Start local web server
         run: |
-          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/world-creator-buy-all-http.log 2>&1 &
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/world-creator-regression-http.log 2>&1 &
           for i in $(seq 1 30); do
             if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
               break
@@ -46,5 +50,8 @@ jobs:
           done
           curl --fail http://127.0.0.1:4173/ > /dev/null
 
-      - name: Verify unlimited responsive upgrade purchases
+      - name: Stress test unlimited buy-all with debug 1e1000 EP
         run: node tests/upgrade-buy-all.cjs
+
+      - name: Verify new-birth resource resets
+        run: node tests/newbirth-reset.cjs
