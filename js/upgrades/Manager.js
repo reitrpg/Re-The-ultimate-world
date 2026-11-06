@@ -71,22 +71,13 @@ class UpgradeManager {
 
         this.buyAllInProgress.add(id);
         let bought = 0;
-        const batchSize = 250;
 
         try {
-            // 購入上限は設けず、250Lvごとにイベントループへ制御を返す。
-            // 大量購入中も入力・描画・ゲーム更新が停止しないようにする。
+            // 購入可能なEP/素材が尽きるか、強化上限に達するまで一度に購入する。
+            // 固定バッチ数・固定Lv数による購入打ち切りは設けない。
             while (upgrade.canBuy()) {
-                let batchBought = 0;
-
-                while (batchBought < batchSize && upgrade.canBuy()) {
-                    if (!upgrade.buy()) break;
-                    bought += 1;
-                    batchBought += 1;
-                }
-
-                if (batchBought === 0 || batchBought < batchSize) break;
-                await new Promise(resolve => setTimeout(resolve, 0));
+                if (!upgrade.buy()) break;
+                bought += 1;
             }
         } finally {
             this.buyAllInProgress.delete(id);
