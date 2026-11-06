@@ -87,15 +87,14 @@ class ResourceManager {
     }
 
     /**
-     * 新生時に素材の所持量と表示用生産量を初期化する。
-     * 累計統計や素材定義は維持する。
+     * 新生時に素材3種の所持量のみを初期化する。
+     * 生産量・累計統計・素材定義は維持する。
      */
     resetAmounts(ids = ["plant", "metal", "magic"]) {
         ids.forEach(id => {
             const resource = this.get(id);
             if (!resource) return;
             resource.amount = BigNumber.zero();
-            resource.production = BigNumber.zero();
         });
 
         eventBus.emit("resource:update");
