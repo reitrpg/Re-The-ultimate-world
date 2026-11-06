@@ -168,8 +168,9 @@ class World {
         let leveledUp = false;
 
         while (this.exp.greaterOrEqual(this.getRequiredExperience())) {
+            const requiredExperience = this.getRequiredExperience();
+            this.exp = this.exp.subtract(requiredExperience);
             this.level += 1;
-            this.exp = BigNumber.zero();
             leveledUp = true;
         }
 
