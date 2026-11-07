@@ -64,6 +64,12 @@ class SettingsUI {
 
         const seedOutput = this.getElement("settings-seed-output");
         if (seedOutput) seedOutput.dataset.action = "settings:seed-output";
+
+        const diagnosticRefresh = this.getElement("ep-diagnostic-refresh");
+        if (diagnosticRefresh) diagnosticRefresh.addEventListener("click", () => this.renderDiagnostics());
+
+        const diagnosticCopy = this.getElement("ep-diagnostic-copy");
+        if (diagnosticCopy) diagnosticCopy.addEventListener("click", () => this.copyDiagnostics());
     }
 
     registerEvents() {
@@ -92,6 +98,35 @@ class SettingsUI {
         });
     }
 
+    renderDiagnostics() {
+        const output = this.getElement("ep-diagnostic-output");
+        if (!output) return;
+        try {
+            const entries = JSON.parse(localStorage.getItem("world_creator_ep_diagnostics") || "[]");
+            output.value = JSON.stringify({
+                appVersion: document.documentElement.dataset.appVersion || "unknown",
+                capturedAt: new Date().toISOString(),
+                entries: Array.isArray(entries) ? entries : []
+            }, null, 2);
+        } catch (error) {
+            output.value = "診断情報の読み込みに失敗: " + String(error?.message || error);
+        }
+    }
+
+    async copyDiagnostics() {
+        this.renderDiagnostics();
+        const output = this.getElement("ep-diagnostic-output");
+        if (!output) return;
+        try {
+            await navigator.clipboard.writeText(output.value);
+            eventBus.emit("notification:show", { type: "info", message: "EP診断情報をコピーしました。" });
+        } catch (error) {
+            output.focus();
+            output.select();
+            eventBus.emit("notification:show", { type: "warning", message: "自動コピーできません。表示された診断情報を手動でコピーしてください。" });
+        }
+    }
+
     render() {
         const s = SettingsManager.getAll();
         const n = this.getElement("settings-number-format");
@@ -116,6 +151,7 @@ class SettingsUI {
         if (maxed) maxed.checked = Boolean(s.showMaxedUpgrades);
         if (l) l.value = s.language;
         if (seed && document.activeElement !== seed) seed.value = s.seed || "";
+        this.renderDiagnostics();
     }
 }
 
