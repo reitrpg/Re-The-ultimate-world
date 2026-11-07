@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#ffffff">
 <meta name="description" content="World Creator - 自分だけの世界を育てる放置ゲーム">
 <link rel="manifest" href="./manifest.json">
-<link rel="modulepreload" href="./js/core/main.js?v=0.0.143">
+<link rel="modulepreload" href="./js/core/main.js?v=0.0.144">
 <link rel="modulepreload" href="./js/core/save.js">
 <link rel="modulepreload" href="./js/core/game.js">
 <link rel="modulepreload" href="./js/utils/OfflineProgress.js">
@@ -14,7 +14,7 @@
 <link rel="modulepreload" href="./js/core/InputManager.js">
 <link rel="modulepreload" href="./js/core/InputActionController.js">
 <link rel="modulepreload" href="./js/ui/UI.js">
-<link rel="stylesheet" href="./style.css?v=0.0.143">
+<link rel="stylesheet" href="./style.css?v=0.0.144">
 <title>World Creator</title>
 </head>
 <body>
@@ -105,11 +105,18 @@
 <button id="debug-set-world-level" type="button">世界Lv設定</button>
 <button id="debug-reset" type="button">ゲームデータ初期化</button>
 </div>
+<section id="ep-diagnostic-panel">
+<h3>EP診断情報</h3>
+<p>EP表示の更新履歴と、内部値・表示変換結果・エラーを最大100件保存します。</p>
+<button id="ep-diagnostic-refresh" type="button">診断情報を更新</button>
+<button id="ep-diagnostic-copy" type="button">診断情報をコピー</button>
+<textarea id="ep-diagnostic-output" rows="10" readonly aria-label="EP診断情報"></textarea>
+</section>
 <div><h3>エラーログ</h3><div id="error-log"></div><button id="clear-error-log" type="button">エラーログ削除</button></div>
 </section>
 </main>
 <div id="notification-container" aria-live="polite"></div>
-<footer id="app-version">World Creator v0.0.143</footer>
-<script type="module" src="./js/core/main.js?v=0.0.143"></script>
+<footer id="app-version">World Creator v0.0.144</footer>
+<script type="module" src="./js/core/main.js?v=0.0.144"></script>
 </body>
 </html>
