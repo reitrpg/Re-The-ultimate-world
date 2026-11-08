@@ -39,7 +39,9 @@ const BASE_URL = "http://127.0.0.1:4173/";
         import("./js/converter/Converter.js"),
         import("./js/core/game.js"),
         import("./js/upgrades/Manager.js"),
-        import("./js/core/eventBus.js")
+        import("./js/core/eventBus.js"),
+        import("./js/rebirth/Manager.js"),
+        import("./js/world/Manager.js")
       ]);
 
       const BigNumber = numberModule.default;
@@ -49,6 +51,8 @@ const BASE_URL = "http://127.0.0.1:4173/";
       const Game = gameModule.default;
       const UpgradeManager = upgradeModule.default;
       const eventBus = eventModule.default;
+      const NewBirthManager = (await import("./js/rebirth/Manager.js")).default;
+      const WorldManager = (await import("./js/world/Manager.js")).default;
 
       Game.stop();
 
@@ -85,6 +89,48 @@ const BASE_URL = "http://127.0.0.1:4173/";
       const emptyConversionCount = Converter.convertAll("plant_to_ep");
       const EPAfterEmptyConversion = EPManager.get().toNumber();
 
+      // Reproduce the reported sequence: real new birth, legacy negative EP
+      // state, EP conversion, and navigation through every major tab.
+      const activeWorld = WorldManager.getActive();
+      if (!activeWorld) throw new Error("No active world available for new-birth regression");
+
+      activeWorld.totalExperience = BigNumber.from(625000);
+      const productionBeforeBirth = {
+        plant: 5,
+        metal: 6,
+        magic: 7
+      };
+
+      Object.entries(productionBeforeBirth).forEach(([id, rate]) => {
+        ResourceManager.get(id).setProduction(rate);
+        ResourceManager.add(id, 20);
+      });
+
+      EPManager.set(321);
+      const realNewBirthAccepted = NewBirthManager.newBirth();
+      const EPAfterNewBirth = EPManager.get().toNumber();
+      const materialsAfterNewBirth = Object.fromEntries(
+        ["plant", "metal", "magic"].map(id => [
+          id,
+          ResourceManager.get(id).amount.toNumber()
+        ])
+      );
+      const productionAfterNewBirth = Object.fromEntries(
+        ["plant", "metal", "magic"].map(id => [
+          id,
+          ResourceManager.get(id).production.toNumber()
+        ])
+      );
+
+      // Inject the prior-version corruption directly to verify that the
+      // manager repairs stale internal state before a post-birth conversion.
+      EPManager.amount = negative.clone();
+      const legacyNegativeEPWasRepaired = EPManager.get().isZero();
+      ResourceManager.add("plant", 30);
+      const conversionAfterNewBirthCount = Converter.convertAll("plant_to_ep");
+      const EPAfterNewBirthConversion = EPManager.get().toNumber();
+      ResourceManager.resetAmounts(["plant", "metal", "magic"]);
+
       UpgradeManager.get("automation_unlock").level = 1;
       eventBus.emit("upgrade:update");
 
@@ -107,6 +153,14 @@ const BASE_URL = "http://127.0.0.1:4173/";
         plantAfterConversion,
         emptyConversionCount,
         EPAfterEmptyConversion,
+        realNewBirthAccepted,
+        EPAfterNewBirth,
+        materialsAfterNewBirth,
+        productionBeforeBirth,
+        productionAfterNewBirth,
+        legacyNegativeEPWasRepaired,
+        conversionAfterNewBirthCount,
+        EPAfterNewBirthConversion,
         automationTabVisible: !document.querySelector('[data-tab="automation"]').hidden
       };
     });
@@ -131,6 +185,21 @@ const BASE_URL = "http://127.0.0.1:4173/";
     assert.equal(numeric.plantAfterConversion, 0);
     assert.equal(numeric.emptyConversionCount, 0);
     assert.equal(numeric.EPAfterEmptyConversion, 0);
+    assert.equal(numeric.realNewBirthAccepted, true, "Real new birth must complete");
+    assert.equal(numeric.EPAfterNewBirth, 0, "New birth must reset EP");
+    assert.deepEqual(numeric.materialsAfterNewBirth, {
+      plant: 0,
+      metal: 0,
+      magic: 0
+    }, "New birth must reset material balances");
+    assert.deepEqual(numeric.productionAfterNewBirth, numeric.productionBeforeBirth,
+      "New birth must preserve displayed material production");
+    assert.equal(numeric.legacyNegativeEPWasRepaired, true,
+      "Legacy negative EP must be repaired before conversion");
+    assert.equal(numeric.conversionAfterNewBirthCount, 3,
+      "EP conversion must remain usable after new birth");
+    assert.ok(numeric.EPAfterNewBirthConversion > 0,
+      "Post-new-birth conversion must add positive EP");
     assert.equal(numeric.automationTabVisible, true);
 
     const tabIds = ["world", "statistics", "achievements", "settings", "automation", "world"];
