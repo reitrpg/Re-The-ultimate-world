@@ -59,7 +59,7 @@ class BigNumber {
         const number = Number(value);
 
         return new BigNumber(
-            Number.isFinite(number) ? number : 0,
+            Number.isNaN(number) ? 0 : number,
             0,
             0
         );
@@ -75,6 +75,22 @@ class BigNumber {
             this.exponent,
             this.layer
         );
+    }
+
+    isFinite() {
+        return Number.isFinite(this.mantissa) &&
+            Number.isFinite(this.exponent) &&
+            Number.isInteger(this.layer) &&
+            this.layer >= 0 &&
+            this.layer <= 2;
+    }
+
+    isZero() {
+        return this.mantissa === 0;
+    }
+
+    isNegative() {
+        return this.mantissa < 0;
     }
 
     add(value) {
@@ -122,10 +138,13 @@ class BigNumber {
     }
 
     toNumber() {
-        if (this.layer > 0) return Infinity;
+        if (this.layer > 0) {
+            return this.mantissa < 0 ? -Infinity : Infinity;
+        }
 
         const value = this.mantissa * Math.pow(1000, this.exponent);
-        return Number.isFinite(value) ? value : Infinity;
+        // Preserve the sign when a finite BigNumber exceeds Number's range.
+        return value;
     }
 
     toString() {
