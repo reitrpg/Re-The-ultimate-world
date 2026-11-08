@@ -381,7 +381,18 @@ class World {
 
             const amount = production.multiply(seconds);
 
-            if (amount.lessOrEqual(0)) return;
+            if (
+                !production.isFinite() ||
+                !production.greater(0) ||
+                !amount.isFinite() ||
+                !amount.greater(0)
+            ) {
+                const resource = ResourceManager.get(id);
+                if (resource && (!production.isFinite() || production.less(0))) {
+                    resource.production = BigNumber.zero();
+                }
+                return;
+            }
 
             if (ResourceManager.produce(id, amount, false)) {
                 const resource = ResourceManager.get(id);
