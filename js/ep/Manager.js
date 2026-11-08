@@ -39,6 +39,9 @@ class EPManager {
     }
 
     add(value) {
+        const current = this.sanitizeAmount(this.amount);
+        this.amount = current;
+
         const gain = BigNumber.from(value);
 
         // EP is a non-negative game resource. Negative/zero gains are ignored
@@ -47,7 +50,6 @@ class EPManager {
             return false;
         }
 
-        const current = this.sanitizeAmount(this.amount);
         this.amount = current.add(gain);
 
         if (!this.amount.isFinite() || this.amount.less(0)) {
@@ -68,6 +70,7 @@ class EPManager {
         }
 
         const current = this.sanitizeAmount(this.amount);
+        this.amount = current;
         if (current.less(cost)) {
             return false;
         }
@@ -88,7 +91,9 @@ class EPManager {
             return false;
         }
 
-        return this.sanitizeAmount(this.amount).greaterOrEqual(cost);
+        const current = this.sanitizeAmount(this.amount);
+        this.amount = current;
+        return current.greaterOrEqual(cost);
     }
 
     reset() {
