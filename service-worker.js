@@ -1,4 +1,4 @@
-const CACHE_NAME = "world-creator-v148";
+const CACHE_NAME = "world-creator-v149";
 
 const FILES_TO_CACHE = [
     "./",
@@ -6,6 +6,8 @@ const FILES_TO_CACHE = [
     "./style.css",
     "./manifest.json",
     "./js/core/main.js",
+    "./js/plasma/Manager.js",
+    "./js/plasma/PhaseTransition.js",
     "./js/core/game.js",
     "./js/core/save.js",
     "./js/core/eventBus.js",
@@ -52,6 +54,7 @@ const FILES_TO_CACHE = [
     "./js/ui/StatisticsUI.js",
     "./js/ui/AchievementUI.js",
     "./js/ui/AutomationUI.js",
+    "./js/ui/PlasmaUI.js",
     "./js/automation/Manager.js",
     "./js/automation/FormulaEvaluator.js",
     "./icon-192.png",
