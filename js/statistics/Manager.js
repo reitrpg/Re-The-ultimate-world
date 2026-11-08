@@ -36,15 +36,26 @@ class StatisticsManager {
 
     recordResource(id, amount) {
         if (!RESOURCE_IDS.includes(id)) return;
+        const gain = BigNumber.from(amount);
+        if (!gain.isFinite() || !gain.greater(0)) return;
+
         if (!this.totalResources[id]) {
             this.totalResources[id] = BigNumber.zero();
         }
-        this.totalResources[id] = this.totalResources[id].add(amount);
+
+        this.totalResources[id] = this.totalResources[id].add(gain);
         eventBus.emit("statistics:update");
     }
 
     recordEP(amount) {
-        this.totalEP = this.totalEP.add(amount);
+        const gain = BigNumber.from(amount);
+        if (!gain.isFinite() || !gain.greater(0)) return;
+
+        const current = BigNumber.from(this.totalEP);
+        this.totalEP = current.less(0)
+            ? BigNumber.zero().add(gain)
+            : current.add(gain);
+
         eventBus.emit("statistics:update");
     }
 
@@ -81,6 +92,9 @@ class StatisticsManager {
     }
 
     getTotalEP() {
+        if (!this.totalEP?.isFinite?.() || this.totalEP.less(0)) {
+            this.totalEP = BigNumber.zero();
+        }
         return this.totalEP;
     }
 
@@ -92,7 +106,7 @@ class StatisticsManager {
             totalResources: Object.fromEntries(
                 RESOURCE_IDS.map(id => [id, this.getTotalResource(id).toJSON()])
             ),
-            totalEP: this.totalEP.toJSON()
+            totalEP: this.getTotalEP().toJSON()
         };
     }
 
@@ -109,10 +123,16 @@ class StatisticsManager {
 
         const savedResources = data.totalResources || {};
         RESOURCE_IDS.forEach(id => {
-            this.totalResources[id] = BigNumber.from(savedResources[id] ?? 0);
+            const amount = BigNumber.from(savedResources[id] ?? 0);
+            this.totalResources[id] = amount.less(0)
+                ? BigNumber.zero()
+                : amount;
         });
 
-        this.totalEP = BigNumber.from(data.totalEP ?? 0);
+        const savedEP = BigNumber.from(data.totalEP ?? 0);
+        this.totalEP = savedEP.less(0)
+            ? BigNumber.zero()
+            : savedEP;
     }
 }
 
