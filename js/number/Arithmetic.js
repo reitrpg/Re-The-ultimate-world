@@ -51,7 +51,7 @@ function subtract(a, b) {
     }
 
     // Subtraction is addition of the sign-reversed right operand. This keeps
-    // the exponent/layer approximation consistent for positive and negative
+    // exponent/layer approximations consistent for positive and negative
     // operands instead of incorrectly returning zero when exponents differ.
     return add(a, {
         mantissa: -b.mantissa,
@@ -101,10 +101,6 @@ function divide(a, b) {
         throw new Error("BigNumber: division by zero");
     }
 
-    if (a.mantissa === 0) {
-        return make(0, 0, 0);
-    }
-
     if (a.layer === 0 && b.layer === 0) {
         return make(
             a.mantissa / b.mantissa,
@@ -116,21 +112,20 @@ function divide(a, b) {
     if (a.layer === 2 || b.layer === 2) {
         if (a.layer === 2 && b.layer < 2) {
             const result = { ...a };
-            result.mantissa = Math.sign(a.mantissa) * Math.sign(b.mantissa) *
-                Math.abs(a.mantissa);
+            result.mantissa = Math.sign(a.mantissa) *
+                Math.sign(b.mantissa) * Math.abs(a.mantissa);
             return result;
         }
 
         if (a.layer < 2 && b.layer === 2) {
-            return make(Math.sign(a.mantissa) * Math.sign(b.mantissa), 0, 0);
+            return make(0, 0, 0);
         }
 
         if (a.exponent >= b.exponent) {
-            return make(
-                Math.sign(a.mantissa) * Math.sign(b.mantissa),
-                Math.max(0, a.exponent - b.exponent),
-                2
-            );
+            const result = { ...a };
+            result.mantissa = Math.sign(a.mantissa) *
+                Math.sign(b.mantissa) * Math.abs(a.mantissa);
+            return result;
         }
 
         return make(0, 0, 0);
@@ -145,16 +140,11 @@ function divide(a, b) {
     }
 
     if (a.layer === 0 && b.layer === 1) {
-        return make(
-            Math.sign(a.mantissa) * Math.sign(b.mantissa),
-            0,
-            0
-        );
+        return make(0, 0, 0);
     }
 
     return make(
-        (Math.sign(a.mantissa) * Math.sign(b.mantissa)) *
-            (Math.abs(a.mantissa) / Math.abs(b.mantissa)),
+        a.mantissa / b.mantissa,
         a.exponent - b.exponent,
         1
     );
