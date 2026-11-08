@@ -72,7 +72,9 @@ class UnlockManager {
 
         const cost = this.getUnlockCost();
 
-        if (!EPManager.consume(cost)) {
+        // The first world is free (cost = 0). EPManager.consume intentionally
+        // rejects zero-value transactions, so only consume positive costs.
+        if (cost.greater(0) && !EPManager.consume(cost)) {
             eventBus.emit("world:unlock:failed", {
                 code: "EP_CONSUME_FAILED",
                 required: cost,
