@@ -78,12 +78,21 @@ function multiply(a, b) {
         const other = a.layer === 2 ? b : a;
 
         if (other.layer === 2) {
-            return high.exponent >= other.exponent
-                ? { ...high }
-                : { ...other };
+            const dominant = high.exponent >= other.exponent ? high : other;
+            return make(
+                Math.sign(a.mantissa) * Math.sign(b.mantissa) *
+                    Math.abs(dominant.mantissa),
+                dominant.exponent,
+                2
+            );
         }
 
-        return { ...high };
+        return make(
+            Math.sign(a.mantissa) * Math.sign(b.mantissa) *
+                Math.abs(high.mantissa),
+            high.exponent,
+            2
+        );
     }
 
     const high = a.layer === 1 ? a : b;
