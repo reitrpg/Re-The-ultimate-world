@@ -105,6 +105,8 @@ const BASE_URL = "http://127.0.0.1:4173/";
 
       activeWorld.level = 10000;
       const highLevelRequirement = activeWorld.getRequiredExperience();
+      activeWorld.level = 1e200;
+      const largeLevelProductionBonus = activeWorld.getLevelProductionBonus();
       activeWorld.level = originalLevel;
 
       // A zero threshold used to make the level-up while-loop run forever.
@@ -178,12 +180,14 @@ const BASE_URL = "http://127.0.0.1:4173/";
         levelAfterNegativeGain,
         originalLevel,
         highLevelRequirementPositive: highLevelRequirement.isFinite() && highLevelRequirement.greater(0),
+        largeLevelProductionBonusFinite: largeLevelProductionBonus.isFinite() && largeLevelProductionBonus.greater(0),
         zeroThresholdDidNotHang,
         realNewBirthAccepted,
         EPAfterNewBirth,
         materialsAfterNewBirth,
         productionBeforeBirth,
         productionAfterNewBirth,
+        newBirthMultiplierPositive: activeWorld.newBirthMultiplier.isFinite() && activeWorld.newBirthMultiplier.greater(0),
         legacyNegativeEPWasRepaired,
         conversionAfterNewBirthCount,
         EPAfterNewBirthConversion,
@@ -216,6 +220,8 @@ const BASE_URL = "http://127.0.0.1:4173/";
       "Negative EXP must not cause an unintended level-up");
     assert.equal(numeric.highLevelRequirementPositive, true,
       "High-level EXP requirements must not overflow to zero");
+    assert.equal(numeric.largeLevelProductionBonusFinite, true,
+      "Production bonus calculation must not loop through every world level");
     assert.equal(numeric.zeroThresholdDidNotHang, true,
       "A zero EXP requirement must not lock the game loop");
     assert.equal(numeric.realNewBirthAccepted, true, "Real new birth must complete");
@@ -230,6 +236,8 @@ const BASE_URL = "http://127.0.0.1:4173/";
     }, "New birth must reset material balances");
     assert.deepEqual(numeric.productionAfterNewBirth, numeric.productionBeforeBirth,
       "New birth must preserve displayed material production");
+    assert.equal(numeric.newBirthMultiplierPositive, true,
+      "A corrupted negative new-birth multiplier must be repaired");
     assert.equal(numeric.legacyNegativeEPWasRepaired, true,
       "Legacy negative EP must be repaired before conversion");
     assert.equal(numeric.conversionAfterNewBirthCount, 3,
