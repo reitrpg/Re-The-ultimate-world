@@ -873,7 +873,7 @@ nav button.active {
 
 /* Achievement cards: prevent long-press selection/copy UI from interfering with taps */
 .achievement-card {
-    touch-action: manipulation;
+    touch-action: pan-y;
     user-select: none;
     -webkit-user-select: none;
     -webkit-touch-callout: none;
