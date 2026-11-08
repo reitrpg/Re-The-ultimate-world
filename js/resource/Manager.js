@@ -50,7 +50,13 @@ class ResourceManager {
         if (!resource) return false;
 
         const gain = BigNumber.from(amount);
-        resource.amount = resource.amount.add(gain);
+        if (!gain.isFinite() || !gain.greater(0)) return false;
+
+        const current = BigNumber.from(resource.amount);
+        resource.amount = current.less(0)
+            ? BigNumber.zero().add(gain)
+            : current.add(gain);
+
         StatisticsManager.recordResource(id, gain);
         eventBus.emit("resource:update");
         return true;
@@ -61,9 +67,12 @@ class ResourceManager {
         if (!resource) return false;
 
         const cost = BigNumber.from(amount);
-        if (resource.amount.less(cost)) return false;
+        if (!cost.isFinite() || !cost.greater(0)) return false;
 
-        resource.amount = resource.amount.subtract(cost);
+        const current = BigNumber.from(resource.amount);
+        if (!current.isFinite() || current.less(0) || current.less(cost)) return false;
+
+        resource.amount = current.subtract(cost);
         eventBus.emit("resource:update");
         return true;
     }
@@ -71,7 +80,13 @@ class ResourceManager {
     has(id, amount) {
         const resource = this.get(id);
         if (!resource) return false;
-        return resource.amount.greaterOrEqual(amount);
+
+        const cost = BigNumber.from(amount);
+        if (!cost.isFinite() || cost.less(0)) return false;
+
+        const current = BigNumber.from(resource.amount);
+        return current.isFinite() && !current.less(0) &&
+            current.greaterOrEqual(cost);
     }
 
     produce(id, amount, emitUpdate = true) {
@@ -79,7 +94,13 @@ class ResourceManager {
         if (!resource) return false;
 
         const gain = BigNumber.from(amount);
-        resource.amount = resource.amount.add(gain);
+        if (!gain.isFinite() || !gain.greater(0)) return false;
+
+        const current = BigNumber.from(resource.amount);
+        resource.amount = current.less(0)
+            ? BigNumber.zero().add(gain)
+            : current.add(gain);
+
         StatisticsManager.recordResource(id, gain);
 
         if (emitUpdate) eventBus.emit("resource:update");
@@ -129,13 +150,7 @@ class ResourceManager {
         });
 
         this.createDefaultResources();
-
-        ["plant", "metal", "magic"].forEach(id => {
-            const resource = this.get(id);
-            if (resource && resource.production.less(0)) {
-                resource.production = BigNumber.zero();
-            }
-        });
+        eventBus.emit("resource:update");
     }
 }
 
