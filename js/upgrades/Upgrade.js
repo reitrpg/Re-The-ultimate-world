@@ -41,7 +41,7 @@ class Upgrade {
 
     getCost() {
         if (this.id === "creator_will") {
-            const decimalExponent = this.level + 3;
+            const decimalExponent = (2 * this.level) + 3;
             const exponent = Math.floor(decimalExponent / 3);
             const remainder = decimalExponent % 3;
             const mantissa = Math.pow(10, remainder);
@@ -74,13 +74,29 @@ class Upgrade {
             levelFactor = 1 + (coefficient * Math.pow(this.level, 3));
 
             if (this.level >= 150) {
-                // Lv150を従来式の基準点とし、それ以降は1Lvごとに1.2倍。
-                // 強化効果のLv50以降の成長率（1.1倍）とコスト成長率を揃える。
+                // Lv150の従来コストを基準に、100Lv帯が上がるごとに
+                // 1Lvあたりのコスト倍率を0.1ずつ増加させる。
+                // Lv150-199: 1.2倍、Lv200-299: 1.3倍、Lv300-399: 1.4倍……
                 const anchorLevel = 150;
                 const anchorFactor = 1 + (13 * Math.pow(anchorLevel, 3));
-                const anchorQuadraticMultiplier = 100;
-                const decimalExponent =
-                    (this.level - anchorLevel) * Math.log10(1.2);
+                let remainingLevels = this.level - anchorLevel;
+                let currentLevel = anchorLevel;
+                let decimalExponent = 0;
+
+                while (remainingLevels > 0) {
+                    const nextHundred = (Math.floor(currentLevel / 100) + 1) * 100;
+                    const levelsInBand = Math.min(
+                        remainingLevels,
+                        nextHundred - currentLevel
+                    );
+                    const bandMultiplier =
+                        1.2 + ((Math.floor(currentLevel / 100) - 1) * 0.1);
+
+                    decimalExponent += levelsInBand * Math.log10(bandMultiplier);
+                    currentLevel += levelsInBand;
+                    remainingLevels -= levelsInBand;
+                }
+
                 const layeredExponent = Math.floor(decimalExponent / 3);
                 const mantissa = Math.pow(
                     10,
@@ -93,7 +109,7 @@ class Upgrade {
                 );
 
                 return this.baseCost
-                    .multiply(anchorFactor * anchorQuadraticMultiplier)
+                    .multiply(anchorFactor * 100)
                     .multiply(growthMultiplier);
             }
 
