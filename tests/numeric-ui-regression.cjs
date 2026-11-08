@@ -98,7 +98,24 @@ const BASE_URL = "http://127.0.0.1:4173/";
         activeWorld = WorldManager.create("numeric-ui-regression");
       }
 
+      const originalLevel = activeWorld.level;
+      const originalRequirement = activeWorld.getRequiredExperience;
+      const negativeWorldGainRejected = activeWorld.gainExperience(negative) === false;
+      const levelAfterNegativeGain = activeWorld.level;
+
+      activeWorld.level = 10000;
+      const highLevelRequirement = activeWorld.getRequiredExperience();
+      activeWorld.level = originalLevel;
+
+      // A zero threshold used to make the level-up while-loop run forever.
+      activeWorld.exp = BigNumber.from(11);
+      activeWorld.getRequiredExperience = () => BigNumber.zero();
+      const zeroThresholdDidNotHang = activeWorld.gainExperience(1) === false;
+      activeWorld.getRequiredExperience = originalRequirement;
+      activeWorld.exp = BigNumber.zero();
+
       activeWorld.totalExperience = BigNumber.from(625000);
+      activeWorld.newBirthMultiplier = negative.clone();
       const productionBeforeBirth = {
         plant: 5,
         metal: 6,
