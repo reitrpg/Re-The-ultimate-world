@@ -55,6 +55,9 @@ jobs:
       - name: Verify unlimited responsive upgrade purchases
         run: node tests/upgrade-buy-all.cjs
 
+      - name: Run numeric and tab navigation regression checks
+        run: node tests/numeric-ui-regression.cjs
+
       - name: Upload browser test report
         if: always()
         uses: actions/upload-artifact@v4
