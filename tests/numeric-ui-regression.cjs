@@ -31,7 +31,9 @@ const BASE_URL = "http://127.0.0.1:4173/";
         converterModule,
         gameModule,
         upgradeModule,
-        eventModule
+        eventModule,
+        birthModule,
+        worldManagerModule
       ] = await Promise.all([
         import("./js/number/BigNumber.js"),
         import("./js/ep/Manager.js"),
@@ -51,8 +53,8 @@ const BASE_URL = "http://127.0.0.1:4173/";
       const Game = gameModule.default;
       const UpgradeManager = upgradeModule.default;
       const eventBus = eventModule.default;
-      const NewBirthManager = (await import("./js/rebirth/Manager.js")).default;
-      const WorldManager = (await import("./js/world/Manager.js")).default;
+      const NewBirthManager = birthModule.default;
+      const WorldManager = worldManagerModule.default;
 
       Game.stop();
 
@@ -91,8 +93,10 @@ const BASE_URL = "http://127.0.0.1:4173/";
 
       // Reproduce the reported sequence: real new birth, legacy negative EP
       // state, EP conversion, and navigation through every major tab.
-      const activeWorld = WorldManager.getActive();
-      if (!activeWorld) throw new Error("No active world available for new-birth regression");
+      let activeWorld = WorldManager.getActive();
+      if (!activeWorld) {
+        activeWorld = WorldManager.create("numeric-ui-regression");
+      }
 
       activeWorld.totalExperience = BigNumber.from(625000);
       const productionBeforeBirth = {
