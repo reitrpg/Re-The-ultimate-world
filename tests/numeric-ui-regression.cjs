@@ -149,6 +149,9 @@ const BASE_URL = "http://127.0.0.1:4173/";
       // manager repairs stale internal state before a post-birth conversion.
       EPManager.amount = negative.clone();
       const legacyNegativeEPWasRepaired = EPManager.get().isZero();
+      ResourceManager.get("plant").amount = negative.clone();
+      const negativeMaterialConversionRejected =
+        Converter.convertAll("plant_to_ep") === 0;
       ResourceManager.add("plant", 30);
       const conversionAfterNewBirthCount = Converter.convertAll("plant_to_ep");
       const EPAfterNewBirthConversion = EPManager.get().toNumber();
@@ -189,6 +192,7 @@ const BASE_URL = "http://127.0.0.1:4173/";
         productionAfterNewBirth,
         newBirthMultiplierPositive: activeWorld.newBirthMultiplier.isFinite() && activeWorld.newBirthMultiplier.greater(0),
         legacyNegativeEPWasRepaired,
+        negativeMaterialConversionRejected,
         conversionAfterNewBirthCount,
         EPAfterNewBirthConversion,
         automationTabVisible: !document.querySelector('[data-tab="automation"]').hidden
@@ -240,6 +244,8 @@ const BASE_URL = "http://127.0.0.1:4173/";
       "A corrupted negative new-birth multiplier must be repaired");
     assert.equal(numeric.legacyNegativeEPWasRepaired, true,
       "Legacy negative EP must be repaired before conversion");
+    assert.equal(numeric.negativeMaterialConversionRejected, true,
+      "Legacy negative material must not be converted into negative EP");
     assert.equal(numeric.conversionAfterNewBirthCount, 3,
       "EP conversion must remain usable after new birth");
     assert.ok(numeric.EPAfterNewBirthConversion > 0,
