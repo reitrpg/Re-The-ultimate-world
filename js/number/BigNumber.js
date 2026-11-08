@@ -59,7 +59,7 @@ class BigNumber {
         const number = Number(value);
 
         return new BigNumber(
-            Number.isNaN(number) ? 0 : number,
+            Number.isFinite(number) ? number : 0,
             0,
             0
         );
