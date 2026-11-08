@@ -6,6 +6,7 @@ class TabUI {
         this.activeTab = null;
         this.tabs = [];
         this.panels = [];
+        this.isChanging = false;
     }
 
     initialize() {
@@ -31,10 +32,7 @@ class TabUI {
         });
 
         const initial = this.getInitialTab();
-
-        if (initial) {
-            this.setActive(initial, false);
-        }
+        if (initial) this.setActive(initial, false);
     }
 
     collectElements() {
@@ -82,6 +80,10 @@ class TabUI {
     }
 
     setActive(tabId, emit = true) {
+        if (this.isChanging || typeof tabId !== "string" || !tabId) {
+            return false;
+        }
+
         const tab = this.tabs.find(
             item => this.getTabId(item) === tabId
         );
@@ -92,36 +94,59 @@ class TabUI {
 
         if (!tab || !panel) return false;
 
-        this.tabs.forEach(item => {
-            const active = this.getTabId(item) === tabId;
+        // Repeatedly selecting the current tab must not trigger duplicate
+        // rendering/events. Still repair visibility if another component
+        // changed the panel state behind the tab controller.
+        if (this.activeTab === tabId) {
+            tab.classList.add("active");
+            tab.setAttribute("aria-selected", "true");
 
-            item.classList.toggle("active", active);
+            this.panels.forEach(item => {
+                const active = item === panel;
+                item.hidden = !active;
+                item.classList.toggle("active", active);
+                item.setAttribute("aria-hidden", String(!active));
+            });
 
-            if (item.hasAttribute("aria-selected")) {
-                item.setAttribute("aria-selected", String(active));
-            }
-
-            if (item.hasAttribute("aria-expanded")) {
-                item.setAttribute("aria-expanded", String(active));
-            }
-        });
-
-        this.panels.forEach(item => {
-            const active = this.getPanelId(item) === tabId;
-
-            item.hidden = !active;
-            item.classList.toggle("active", active);
-            item.setAttribute("aria-hidden", String(!active));
-        });
-
-        this.activeTab = tabId;
-
-        if (emit) {
-            eventBus.emit("tab:change", tabId);
-            eventBus.emit("tab:update", tabId);
+            return true;
         }
 
-        return true;
+        this.isChanging = true;
+
+        try {
+            this.tabs.forEach(item => {
+                const active = this.getTabId(item) === tabId;
+
+                item.classList.toggle("active", active);
+
+                if (item.hasAttribute("aria-selected")) {
+                    item.setAttribute("aria-selected", String(active));
+                }
+
+                if (item.hasAttribute("aria-expanded")) {
+                    item.setAttribute("aria-expanded", String(active));
+                }
+            });
+
+            this.panels.forEach(item => {
+                const active = item === panel;
+
+                item.hidden = !active;
+                item.classList.toggle("active", active);
+                item.setAttribute("aria-hidden", String(!active));
+            });
+
+            this.activeTab = tabId;
+
+            if (emit) {
+                eventBus.emit("tab:change", tabId);
+                eventBus.emit("tab:update", tabId);
+            }
+
+            return true;
+        } finally {
+            this.isChanging = false;
+        }
     }
 
     open(id) {
