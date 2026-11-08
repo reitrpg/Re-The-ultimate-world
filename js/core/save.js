@@ -42,6 +42,8 @@ class SaveManager{
   StatisticsManager.reset();
   AchievementManager.reset();
   AutomationManager.reset();
+  PlasmaManager.reset();
+  localStorage.removeItem("world_creator_phase_transition");
   localStorage.setItem("world_creator_reset_pending", "true");
   localStorage.removeItem(this.key);
   localStorage.removeItem("world_creator_last_time");
