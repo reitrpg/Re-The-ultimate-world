@@ -4,134 +4,107 @@
  */
 
 import BigNumber from "../number/BigNumber.js";
-
 import eventBus from "../core/eventBus.js";
 import StatisticsManager from "../statistics/Manager.js";
 
 class EPManager {
-
     constructor() {
+        this.amount = BigNumber.zero();
+    }
 
-        this.amount =
-            BigNumber.zero();
+    sanitizeAmount(value) {
+        const amount = BigNumber.from(value);
 
+        if (!amount.isFinite() || amount.less(0)) {
+            return BigNumber.zero();
+        }
+
+        return amount;
     }
 
     get() {
+        // Repair legacy/corrupted negative values before exposing them to UI
+        // and purchase calculations.
+        if (!this.amount?.isFinite?.() || this.amount.less(0)) {
+            this.amount = BigNumber.zero();
+        }
 
         return this.amount;
-
     }
 
     set(value) {
-
-        const nextAmount = BigNumber.from(value);
-        this.amount = nextAmount;
-        eventBus.emit(
-            "ep:update"
-        );
-
+        this.amount = this.sanitizeAmount(value);
+        eventBus.emit("ep:update");
+        return true;
     }
 
     add(value) {
-
         const gain = BigNumber.from(value);
-        this.amount =
 
-            this.amount.add(
-                gain
-            );
+        // EP is a non-negative game resource. Negative/zero gains are ignored
+        // so a bad multiplier or stale state cannot corrupt the EP balance.
+        if (!gain.isFinite() || !gain.greater(0)) {
+            return false;
+        }
+
+        const current = this.sanitizeAmount(this.amount);
+        this.amount = current.add(gain);
+
+        if (!this.amount.isFinite() || this.amount.less(0)) {
+            this.amount = BigNumber.zero();
+            return false;
+        }
 
         StatisticsManager.recordEP(gain);
-
-        eventBus.emit(
-            "ep:update"
-        );
-
+        eventBus.emit("ep:update");
+        return true;
     }
 
     consume(value) {
+        const cost = BigNumber.from(value);
 
-        const cost =
-
-            BigNumber.from(
-                value
-            );
-
-        if (
-
-            this.amount.less(
-                cost
-            )
-
-        ) {
-
+        if (!cost.isFinite() || cost.lessOrEqual(0)) {
             return false;
-
         }
 
-        this.amount =
+        const current = this.sanitizeAmount(this.amount);
+        if (current.less(cost)) {
+            return false;
+        }
 
-            this.amount.subtract(
-                cost
-            );
+        const remaining = current.subtract(cost);
+        this.amount = remaining.less(0)
+            ? BigNumber.zero()
+            : remaining;
 
-        eventBus.emit(
-            "ep:update"
-        );
-
+        eventBus.emit("ep:update");
         return true;
-
     }
 
     has(value) {
+        const cost = BigNumber.from(value);
 
-        return this.amount.greaterOrEqual(value);
+        if (!cost.isFinite() || cost.less(0)) {
+            return false;
+        }
 
+        return this.sanitizeAmount(this.amount).greaterOrEqual(cost);
     }
 
     reset() {
-
-        this.amount =
-            BigNumber.zero();
-
-        eventBus.emit(
-            "ep:update"
-        );
-
+        this.amount = BigNumber.zero();
+        eventBus.emit("ep:update");
     }
 
     toJSON() {
-
         return {
-
-            amount:
-
-                this.amount
-                    .toJSON()
-
+            amount: this.get().toJSON()
         };
-
     }
 
     load(data) {
-
-        if (!data) {
-
-            return;
-
-        }
-
-        this.amount =
-
-            BigNumber.from(
-
-                data.amount || 0
-
-            );
-
+        this.amount = this.sanitizeAmount(data?.amount ?? 0);
     }
-
 }
 
 export default new EPManager();
