@@ -15,7 +15,8 @@ const MODULES = [
     ["ErrorUI", "./ErrorUI.js"],
     ["StatisticsUI", "./StatisticsUI.js"],
     ["AchievementUI", "./AchievementUI.js"],
-    ["AutomationUI", "./AutomationUI.js"]
+    ["AutomationUI", "./AutomationUI.js"],
+    ["PlasmaUI", "./PlasmaUI.js"]
 ];
 
 class UI {
