@@ -58,6 +58,9 @@ jobs:
       - name: Run numeric and tab navigation regression checks
         run: node tests/numeric-ui-regression.cjs
 
+      - name: Verify Phase 1 transition cinematic and Plasma unlock
+        run: node tests/phase-transition.cjs
+
       - name: Upload browser test report
         if: always()
         uses: actions/upload-artifact@v4
