@@ -153,7 +153,13 @@ class ResourceManager {
 
         ["plant", "metal", "magic"].forEach(id => {
             const resource = this.get(id);
-            if (resource && resource.production.less(0)) {
+            if (!resource) return;
+
+            if (resource.amount.less(0)) {
+                resource.amount = BigNumber.zero();
+            }
+
+            if (resource.production.less(0)) {
                 resource.production = BigNumber.zero();
             }
         });
