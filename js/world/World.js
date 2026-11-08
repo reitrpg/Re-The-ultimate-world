@@ -295,8 +295,14 @@ class World {
         const scaledExperience = BigNumber.one().add(
             effectiveExperience.divide(500000)
         );
-        // 仮設定：累計EXPの平方根を新生倍率の基礎値にする。
-        const baseMultiplier = this.getPower(scaledExperience, 0.5);
+        // 基礎倍率は5倍までは従来の平方根。5倍を超えた分は0.25乗で伸ばす。
+        // 5倍地点で値が連続するよう、5 * (X / 25)^0.25 とする。
+        const squareRootMultiplier = this.getPower(scaledExperience, 0.5);
+        const baseMultiplier = squareRootMultiplier.lessOrEqual(5)
+            ? squareRootMultiplier
+            : BigNumber.from(5).multiply(
+                this.getPower(scaledExperience.divide(25), 0.25)
+            );
 
         const currentMultiplier = BigNumber.from(this.newBirthMultiplier);
         if (currentMultiplier.lessOrEqual(0)) {
