@@ -61,7 +61,8 @@ const BASE_URL = "http://127.0.0.1:4173/";
         .fromLayered(1, 1, 0)
         .subtract(BigNumber.fromLayered(1, 2, 0));
 
-      const saturated = BigNumber.from(Infinity);
+      const saturated = new BigNumber(Infinity);
+      const parsedInfinityWasZeroed = BigNumber.from(Infinity).isZero();
 
       EPManager.set(negative);
       const negativeEPWasClamped = EPManager.get().isZero();
@@ -94,6 +95,7 @@ const BASE_URL = "http://127.0.0.1:4173/";
         exponentDifference: exponentDifference.toNumber(),
         saturatedIsFinite: saturated.isFinite(),
         saturatedMantissa: saturated.mantissa,
+        parsedInfinityWasZeroed,
         negativeEPWasClamped,
         negativeGainRejected,
         overspendRejected,
@@ -113,7 +115,8 @@ const BASE_URL = "http://127.0.0.1:4173/";
     assert.equal(numeric.negativeCompareIsLess, true);
     assert.equal(numeric.negativeResult, -99, "Subtraction must preserve a negative result");
     assert.equal(numeric.exponentDifference, -999000, "Subtraction must handle different exponents");
-    assert.equal(numeric.saturatedIsFinite, true, "Infinity input must be safely saturated");
+    assert.equal(numeric.saturatedIsFinite, true, "Direct Infinity construction must not hang");
+    assert.equal(numeric.parsedInfinityWasZeroed, true, "Parsed non-finite values must retain the safe zero fallback");
     assert.equal(numeric.negativeEPWasClamped, true, "EP balance must never remain negative");
     assert.equal(numeric.negativeGainRejected, true, "Negative EP gains must be rejected");
     assert.equal(numeric.overspendRejected, true, "EP overspending must be rejected");
