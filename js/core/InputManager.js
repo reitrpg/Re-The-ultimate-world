@@ -70,6 +70,9 @@ class InputManager {
             });
 
             if (!target || target.disabled) return;
+            // Achievement cards use native click handling so vertical swipe gestures
+            // remain scroll gestures instead of being converted into immediate taps.
+            if (this.isAchievementCard(target)) return;
 
             // Native form controls must keep their browser input behavior.
             // Preventing pointerdown here can immediately close the Android keyboard
@@ -132,6 +135,9 @@ class InputManager {
         document.addEventListener("click", event => {
             const target = this.resolveTarget(event);
             if (!target) return;
+            // Let the browser deliver a click only after a genuine tap (or keyboard
+            // activation). A swipe that scrolls the page will not generate this click.
+            if (this.isAchievementCard(target)) return;
 
             this.diagnostics.record("NATIVE_CLICK_BLOCKED", {
                 target: this.describeTarget(target)
@@ -147,6 +153,7 @@ class InputManager {
 
             const target = this.resolveTarget(event);
             if (!target || target.disabled) return;
+            if (this.isAchievementCard(target)) return;
 
             if (this.isNativeInput(target)) return;
 
@@ -165,6 +172,10 @@ class InputManager {
             "touch-action",
             "manipulation"
         );
+    }
+
+    isAchievementCard(target) {
+        return Boolean(target?.closest?.(".achievement-card"));
     }
 
     isNativeInput(target) {
