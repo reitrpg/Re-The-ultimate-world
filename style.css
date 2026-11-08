@@ -1187,3 +1187,14 @@ nav button.active {
     min-width: 0;
     margin: 0 !important;
 }
+
+
+/* Plasma phase */
+.plasma-energy-panel {
+    max-width: 560px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+}
+.plasma-energy-panel h3 { margin-top: 0; }
+#plasma-energy-value { font-size: 1.5em; }
