@@ -22,15 +22,15 @@ class UpgradeManager {
         this.create("world_tree", "神秘:魔法技術 Ⅰ", 1.20, 10, "infinite", null, true, "魔力の生産量を1.2倍", "magic");
         this.create("creator_will", "創造神の意思", 2.00, 1000, "infinite", null, false, "全体生産量を2倍");
 
-        this.create("plant_fivefold", "植物五倍", 5.00, 200, "limited", 1, true, "植物の生産量を5倍", "plant", "plant", "divine_revelation");
-        this.create("metal_fivefold", "金属五倍", 5.00, 200, "limited", 1, true, "金属の生産量を5倍", "metal", "metal", "heavenly_blessing");
-        this.create("magic_fivefold", "魔力五倍", 5.00, 200, "limited", 1, true, "魔力の生産量を5倍", "magic", "magic", "world_tree");
-        this.create("automation_unlock", "自動化解禁", 1, 10000, "limited", 1, true, "自動化機能を解禁");
+        this.create("plant_fivefold", "生命樹の祝福", 5.00, 200, "limited", 1, true, "植物の生産量を5倍", "plant", "plant", "divine_revelation");
+        this.create("metal_fivefold", "深淵鉱脈の祝福", 5.00, 200, "limited", 1, true, "金属の生産量を5倍", "metal", "metal", "heavenly_blessing");
+        this.create("magic_fivefold", "原初魔導の祝福", 5.00, 200, "limited", 1, true, "魔力の生産量を5倍", "magic", "magic", "world_tree");
+        this.create("automation_unlock", "機巧神の啓示", 1, 10000, "limited", 1, true, "自動化機能を解禁");
 
-        this.create("buy_max_divine_revelation", "天啓：農業革命 全購入解禁", 1, 1000, "limited", 1, true, "天啓：農業革命に全購入ボタンを追加", null, null, "divine_revelation");
-        this.create("buy_max_heavenly_blessing", "神域：亡霊鉱山 全購入解禁", 1, 1000, "limited", 1, true, "神域：亡霊鉱山に全購入ボタンを追加", null, null, "heavenly_blessing");
-        this.create("buy_max_world_tree", "神秘：魔法技術 全購入解禁", 1, 1000, "limited", 1, true, "神秘：魔法技術に全購入ボタンを追加", null, null, "world_tree");
-        this.create("buy_max_creator_will", "創造神の意思 全購入解禁", 1, 1000, "limited", 1, true, "創造神の意思に全購入ボタンを追加", null, null, "creator_will");
+        this.create("buy_max_divine_revelation", "天啓：農業革命・一括購入", 1, 1000, "limited", 1, true, "天啓：農業革命に全購入ボタンを追加", null, null, "divine_revelation");
+        this.create("buy_max_heavenly_blessing", "神域：亡霊鉱山・一括購入", 1, 1000, "limited", 1, true, "神域：亡霊鉱山に全購入ボタンを追加", null, null, "heavenly_blessing");
+        this.create("buy_max_world_tree", "神秘：魔法技術・一括購入", 1, 1000, "limited", 1, true, "神秘：魔法技術に全購入ボタンを追加", null, null, "world_tree");
+        this.create("buy_max_creator_will", "創造神の意思・一括購入", 1, 1000, "limited", 1, true, "創造神の意思に全購入ボタンを追加", null, null, "creator_will");
     }
 
     create(id, name, multiplier, cost, type = "infinite", maxLevel = null, unlocked = true, effectText = "", targetResource = null, costResource = null, prerequisiteId = null) {
@@ -159,10 +159,10 @@ class UpgradeManager {
             metal_fivefold: { cost: 200, multiplier: 5.00, targetResource: "metal", costResource: "metal", prerequisiteId: "heavenly_blessing", effectText: "金属の生産量を5倍" },
             magic_fivefold: { cost: 200, multiplier: 5.00, targetResource: "magic", costResource: "magic", prerequisiteId: "world_tree", effectText: "魔力の生産量を5倍" },
             automation_unlock: { cost: 10000, multiplier: 1, targetResource: null, costResource: null, effectText: "自動化機能を解禁" },
-            buy_max_divine_revelation: { name: "天啓：農業革命 全購入解禁", cost: 1000, multiplier: 1, targetResource: null, costResource: null, prerequisiteId: "divine_revelation", effectText: "天啓：農業革命に全購入ボタンを追加" },
-            buy_max_heavenly_blessing: { name: "神域：亡霊鉱山 全購入解禁", cost: 1000, multiplier: 1, targetResource: null, costResource: null, prerequisiteId: "heavenly_blessing", effectText: "神域：亡霊鉱山に全購入ボタンを追加" },
-            buy_max_world_tree: { name: "神秘：魔法技術 全購入解禁", cost: 1000, multiplier: 1, targetResource: null, costResource: null, prerequisiteId: "world_tree", effectText: "神秘：魔法技術に全購入ボタンを追加" },
-            buy_max_creator_will: { name: "創造神の意思 全購入解禁", cost: 1000, multiplier: 1, targetResource: null, costResource: null, prerequisiteId: "creator_will", effectText: "創造神の意思に全購入ボタンを追加" }
+            buy_max_divine_revelation: { name: "天啓：農業革命・一括購入", cost: 1000, multiplier: 1, targetResource: null, costResource: null, prerequisiteId: "divine_revelation", effectText: "天啓：農業革命に全購入ボタンを追加" },
+            buy_max_heavenly_blessing: { name: "神域：亡霊鉱山・一括購入", cost: 1000, multiplier: 1, targetResource: null, costResource: null, prerequisiteId: "heavenly_blessing", effectText: "神域：亡霊鉱山に全購入ボタンを追加" },
+            buy_max_world_tree: { name: "神秘：魔法技術・一括購入", cost: 1000, multiplier: 1, targetResource: null, costResource: null, prerequisiteId: "world_tree", effectText: "神秘：魔法技術に全購入ボタンを追加" },
+            buy_max_creator_will: { name: "創造神の意思・一括購入", cost: 1000, multiplier: 1, targetResource: null, costResource: null, prerequisiteId: "creator_will", effectText: "創造神の意思に全購入ボタンを追加" }
         };
         Object.entries(definitions).forEach(([id, definition]) => {
             const upgrade = this.get(id);
