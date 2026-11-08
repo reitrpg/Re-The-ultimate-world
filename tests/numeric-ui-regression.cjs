@@ -33,7 +33,8 @@ const BASE_URL = "http://127.0.0.1:4173/";
         upgradeModule,
         eventModule,
         birthModule,
-        worldManagerModule
+        worldManagerModule,
+        unlockModule
       ] = await Promise.all([
         import("./js/number/BigNumber.js"),
         import("./js/ep/Manager.js"),
@@ -43,7 +44,8 @@ const BASE_URL = "http://127.0.0.1:4173/";
         import("./js/upgrades/Manager.js"),
         import("./js/core/eventBus.js"),
         import("./js/rebirth/Manager.js"),
-        import("./js/world/Manager.js")
+        import("./js/world/Manager.js"),
+        import("./js/world/UnlockManager.js")
       ]);
 
       const BigNumber = numberModule.default;
@@ -55,8 +57,20 @@ const BASE_URL = "http://127.0.0.1:4173/";
       const eventBus = eventModule.default;
       const NewBirthManager = birthModule.default;
       const WorldManager = worldManagerModule.default;
+      const UnlockManager = unlockModule.default;
 
       Game.stop();
+
+      // The first world costs zero EP and must not call the positive-cost-only
+      // EP consume operation.
+      UnlockManager.reset();
+      WorldManager.clear();
+      EPManager.reset();
+      const firstWorldCostIsZero = UnlockManager.getUnlockCost().isZero();
+      const firstWorldCanUnlock = UnlockManager.canUnlock();
+      const firstWorldUnlocked = UnlockManager.unlock("first-world-regression");
+      const firstWorldCountAfterUnlock = WorldManager.getCount();
+      const EPAfterFirstWorldUnlock = EPManager.get().toNumber();
 
       const negative = BigNumber.fromLayered(-938.4369599771804, 96.25, 0);
       const zero = BigNumber.zero();
@@ -161,6 +175,11 @@ const BASE_URL = "http://127.0.0.1:4173/";
       eventBus.emit("upgrade:update");
 
       return {
+        firstWorldCostIsZero,
+        firstWorldCanUnlock,
+        firstWorldUnlocked,
+        firstWorldCountAfterUnlock,
+        EPAfterFirstWorldUnlock,
         signComparison,
         negativeCompareIsLess: negative.less(0),
         negativeResult: negativeResult.toNumber(),
@@ -199,6 +218,11 @@ const BASE_URL = "http://127.0.0.1:4173/";
       };
     });
 
+    assert.equal(numeric.firstWorldCostIsZero, true, "The first world must remain free");
+    assert.equal(numeric.firstWorldCanUnlock, true, "The free first world must be unlockable");
+    assert.equal(numeric.firstWorldUnlocked, true, "The first world unlock must succeed");
+    assert.equal(numeric.firstWorldCountAfterUnlock, 1, "The first world must be created");
+    assert.equal(numeric.EPAfterFirstWorldUnlock, 0, "The free first world must not consume EP");
     assert.equal(numeric.signComparison, -1, "Negative BigNumber must compare below zero");
     assert.equal(numeric.negativeCompareIsLess, true);
     assert.equal(numeric.negativeResult, -99, "Subtraction must preserve a negative result");
