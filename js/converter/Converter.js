@@ -59,23 +59,52 @@ class Converter {
 
     canConvert(id) {
         const recipe = this.getRecipe(id);
-        return Boolean(
-            recipe &&
-            ResourceManager.has(recipe.resourceId, recipe.resourceCost)
-        );
+        if (!recipe || !recipe.resourceCost.greater(0) || !recipe.epReward.greater(0)) {
+            return false;
+        }
+
+        return ResourceManager.has(recipe.resourceId, recipe.resourceCost);
+    }
+
+    getReward(recipe, count = BigNumber.one()) {
+        if (!recipe) return null;
+
+        const amount = BigNumber.from(count);
+        const multiplier = BigNumber.from(AchievementManager.getTotalMultiplier());
+
+        if (
+            !amount.isFinite() ||
+            !amount.greater(0) ||
+            !multiplier.isFinite() ||
+            !multiplier.greater(0)
+        ) {
+            return null;
+        }
+
+        const reward = recipe.epReward.multiply(amount).multiply(multiplier);
+
+        return reward.isFinite() && reward.greater(0)
+            ? reward
+            : null;
     }
 
     convert(id) {
         const recipe = this.getRecipe(id);
         if (!recipe || !this.canConvert(id)) return false;
 
-        if (!ResourceManager.consume(recipe.resourceId, recipe.resourceCost)) return false;
+        const reward = this.getReward(recipe);
+        if (!reward) return false;
 
-        EPManager.add(
-            recipe.epReward.multiply(
-                AchievementManager.getTotalMultiplier()
-            )
-        );
+        if (!ResourceManager.consume(recipe.resourceId, recipe.resourceCost)) {
+            return false;
+        }
+
+        if (!EPManager.add(reward)) {
+            // The reward was validated before consumption; this is a final
+            // consistency guard for unexpected state changes.
+            ResourceManager.add(recipe.resourceId, recipe.resourceCost);
+            return false;
+        }
 
         eventBus.emit("converter:update", recipe);
         return true;
@@ -84,7 +113,9 @@ class Converter {
     getWholeCount(amount, unitCost) {
         const quotient = BigNumber.from(amount).divide(unitCost);
 
-        if (quotient.lessOrEqual(0)) return BigNumber.zero();
+        if (!quotient.isFinite() || quotient.lessOrEqual(0)) {
+            return BigNumber.zero();
+        }
 
         // Layered values are already far beyond normal Number precision.
         // At this scale, the stored representation is treated as an integer count.
@@ -112,7 +143,7 @@ class Converter {
         if (!recipe) return 0;
 
         const requested = BigNumber.from(amount);
-        if (requested.lessOrEqual(0)) return 0;
+        if (!requested.isFinite() || !requested.greater(0)) return 0;
 
         const resource = ResourceManager.get(recipe.resourceId);
         if (!resource) return 0;
@@ -126,20 +157,24 @@ class Converter {
             recipe.resourceCost
         );
 
-        let count = availableCount.lessOrEqual(requestedCount)
+        const count = availableCount.lessOrEqual(requestedCount)
             ? availableCount
             : requestedCount;
 
-        if (count.lessOrEqual(0)) return 0;
+        if (!count.greater(0)) return 0;
 
         const resourceCost = recipe.resourceCost.multiply(count);
-        const epReward = recipe.epReward
-            .multiply(count)
-            .multiply(AchievementManager.getTotalMultiplier());
+        const epReward = this.getReward(recipe, count);
 
-        if (!ResourceManager.consume(recipe.resourceId, resourceCost)) return 0;
+        if (!epReward || !ResourceManager.consume(recipe.resourceId, resourceCost)) {
+            return 0;
+        }
 
-        EPManager.add(epReward);
+        if (!EPManager.add(epReward)) {
+            ResourceManager.add(recipe.resourceId, resourceCost);
+            return 0;
+        }
+
         eventBus.emit("converter:update", recipe);
 
         const numericCount = count.toNumber();
@@ -148,23 +183,26 @@ class Converter {
 
     convertByRate(id, rate) {
         const recipe = this.getRecipe(id);
-        if (!recipe) return 0;
+        const rateValue = Number(rate);
+
+        if (!recipe || !Number.isFinite(rateValue) || rateValue <= 0) {
+            return 0;
+        }
 
         const resource = ResourceManager.get(recipe.resourceId);
         if (!resource) return 0;
 
-        const usable = resource.amount.multiply(rate);
+        const usable = resource.amount.multiply(rateValue);
+        const countValue = usable.divide(recipe.resourceCost).toNumber();
+
+        if (!Number.isFinite(countValue) && countValue !== Infinity) return 0;
+
         const count = Math.min(
             1000,
-            Math.max(
-                0,
-                Math.floor(
-                    usable.divide(recipe.resourceCost).toNumber()
-                )
-            )
+            Math.max(0, Math.floor(countValue))
         );
 
-        if (count <= 0) return 0;
+        if (!Number.isFinite(count) || count <= 0) return 0;
 
         return this.convertByAmount(
             id,
@@ -184,16 +222,20 @@ class Converter {
             recipe.resourceCost
         );
 
-        if (count.lessOrEqual(0)) return 0;
+        if (!count.greater(0)) return 0;
 
         const resourceCost = recipe.resourceCost.multiply(count);
-        const epReward = recipe.epReward
-            .multiply(count)
-            .multiply(AchievementManager.getTotalMultiplier());
+        const epReward = this.getReward(recipe, count);
 
-        if (!ResourceManager.consume(recipe.resourceId, resourceCost)) return 0;
+        if (!epReward || !ResourceManager.consume(recipe.resourceId, resourceCost)) {
+            return 0;
+        }
 
-        EPManager.add(epReward);
+        if (!EPManager.add(epReward)) {
+            ResourceManager.add(recipe.resourceId, resourceCost);
+            return 0;
+        }
+
         eventBus.emit("converter:update", recipe);
 
         const numericCount = count.toNumber();
