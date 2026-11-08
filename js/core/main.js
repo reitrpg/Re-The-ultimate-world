@@ -1,8 +1,9 @@
 import ErrorHandler from "./errorHandler.js";
 import BootProfiler from "./BootProfiler.js";
+import eventBus from "./eventBus.js";
 
-const APP_VERSION = "0.0.148";
-const SERVICE_WORKER_VERSION = "148";
+const APP_VERSION = "0.0.149";
+const SERVICE_WORKER_VERSION = "149";
 
 async function loadModule(path) {
     try {
@@ -66,7 +67,8 @@ async function initializeGame() {
             ResourceManager,
             InputManager,
             InputActionController,
-            UI
+            UI,
+            PhaseTransition
         ] = await Promise.all([
             loadModule("./save.js"),
             loadModule("./game.js"),
@@ -74,14 +76,16 @@ async function initializeGame() {
             loadModule("../resource/Manager.js"),
             loadModule("./InputManager.js"),
             loadModule("./InputActionController.js"),
-            loadModule("../ui/UI.js")
+            loadModule("../ui/UI.js"),
+            loadModule("../plasma/PhaseTransition.js")
         ]);
 
         runtime.SaveManager = SaveManager;
+        runtime.PhaseTransition = PhaseTransition;
         runtime.OfflineProgress = OfflineProgress;
         BootProfiler.mark("Core modules loaded");
 
-        if (!SaveManager || !Game || !ResourceManager || !InputManager || !InputActionController || !UI) {
+        if (!SaveManager || !Game || !ResourceManager || !InputManager || !InputActionController || !UI || !PhaseTransition) {
             throw new Error("World Creator: core module initialization failed");
         }
 
@@ -115,8 +119,15 @@ async function initializeGame() {
 
         await UI.initialize();
         BootProfiler.mark("UI.initialize");
+        PhaseTransition.initialize();
+        eventBus.on("phase:transition:start", () => Game.stop());
+        eventBus.on("phase:transition:complete", () => {
+            SaveManager.save();
+            Game.start();
+        });
         SaveManager.startAutoSave();
         Game.start();
+        PhaseTransition.resumeIfNeeded();
         BootProfiler.mark("Game.start");
 
         document.documentElement.dataset.appReady = "true";
