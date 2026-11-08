@@ -140,8 +140,11 @@ class PhaseTransition {
     completeTransition() {
         if (!this.running || PlasmaManager.isUnlocked()) return;
 
-        // Lifetime statistics and achievements remain permanent records.
-        // Phase 1 resources, worlds, research, upgrades and automation reset.
+        // 自動化設定と自動化解禁だけを次の段階へ引き継ぐ。
+        // その他の強化・進行状況は初期化する。
+        const automationState = AutomationManager.toJSON();
+        const automationUnlock = UpgradeManager.get("automation_unlock")?.toJSON() ?? null;
+
         EPManager.reset();
         WorldManager.clear();
         UnlockManager.reset();
@@ -149,7 +152,11 @@ class PhaseTransition {
         ResearchManager.reset();
         UpgradeManager.reset();
         RebirthManager.reset();
-        AutomationManager.reset();
+
+        if (automationUnlock) {
+            UpgradeManager.get("automation_unlock")?.load(automationUnlock);
+        }
+        AutomationManager.load(automationState);
         PlasmaManager.unlockFirst();
 
         this.running = false;
