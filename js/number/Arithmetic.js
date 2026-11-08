@@ -2,8 +2,8 @@
  * World Creator
  * BigNumber Arithmetic
  *
- * layer 0 は従来通り計算。
- * 上位層は支配項近似を使用し、巨大値の比較・消費を成立させる。
+ * layer 0 uses aligned signed arithmetic.
+ * Higher layers use dominant-term approximations.
  */
 
 import normalize from "./Normalize.js";
@@ -46,33 +46,18 @@ function add(a, b) {
 }
 
 function subtract(a, b) {
-    if (a.layer !== b.layer) {
-        return a.layer > b.layer ? { ...a } : make(0, 0, 0);
-    }
-
-    if (a.exponent < b.exponent) {
-        return make(0, 0, 0);
-    }
-
-    if (a.exponent === b.exponent && a.mantissa === b.mantissa) {
-        return make(0, 0, 0);
-    }
-
-    if (a.layer > 0) {
-        if (a.mantissa <= b.mantissa && a.exponent === b.exponent) {
-            return make(0, 0, 0);
-        }
-
+    if (b.mantissa === 0) {
         return { ...a };
     }
 
-    const aligned = align(a, b);
-
-    return make(
-        aligned.a - aligned.b,
-        aligned.exponent,
-        0
-    );
+    // Subtraction is addition of the sign-reversed right operand. This keeps
+    // the exponent/layer approximation consistent for positive and negative
+    // operands instead of incorrectly returning zero when exponents differ.
+    return add(a, {
+        mantissa: -b.mantissa,
+        exponent: b.exponent,
+        layer: b.layer
+    });
 }
 
 function multiply(a, b) {
@@ -116,6 +101,10 @@ function divide(a, b) {
         throw new Error("BigNumber: division by zero");
     }
 
+    if (a.mantissa === 0) {
+        return make(0, 0, 0);
+    }
+
     if (a.layer === 0 && b.layer === 0) {
         return make(
             a.mantissa / b.mantissa,
@@ -125,12 +114,26 @@ function divide(a, b) {
     }
 
     if (a.layer === 2 || b.layer === 2) {
-        if (a.layer === 2 && b.layer < 2) return { ...a };
-        if (a.layer < 2 && b.layer === 2) return make(0, 0, 0);
+        if (a.layer === 2 && b.layer < 2) {
+            const result = { ...a };
+            result.mantissa = Math.sign(a.mantissa) * Math.sign(b.mantissa) *
+                Math.abs(a.mantissa);
+            return result;
+        }
 
-        return a.exponent >= b.exponent
-            ? { ...a }
-            : make(0, 0, 0);
+        if (a.layer < 2 && b.layer === 2) {
+            return make(Math.sign(a.mantissa) * Math.sign(b.mantissa), 0, 0);
+        }
+
+        if (a.exponent >= b.exponent) {
+            return make(
+                Math.sign(a.mantissa) * Math.sign(b.mantissa),
+                Math.max(0, a.exponent - b.exponent),
+                2
+            );
+        }
+
+        return make(0, 0, 0);
     }
 
     if (a.layer === 1 && b.layer === 0) {
@@ -142,11 +145,16 @@ function divide(a, b) {
     }
 
     if (a.layer === 0 && b.layer === 1) {
-        return make(0, 0, 0);
+        return make(
+            Math.sign(a.mantissa) * Math.sign(b.mantissa),
+            0,
+            0
+        );
     }
 
     return make(
-        a.mantissa / b.mantissa,
+        (Math.sign(a.mantissa) * Math.sign(b.mantissa)) *
+            (Math.abs(a.mantissa) / Math.abs(b.mantissa)),
         a.exponent - b.exponent,
         1
     );
