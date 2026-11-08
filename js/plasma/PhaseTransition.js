@@ -59,6 +59,13 @@ class PhaseTransition {
         }
         if (localStorage.getItem(TRANSITION_KEY) === "true" ||
             EPManager.get().greaterOrEqual(PHASE_ONE_LIMIT)) {
+            if (EPManager.get().greaterOrEqual(PHASE_ONE_LIMIT)) {
+                AchievementManager.update({
+                    worldManager: WorldManager,
+                    upgradeManager: UpgradeManager,
+                    researchManager: ResearchManager
+                });
+            }
             this.startSequence();
             return true;
         }
