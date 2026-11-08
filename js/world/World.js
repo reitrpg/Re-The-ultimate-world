@@ -4,6 +4,7 @@ import ResearchManager from "../research/Manager.js";
 import UpgradeManager from "../upgrades/Manager.js";
 import eventBus from "../core/eventBus.js";
 import AchievementManager from "../achievements/Manager.js";
+import { MAX_EXPONENT } from "../number/Constants.js";
 
 const RESOURCE_IDS = ["plant", "metal", "magic"];
 
@@ -148,6 +149,14 @@ class World {
     }
 
     getResourceProduction(id) {
+        let rebirthMultiplier = BigNumber.from(this.newBirthMultiplier);
+
+        // An invalid saved multiplier must never turn all production negative.
+        if (!rebirthMultiplier.isFinite() || !rebirthMultiplier.greater(0)) {
+            rebirthMultiplier = BigNumber.one();
+            this.newBirthMultiplier = rebirthMultiplier;
+        }
+
         const levelAdjustedProduction = this.baseProduction.add(
             this.getLevelProductionBonus()
         );
@@ -159,18 +168,49 @@ class World {
         return levelAdjustedProduction
             .multiply(this.getResourceMultiplier(id))
             .multiply(uniqueMultiplier)
-            .multiply(this.newBirthMultiplier);
+            .multiply(rebirthMultiplier);
     }
 
     gainExperience(amount) {
-        this.exp = this.exp.add(amount);
-        this.totalExperience = this.totalExperience.add(amount);
-        let leveledUp = false;
+        const gain = BigNumber.from(amount);
 
-        while (this.exp.greaterOrEqual(this.getRequiredExperience())) {
+        // EXP is a non-negative resource. Reject stale/corrupt negative or
+        // non-finite gains before they can poison the level-up condition.
+        if (!gain.isFinite() || !gain.greater(0)) {
+            return false;
+        }
+
+        if (!this.exp?.isFinite?.() || this.exp.less(0)) {
+            this.exp = BigNumber.zero();
+        }
+        if (!this.totalExperience?.isFinite?.() || this.totalExperience.less(0)) {
+            this.totalExperience = BigNumber.zero();
+        }
+
+        this.exp = this.exp.add(gain);
+        this.totalExperience = this.totalExperience.add(gain);
+
+        let leveledUp = false;
+        let levelUpsThisTick = 0;
+        const maxLevelUpsPerTick = 250;
+
+        // Keep multi-level gains, but bound work per game tick. This prevents
+        // a corrupt/astronomical EXP value from monopolizing the browser thread.
+        while (levelUpsThisTick < maxLevelUpsPerTick) {
             const requiredExperience = this.getRequiredExperience();
+
+            // A zero/invalid requirement would make the old while-loop infinite.
+            if (
+                !requiredExperience?.isFinite?.() ||
+                !requiredExperience.greater(0) ||
+                !this.exp.greaterOrEqual(requiredExperience)
+            ) {
+                break;
+            }
+
             this.exp = this.exp.subtract(requiredExperience);
             this.level += 1;
+            levelUpsThisTick += 1;
             leveledUp = true;
         }
 
@@ -179,7 +219,6 @@ class World {
 
     getRequiredExperience() {
         const level = Math.max(1, Math.floor(Number(this.level) || 1));
-        const baseRequiredExperience = level * level * 100;
 
         // Lv1〜10は従来の20%。Lv11〜20で段階的に通常値へ戻す。
         let requiredExperienceRate = 0.2;
@@ -189,18 +228,35 @@ class World {
             requiredExperienceRate = 1;
         }
 
-        // Lv60からコスト上昇を強め、Lv70以降はさらに急増させる。
-        let highLevelCostMultiplier = 1;
-        if (level >= 60) {
-            highLevelCostMultiplier = Math.pow(1.08, level - 59);
-        }
-        if (level >= 70) {
-            highLevelCostMultiplier *= Math.pow(1.15, level - 69);
+        if (level < 60) {
+            return BigNumber.from(
+                level * level * 100 * requiredExperienceRate
+            );
         }
 
-        return BigNumber.from(
-            baseRequiredExperience * requiredExperienceRate * highLevelCostMultiplier
+        // Compute the high-level exponential cost in logarithmic space.
+        // Native Math.pow() overflowed to Infinity at extreme levels, which
+        // BigNumber.from(Infinity) converted to zero and could freeze leveling.
+        let decimalExponent =
+            2 * Math.log10(level) +
+            Math.log10(100 * requiredExperienceRate) +
+            (level - 59) * Math.log10(1.08);
+
+        if (level >= 70) {
+            decimalExponent += (level - 69) * Math.log10(1.15);
+        }
+
+        if (!Number.isFinite(decimalExponent)) {
+            return BigNumber.fromLayered(1, MAX_EXPONENT, 0);
+        }
+
+        const exponent = Math.floor(decimalExponent / 3);
+        const mantissa = Math.pow(
+            10,
+            decimalExponent - exponent * 3
         );
+
+        return BigNumber.fromLayered(mantissa, exponent, 0);
     }
 
     getPower(value, power) {
@@ -273,8 +329,12 @@ class World {
         if (!this.canNewBirth()) return false;
 
         const sacrifice = this.getNewBirthMultiplier();
+        const currentMultiplier = BigNumber.from(this.newBirthMultiplier);
 
-        this.newBirthMultiplier = this.newBirthMultiplier.multiply(sacrifice);
+        this.newBirthMultiplier =
+            !currentMultiplier.isFinite() || currentMultiplier.less(1)
+                ? BigNumber.one().multiply(sacrifice)
+                : currentMultiplier.multiply(sacrifice);
         this.newBirthCount += 1;
 
         // 新生成立時、無限強化のLvをそれぞれ10分の1にする（小数点以下切り捨て）。
@@ -368,12 +428,23 @@ class World {
         this.luck = Math.max(1, Number(data.luck) || 1);
         this.level = Math.max(1, Number(data.level) || 1);
         this.exp = BigNumber.from(data.exp);
+        if (!this.exp.isFinite() || this.exp.less(0)) {
+            this.exp = BigNumber.zero();
+        }
+
         this.totalExperience = BigNumber.from(
             data.totalExperience ?? data.totalExp ?? data.exp ?? 0
         );
+        if (!this.totalExperience.isFinite() || this.totalExperience.less(0)) {
+            this.totalExperience = BigNumber.zero();
+        }
+
         this.newBirthMultiplier = BigNumber.from(
             data.newBirthMultiplier ?? data.rebirthMultiplier ?? 1
         );
+        if (!this.newBirthMultiplier.isFinite() || this.newBirthMultiplier.less(1)) {
+            this.newBirthMultiplier = BigNumber.one();
+        }
         this.newBirthCount = Math.max(
             0,
             Number(data.newBirthCount ?? data.rebirthCount) || 0
