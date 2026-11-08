@@ -29,7 +29,7 @@ class AchievementUI {
         const container = document.getElementById("achievement-content");
         if (container && !container.dataset.modalInputBound) {
             container.dataset.modalInputBound = "true";
-            const openFromCard = event => {
+            container.addEventListener("click", event => {
                 const card = event.target?.closest?.(".achievement-card");
                 if (!card || !container.contains(card)) return;
                 if (document.getElementById("achievement-modal")) return;
@@ -37,20 +37,13 @@ class AchievementUI {
                 const id = card.dataset.achievementId;
                 if (!id) return;
 
-                window.__WC_INPUT_DIAGNOSTICS__?.record("ACHIEVEMENT_DIRECT_OPEN", {
+                window.__WC_INPUT_DIAGNOSTICS__?.record("ACHIEVEMENT_TAP_OPEN", {
                     achievementId: id,
-                    inputType: event.type
+                    inputType: event.detail === 0 ? "keyboard" : "click"
                 });
 
                 this.openModal(id);
-            };
-
-            container.addEventListener("touchstart", openFromCard, {
-                capture: true,
-                passive: true
             });
-
-            container.addEventListener("pointerdown", openFromCard, true);
         }
 
         this.render();
@@ -218,8 +211,6 @@ class AchievementUI {
                 "achievement-card" +
                 (achieved ? " achieved" : " locked");
 
-            item.dataset.action = "achievement:open";
-            item.dataset.actionOn = "down";
             item.dataset.achievementId = achievement.id;
             item.setAttribute("role", "button");
             item.tabIndex = 0;
