@@ -62,20 +62,23 @@ class World {
     }
 
     getLevelProductionBonus() {
-        const level = Math.max(1, Math.floor(Number(this.level) || 1));
+        const rawLevel = Number(this.level);
+        const level = Number.isFinite(rawLevel)
+            ? Math.max(1, Math.floor(rawLevel))
+            : 1;
 
-        let remaining = level;
-        let multiplier = 1;
-        let bonus = 0;
+        // Closed-form equivalent of the previous ten-level groups:
+        // 10×1 + 10×2 + ... + remainder×(group+1).
+        // This avoids a loop proportional to the saved world level.
+        const fullGroups = Math.floor(level / 10);
+        const remaining = level % 10;
 
-        while (remaining > 0) {
-            const count = Math.min(10, remaining);
-            bonus += multiplier * count;
-            remaining -= count;
-            multiplier += 1;
-        }
-
-        return BigNumber.from(bonus);
+        return BigNumber.from(fullGroups)
+            .multiply(fullGroups + 1)
+            .multiply(5)
+            .add(
+                BigNumber.from(remaining).multiply(fullGroups + 1)
+            );
     }
 
     getUniqueEffectMultiplier() {
@@ -218,7 +221,10 @@ class World {
     }
 
     getRequiredExperience() {
-        const level = Math.max(1, Math.floor(Number(this.level) || 1));
+        const rawLevel = Number(this.level);
+        const level = Number.isFinite(rawLevel)
+            ? Math.max(1, Math.floor(rawLevel))
+            : 1;
 
         // Lv1〜10は従来の20%。Lv11〜20で段階的に通常値へ戻す。
         let requiredExperienceRate = 0.2;
@@ -426,7 +432,10 @@ class World {
         this.nameLanguage = ["ja", "en"].includes(data.nameLanguage) ? data.nameLanguage : "ja";
         this.rarity = Number(data.rarity) || 1;
         this.luck = Math.max(1, Number(data.luck) || 1);
-        this.level = Math.max(1, Number(data.level) || 1);
+        const savedLevel = Number(data.level);
+        this.level = Number.isFinite(savedLevel)
+            ? Math.max(1, Math.floor(savedLevel))
+            : 1;
         this.exp = BigNumber.from(data.exp);
         if (!this.exp.isFinite() || this.exp.less(0)) {
             this.exp = BigNumber.zero();
