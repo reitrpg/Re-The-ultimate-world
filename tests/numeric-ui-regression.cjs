@@ -157,6 +157,11 @@ const BASE_URL = "http://127.0.0.1:4173/";
         plantAfterConversion,
         emptyConversionCount,
         EPAfterEmptyConversion,
+        negativeWorldGainRejected,
+        levelAfterNegativeGain,
+        originalLevel,
+        highLevelRequirementPositive: highLevelRequirement.isFinite() && highLevelRequirement.greater(0),
+        zeroThresholdDidNotHang,
         realNewBirthAccepted,
         EPAfterNewBirth,
         materialsAfterNewBirth,
@@ -189,8 +194,18 @@ const BASE_URL = "http://127.0.0.1:4173/";
     assert.equal(numeric.plantAfterConversion, 0);
     assert.equal(numeric.emptyConversionCount, 0);
     assert.equal(numeric.EPAfterEmptyConversion, 0);
+    assert.equal(numeric.negativeWorldGainRejected, true, "Negative EXP gains must be ignored");
+    assert.equal(numeric.levelAfterNegativeGain, numeric.originalLevel,
+      "Negative EXP must not cause an unintended level-up");
+    assert.equal(numeric.highLevelRequirementPositive, true,
+      "High-level EXP requirements must not overflow to zero");
+    assert.equal(numeric.zeroThresholdDidNotHang, true,
+      "A zero EXP requirement must not lock the game loop");
     assert.equal(numeric.realNewBirthAccepted, true, "Real new birth must complete");
     assert.equal(numeric.EPAfterNewBirth, 0, "New birth must reset EP");
+    assert.ok(numeric.materialsAfterNewBirth.plant === 0,
+      "New birth must reset plant amount");
+
     assert.deepEqual(numeric.materialsAfterNewBirth, {
       plant: 0,
       metal: 0,
