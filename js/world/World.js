@@ -67,15 +67,15 @@ class World {
             ? Math.max(1, Math.floor(rawLevel))
             : 1;
 
-        // Closed-form equivalent of the previous ten-level groups:
-        // 10×1 + 10×2 + ... + remainder×(group+1).
+        // Closed-form equivalent of the eight-level groups:
+        // 8×1 + 8×2 + ... + remainder×(group+1).
         // This avoids a loop proportional to the saved world level.
-        const fullGroups = Math.floor(level / 10);
-        const remaining = level % 10;
+        const fullGroups = Math.floor(level / 8);
+        const remaining = level % 8;
 
         return BigNumber.from(fullGroups)
             .multiply(fullGroups + 1)
-            .multiply(5)
+            .multiply(4)
             .add(
                 BigNumber.from(remaining).multiply(fullGroups + 1)
             );
